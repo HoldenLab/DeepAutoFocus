@@ -42,6 +42,9 @@ public class DriftCorrection extends Observable implements Runnable {
     // Running variables
     private long startTimeStamp;
     private double threshold;
+    private double alpha = 0; // 190401 kw
+    private double xi_0 = 0;
+    private double xi_n = 0;
 
 
     public DriftCorrection(DriftCorrectionHardware manager, DriftCorrectionData data, DriftCorrectionProcess processor) {
@@ -58,7 +61,33 @@ public class DriftCorrection extends Observable implements Runnable {
                     long startRun = System.currentTimeMillis();
                     // If we've just started, get the reference image
                     if (driftData.getReferenceImage() == null) driftData.setReferenceImage(snapAndProcess());
+                    
+                    // If we've just started, get the reference stack (190401 kw)
+                    if (driftData.getReferenceStack().size() == 0){
+                        ImageStack refStack = new ImageStack(
+                                driftData.getReferenceImage().getWidth(),
+                                driftData.getReferenceImage().getHeight()
+                        );
+                        // Take picture at current position, filter, clip and add to image stack
+                        refStack.addSlice(MIDDLE, snapAndProcess());
+                        
+                        if (correctionMode == Z || correctionMode == XYZ) {
+                        // Move one stepSize above focus, snap and add to image stack
+                        hardwareManager.moveFocusStageInSteps(1);
+                        refStack.addSlice(TOP, snapAndProcess(), 0);
 
+                        // Move two stepSizes below the focus, snap and add to image stack
+                        hardwareManager.moveFocusStageInSteps(-2);
+                        refStack.addSlice(BOTTOM, snapAndProcess());
+
+                        // Move back to original position
+                        hardwareManager.moveFocusStageInSteps(1);
+                        }
+                        
+                        driftData.setReferenceStack(refStack);
+                    }
+
+                    /*
                     // This is the stack where all the images are placed. Images will be clipped
                     // so we create the stack with the same dimensions as the reference image.
                     ImageStack stack = new ImageStack(
@@ -86,28 +115,64 @@ public class DriftCorrection extends Observable implements Runnable {
                         // Move back to original position
                         hardwareManager.moveFocusStageInSteps(1);
                     }
-
+                    
                     // Calculate the Cross Correlation maps
                     ImageStack resultStack =
                             CrossCorrelationMap.calculateCrossCorrelationMap(
                                     driftData.getReferenceImage(), stack, true);
                     driftData.setResultMap(resultStack);
+*/                    
+
+                    ImageStack resultStack =
+                            CrossCorrelationMap.calculateCrossCorrelationMap(
+                                    snapAndProcess(), driftData.getReferenceStack(), true);
+                    driftData.setResultMap(resultStack);
 
                     // Measure XYZ drift
                     float[] rawCenter = new float[3];
-                    double max = 0;
+                    double min = 100000000; // arbitrarily large number kw
+                    //double max = 0;
                     int index = 2;
+                    
+                    // added 190401 kw
+                    FloatProcessor refSliceBottom = driftData.getReferenceStack().getProcessor(2).convertToFloatProcessor();
+                    FloatProcessor refSliceMiddle = driftData.getReferenceStack().getProcessor(1).convertToFloatProcessor();
+                    FloatProcessor refSliceTop = driftData.getReferenceStack().getProcessor(3).convertToFloatProcessor();
+                    
+                    ImageStack refBottomMiddle = CrossCorrelationMap.calculateCrossCorrelationMap(refSliceBottom, driftData.getReferenceStack(), true);
+                    ImageStack refTopMiddle = CrossCorrelationMap.calculateCrossCorrelationMap(refSliceTop, driftData.getReferenceStack(), true);
+                    ImageStack refMidMid = CrossCorrelationMap.calculateCrossCorrelationMap(refSliceMiddle, driftData.getReferenceStack(), true);
 
+                    FloatProcessor refCCbottomMiddle = refBottomMiddle.getProcessor(1).convertToFloatProcessor();
+                    FloatProcessor refCCtopMiddle = refTopMiddle.getProcessor(1).convertToFloatProcessor();
+                    FloatProcessor refCCmidMid = refMidMid.getProcessor(1).convertToFloatProcessor();
+                    
+                    alpha = (2*refCCmidMid.getMax() - refCCtopMiddle.getMax() - refCCbottomMiddle.getMax() / (2*hardwareManager.getStepSize())); // eq 6 in McGorty et al. 2013
+                    xi_0 = (refCCtopMiddle.getMax() - refCCbottomMiddle.getMax()) / refCCmidMid.getMax();
+                        
+                    FloatProcessor ccSliceBottom = resultStack.getProcessor(2).convertToFloatProcessor();
+                    FloatProcessor ccSliceMiddle = resultStack.getProcessor(1).convertToFloatProcessor();
+                    FloatProcessor ccSliceTop = resultStack.getProcessor(3).convertToFloatProcessor();
+                    xi_n = (ccSliceTop.getMax() - ccSliceBottom.getMax()) / ccSliceMiddle.getMax(); // eq 5 in McGorty et al. 2013
+                        
                     for (int i = 1; i <= resultStack.getSize(); i ++) {
                         FloatProcessor currentSlice = resultStack.getProcessor(i).convertToFloatProcessor();
                         float[] currentCenter = EstimateShiftAndTilt.getMaxFindByOptimization(currentSlice);
-
+                        
                         FloatStatistics stats = new FloatStatistics(currentSlice, Measurements.KURTOSIS, new Calibration());
 
                         double score = Math.abs(currentSlice.getMax()*stats.kurtosis);
 
+                        // hacked 190401 kw
+                        /*
                         if (score >= max) {
                             max = score;
+                            index = i;
+                            rawCenter = currentCenter;
+                        }
+*/
+                        if (score <= min) {
+                            min = score;
                             index = i;
                             rawCenter = currentCenter;
                         }
@@ -133,15 +198,26 @@ public class DriftCorrection extends Observable implements Runnable {
                         setChanged();
                         notifyObservers(OUT_OF_BOUNDS_ERROR);
                         driftData.setReferenceImage(null);
+                        driftData.setReferenceStack(new ImageStack()); // 190401 kw
                         break;
                     }
 
                     double zDrift = 0;
 
+                    // hacked 190401 kw
+                    /*
                     // Move Z stage to winning position. We get zDrift in microns instead of steps to save later to Data
                     if (isRunning() && (correctionMode == Z || correctionMode == XYZ) ) {
                         if (index == 1) zDrift = hardwareManager.getStepSize();
                         else  if (index == 3) zDrift = -hardwareManager.getStepSize();
+
+                        hardwareManager.moveFocusStage(zDrift);
+                    }
+                    */
+                    
+                    // Move Z stage to winning position. We get zDrift in microns instead of steps to save later to Data
+                    if (isRunning() && (correctionMode == Z || correctionMode == XYZ) ) {
+                        zDrift = alpha * (xi_n - xi_0); // eq 4 in McGorty et al. 2013
 
                         hardwareManager.moveFocusStage(zDrift);
                     }
@@ -158,7 +234,10 @@ public class DriftCorrection extends Observable implements Runnable {
                     }
 
                     // If the acquisition was stopped, clear the reference image.
-                    if (!isRunning()) driftData.setReferenceImage(null);
+                    if (!isRunning()) {
+                        driftData.setReferenceImage(null);
+                        driftData.setReferenceStack(new ImageStack()); // 190401 kw
+                    }
                     if ((System.currentTimeMillis()-startRun) < sleep && (System.currentTimeMillis()-startRun) > 0)
                         java.lang.Thread.sleep(sleep - (System.currentTimeMillis()-startRun));
                 }

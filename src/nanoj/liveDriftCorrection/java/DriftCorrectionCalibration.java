@@ -17,8 +17,8 @@ public class DriftCorrectionCalibration {
     private DriftCorrectionHardware hardwareManager;
     private DriftCorrectionProcess processor;
 
-    private double step = 0.5;
-    private int totalSteps = 10;
+    private double step = 1;
+    private int totalSteps = 20;
     private double xMovement;
     private double yMovement;
     private double scale;
@@ -98,12 +98,24 @@ public class DriftCorrectionCalibration {
 
         int halfStep = 2;
 
-        for (int i = -halfStep; i<=halfStep; i++) {
+        // hacked this section kw 190401
+        hardwareManager.moveXYStage(-fieldSize*halfStep,-fieldSize*halfStep);
+        /*for (int i = -halfStep; i<=halfStep; i++) {
+            hardwareManager.moveXYStage(0, fieldSize*i);  // hack 190329 kw
             for (int j = -halfStep; j<=halfStep; j++) {
-                hardwareManager.moveXYStage(fieldSize*j, fieldSize*i);
+                hardwareManager.moveXYStage(fieldSize*j, 0);  // hack 190329 kw
                 hardwareManager.snap();
                 stack.addSlice(hardwareManager.getImage());
             }
+        }*/
+        
+        for (int i = 0; i<=halfStep*2; i++) {
+            for (int j = 0; j<=halfStep*2; j++) {
+                hardwareManager.snap();
+                stack.addSlice(hardwareManager.getImage());
+                hardwareManager.moveXYStage(fieldSize, 0);
+            }
+            hardwareManager.moveXYStage(-fieldSize*halfStep*2, fieldSize);
         }
         hardwareManager.moveXYStage(-halfStep*fieldSize, -halfStep*fieldSize);
 
@@ -182,9 +194,9 @@ public class DriftCorrectionCalibration {
         }
 
         // Get Median values to minimize stage error
-        Collections.sort(xShift);
+        //Collections.sort(xShift);
         double x = median(ArrayCasting.toArray(xShift, 0f));
-        Collections.sort(yShift);
+        //Collections.sort(yShift);
         double y = median(ArrayCasting.toArray(yShift, 0f));
 
         xMovement = x;

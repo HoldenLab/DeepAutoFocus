@@ -31,6 +31,7 @@ public class DriftCorrectionData {
     private ImagePlus latestImage = new ImagePlus();
     private FloatProcessor referenceImage = null;
     private FloatProcessor backgroundImage = null;
+    private ImageStack referenceStack = new ImageStack();
     private Plot plot;
 
     // Data
@@ -167,9 +168,19 @@ public class DriftCorrectionData {
     FloatProcessor getReferenceImage() {
         return referenceImage;
     }
+    
+    // added 190401 by kw
+    ImageStack getReferenceStack() {
+        return referenceStack;
+    }
 
     void setReferenceImage(FloatProcessor referenceImage) {
         this.referenceImage = referenceImage;
+    }
+    
+    // added 190401 kw
+    void setReferenceStack(ImageStack referenceStack) {
+        this.referenceStack = referenceStack;
     }
 
     FloatProcessor getBackgroundImage() {

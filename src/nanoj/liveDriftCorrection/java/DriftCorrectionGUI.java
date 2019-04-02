@@ -207,7 +207,7 @@ public class DriftCorrectionGUI{
                 preferences.getDouble(CAL_ANGLE, CAL_DEFAULT),
                 preferences.getBoolean(CAL_FLIPPING, false)
         ));
-
+        
         // Add Listeners
         guiFrame.addWindowListener(new RememberPositionListener());
         guiPanel.addChangeListener(new PanelListener());
