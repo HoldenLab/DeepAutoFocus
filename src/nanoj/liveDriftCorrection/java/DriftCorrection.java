@@ -104,7 +104,7 @@ public class DriftCorrection extends Observable implements Runnable {
                         xi_0 = (refCCtopMiddle.getMax() - refCCbottomMiddle.getMax()) / refCCmidMid.getMax();
                     }
 
-                    /*
+                    /* Deprecated 190404
                     // This is the stack where all the images are placed. Images will be clipped
                     // so we create the stack with the same dimensions as the reference image.
                     ImageStack stack = new ImageStack(
@@ -138,7 +138,7 @@ public class DriftCorrection extends Observable implements Runnable {
                             CrossCorrelationMap.calculateCrossCorrelationMap(
                                     driftData.getReferenceImage(), stack, true);
                     driftData.setResultMap(resultStack);
-*/                    
+                    */                    
 
                     ImageStack resultStack =
                             CrossCorrelationMap.calculateCrossCorrelationMap(
@@ -146,20 +146,18 @@ public class DriftCorrection extends Observable implements Runnable {
                     driftData.setResultMap(resultStack);
 
                     // Measure XYZ drift
-                    float[] rawCenter = new float[3];
-                    double min = 100000000; // arbitrarily large number kw
-                    //double max = 0;
-                    int index = 2;
-   
                     FloatProcessor ccSliceBottom = resultStack.getProcessor(3).convertToFloatProcessor();
                     FloatProcessor ccSliceMiddle = resultStack.getProcessor(2).convertToFloatProcessor();
                     FloatProcessor ccSliceTop = resultStack.getProcessor(1).convertToFloatProcessor();
                     xi_n = (ccSliceTop.getMax() - ccSliceBottom.getMax()) / ccSliceMiddle.getMax(); // eq 5 in McGorty et al. 2013
                     
+                    float[] rawCenter = new float[3];
                     float[] currentCenter = EstimateShiftAndTilt.getMaxFindByOptimization(ccSliceMiddle);
                     rawCenter = currentCenter;
                         
-                    /*
+                    /* Deprecated 190404
+                    double max = 0;
+                    int index = 2;
                     for (int i = 1; i <= resultStack.getSize(); i ++) {
                         FloatProcessor currentSlice = resultStack.getProcessor(i).convertToFloatProcessor();
                         float[] currentCenter = EstimateShiftAndTilt.getMaxFindByOptimization(currentSlice);
@@ -168,21 +166,14 @@ public class DriftCorrection extends Observable implements Runnable {
 
                         double score = Math.abs(currentSlice.getMax()*stats.kurtosis);
 
-                        // hacked 190401 kw
-                        /*
                         if (score >= max) {
                             max = score;
                             index = i;
                             rawCenter = currentCenter;
                         }
-                        if (score <= min) {
-                            min = score;
-                            index = i;
-                            rawCenter = currentCenter;
-                        }
                     }
-
                     */
+                    
                     // The getMaxFindByOptimization can generate NaN's so we protect against that
                     if ( Double.isNaN(rawCenter[0]) || Double.isNaN(rawCenter[1]) || Double.isNaN(rawCenter[2]) ) continue;
 
@@ -209,8 +200,7 @@ public class DriftCorrection extends Observable implements Runnable {
 
                     double zDrift = 0;
 
-                    // hacked 190401 kw
-                    /*
+                    /* deprecated 190401
                     // Move Z stage to winning position. We get zDrift in microns instead of steps to save later to Data
                     if (isRunning() && (correctionMode == Z || correctionMode == XYZ) ) {
                         if (index == 1) zDrift = hardwareManager.getStepSize();
@@ -220,7 +210,7 @@ public class DriftCorrection extends Observable implements Runnable {
                     }
                     */
                     
-                    // Move Z stage to winning position. We get zDrift in microns instead of steps to save later to Data
+                    // Move Z stage to more appropriate position. We get zDrift in microns instead of steps to save later to Data. (added 190403 kw)
                     if (isRunning() && (correctionMode == Z || correctionMode == XYZ) ) {
                         zDrift = -alpha*(xi_n - xi_0); // eq 4 in McGorty et al. 2013
                         

@@ -98,12 +98,12 @@ public class DriftCorrectionCalibration {
 
         int halfStep = 2;
 
-        // hacked this section kw 190401
+        // modified kw 190401
         hardwareManager.moveXYStage(-fieldSize*halfStep,-fieldSize*halfStep);
         /*for (int i = -halfStep; i<=halfStep; i++) {
-            hardwareManager.moveXYStage(0, fieldSize*i);  // hack 190329 kw
+            hardwareManager.moveXYStage(0, fieldSize*i);
             for (int j = -halfStep; j<=halfStep; j++) {
-                hardwareManager.moveXYStage(fieldSize*j, 0);  // hack 190329 kw
+                hardwareManager.moveXYStage(fieldSize*j, 0);
                 hardwareManager.snap();
                 stack.addSlice(hardwareManager.getImage());
             }
