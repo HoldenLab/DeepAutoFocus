@@ -61,6 +61,7 @@ public class DriftCorrectionGUI{
     private static final String ROI_SIZE = "roiSize";
     private static final String EDGE_CLIP = "edgeClip";
     private static final String STEP_SIZE = "stepSize";
+    private static final String ALPHA = "alpha"; // 190404 kw
     private static final String PERIOD = "period";
     private static final String BOUNDS = "bounds";
     private static final String CAL_SCALING = "calScaling";
@@ -72,6 +73,7 @@ public class DriftCorrectionGUI{
     private static final String ROI_SIZE_DEFAULT = "512";
     private static final String EDGE_CLIP_DEFAULT = "30";
     private static final String STEP_SIZE_DEFAULT = "150"; // nanometers
+    private static final String ALPHA_DEFAULT = "10"; // 190404 kw
     private static final String PERIOD_DEFAULT = "0.5"; // seconds
     private static final String BOUNDS_DEFAULT = "3"; // microns
     private static final double CAL_DEFAULT = -1;
@@ -94,6 +96,7 @@ public class DriftCorrectionGUI{
     private static final String ROI_BOX_LABEL = "Maximum ROI to analyse";
     private static final String EDGE_CLIP_LABEL = "How many pixels to trim from the edges";
     private static final String STEP_SIZE_LABEL = "Step size (nm) for Z correction";
+    private static final String ALPHA_LABEL = "Alpha (scale for corrections)"; //190404 kw
     private static final String PERIOD_LABEL = "Time between corrections in seconds";
     private static final String BOUNDS_LABEL = "Maximum translation (microns)";
     private static final String SEPARATE_STAGES_LABEL = "Separate XY stage devices?";
@@ -157,7 +160,7 @@ public class DriftCorrectionGUI{
     private JFrame guiFrame = new JFrame(FRAME_NAME);
     private JTabbedPane guiPanel = new JTabbedPane();
     private Dimension controlDimensions = new Dimension(300, 400);
-    private Dimension configurationDimensions = new Dimension(300, 710);
+    private Dimension configurationDimensions = new Dimension(300, 850);
 
     // Control Panel objects
     private JToggleButton startButton = new DToggleButton(START, startButtonListener);
@@ -181,6 +184,7 @@ public class DriftCorrectionGUI{
     private JTextField roiBox = new DTextField(ROI_SIZE, ROI_SIZE_DEFAULT);
     private JTextField edgeClipBox = new DTextField(EDGE_CLIP, EDGE_CLIP_DEFAULT);
     private JTextField stepSizeBox = new DTextField(STEP_SIZE, STEP_SIZE_DEFAULT);
+    private JTextField alphaBox = new DTextField(ALPHA, ALPHA_DEFAULT); // 190404 kw
     private JTextField periodBox = new DTextField(PERIOD, PERIOD_DEFAULT);
     private JTextField boundsLimitBox = new DTextField(BOUNDS, BOUNDS_DEFAULT);
     private DeviceList focusDeviceList = new DeviceList(DeviceType.StageDevice, Z_STAGE);
@@ -271,6 +275,8 @@ public class DriftCorrectionGUI{
         configurationPanel.add(edgeClipBox);
         configurationPanel.add(new DLabel(STEP_SIZE_LABEL));
         configurationPanel.add(stepSizeBox);
+        configurationPanel.add(new DLabel(ALPHA_LABEL)); //190404 kw
+        configurationPanel.add(alphaBox);
         configurationPanel.add(new DLabel(PERIOD_LABEL));
         configurationPanel.add(periodBox);
         configurationPanel.add(new DLabel(BOUNDS_LABEL));
@@ -350,6 +356,7 @@ public class DriftCorrectionGUI{
 
         processor.setEdgeClip(Integer.parseInt(edgeClipBox.getText()));
         hardwareManager.setStepSize(Double.parseDouble(stepSizeBox.getText())/1000);
+        driftCorrection.setAlpha((double) (Double.parseDouble(alphaBox.getText()))); //190404 kw
         driftCorrection.setSleep((long) (Double.parseDouble(periodBox.getText())*1000));
         driftCorrection.setThreshold(Double.parseDouble(boundsLimitBox.getText()));
 
@@ -882,6 +889,12 @@ public class DriftCorrectionGUI{
 
         @Override
         public void windowClosing(WindowEvent e) {
+            driftCorrection.runAcquisition(false); // 190404 kw
+            startButton.setSelected(false);
+            startButton.setText(START);
+            streamImagesButton.setSelected(false);
+            driftData.setShowLatest(showLatestButton.isSelected());
+            hardwareManager.setStreamImages(streamImagesButton.isSelected());
             Point position = guiFrame.getLocationOnScreen();
             int xPos = position.x;
             int yPos = position.y;

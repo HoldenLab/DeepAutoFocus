@@ -115,9 +115,9 @@ public class DriftCorrectionCalibration {
                 stack.addSlice(hardwareManager.getImage());
                 hardwareManager.moveXYStage(fieldSize, 0);
             }
-            hardwareManager.moveXYStage(-fieldSize*halfStep*2, fieldSize);
+            hardwareManager.moveXYStage(-fieldSize*(halfStep*2+1), fieldSize);
         }
-        hardwareManager.moveXYStage(-halfStep*fieldSize, -halfStep*fieldSize);
+        hardwareManager.moveXYStage(halfStep*fieldSize, -(halfStep+1)*fieldSize);
 
         ZProjector projector = new ZProjector(new ImagePlus("Background Image",stack));
         projector.setMethod(ZProjector.MEDIAN_METHOD);

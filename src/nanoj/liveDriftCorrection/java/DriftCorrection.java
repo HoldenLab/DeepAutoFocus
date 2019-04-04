@@ -85,6 +85,23 @@ public class DriftCorrection extends Observable implements Runnable {
                         }
                         
                         driftData.setReferenceStack(refStack);
+                        
+                        // added 190401 kw
+                        FloatProcessor refSliceBottom = driftData.getReferenceStack().getProcessor(3).convertToFloatProcessor();
+                        FloatProcessor refSliceMiddle = driftData.getReferenceStack().getProcessor(2).convertToFloatProcessor();
+                        FloatProcessor refSliceTop = driftData.getReferenceStack().getProcessor(1).convertToFloatProcessor();
+                    
+                        ImageStack refBottomMiddle = CrossCorrelationMap.calculateCrossCorrelationMap(refSliceBottom, driftData.getReferenceStack(), true);
+                        ImageStack refTopMiddle = CrossCorrelationMap.calculateCrossCorrelationMap(refSliceTop, driftData.getReferenceStack(), true);
+                        ImageStack refMidMid = CrossCorrelationMap.calculateCrossCorrelationMap(refSliceMiddle, driftData.getReferenceStack(), true);
+
+                        FloatProcessor refCCbottomMiddle = refBottomMiddle.getProcessor(2).convertToFloatProcessor();
+                        FloatProcessor refCCtopMiddle = refTopMiddle.getProcessor(2).convertToFloatProcessor();
+                        FloatProcessor refCCmidMid = refMidMid.getProcessor(2).convertToFloatProcessor();
+                    
+                        // overriding this alpha for now, just using user input value.
+                        //alpha = (2*refCCmidMid.getMax() - refCCtopMiddle.getMax() - refCCbottomMiddle.getMax()) / (2*hardwareManager.getStepSize()); // eq 6 in McGorty et al. 2013
+                        xi_0 = (refCCtopMiddle.getMax() - refCCbottomMiddle.getMax()) / refCCmidMid.getMax();
                     }
 
                     /*
@@ -133,28 +150,16 @@ public class DriftCorrection extends Observable implements Runnable {
                     double min = 100000000; // arbitrarily large number kw
                     //double max = 0;
                     int index = 2;
-                    
-                    // added 190401 kw
-                    FloatProcessor refSliceBottom = driftData.getReferenceStack().getProcessor(2).convertToFloatProcessor();
-                    FloatProcessor refSliceMiddle = driftData.getReferenceStack().getProcessor(1).convertToFloatProcessor();
-                    FloatProcessor refSliceTop = driftData.getReferenceStack().getProcessor(3).convertToFloatProcessor();
-                    
-                    ImageStack refBottomMiddle = CrossCorrelationMap.calculateCrossCorrelationMap(refSliceBottom, driftData.getReferenceStack(), true);
-                    ImageStack refTopMiddle = CrossCorrelationMap.calculateCrossCorrelationMap(refSliceTop, driftData.getReferenceStack(), true);
-                    ImageStack refMidMid = CrossCorrelationMap.calculateCrossCorrelationMap(refSliceMiddle, driftData.getReferenceStack(), true);
-
-                    FloatProcessor refCCbottomMiddle = refBottomMiddle.getProcessor(1).convertToFloatProcessor();
-                    FloatProcessor refCCtopMiddle = refTopMiddle.getProcessor(1).convertToFloatProcessor();
-                    FloatProcessor refCCmidMid = refMidMid.getProcessor(1).convertToFloatProcessor();
-                    
-                    alpha = (2*refCCmidMid.getMax() - refCCtopMiddle.getMax() - refCCbottomMiddle.getMax() / (2*hardwareManager.getStepSize())); // eq 6 in McGorty et al. 2013
-                    xi_0 = (refCCtopMiddle.getMax() - refCCbottomMiddle.getMax()) / refCCmidMid.getMax();
-                        
-                    FloatProcessor ccSliceBottom = resultStack.getProcessor(2).convertToFloatProcessor();
-                    FloatProcessor ccSliceMiddle = resultStack.getProcessor(1).convertToFloatProcessor();
-                    FloatProcessor ccSliceTop = resultStack.getProcessor(3).convertToFloatProcessor();
+   
+                    FloatProcessor ccSliceBottom = resultStack.getProcessor(3).convertToFloatProcessor();
+                    FloatProcessor ccSliceMiddle = resultStack.getProcessor(2).convertToFloatProcessor();
+                    FloatProcessor ccSliceTop = resultStack.getProcessor(1).convertToFloatProcessor();
                     xi_n = (ccSliceTop.getMax() - ccSliceBottom.getMax()) / ccSliceMiddle.getMax(); // eq 5 in McGorty et al. 2013
+                    
+                    float[] currentCenter = EstimateShiftAndTilt.getMaxFindByOptimization(ccSliceMiddle);
+                    rawCenter = currentCenter;
                         
+                    /*
                     for (int i = 1; i <= resultStack.getSize(); i ++) {
                         FloatProcessor currentSlice = resultStack.getProcessor(i).convertToFloatProcessor();
                         float[] currentCenter = EstimateShiftAndTilt.getMaxFindByOptimization(currentSlice);
@@ -170,7 +175,6 @@ public class DriftCorrection extends Observable implements Runnable {
                             index = i;
                             rawCenter = currentCenter;
                         }
-*/
                         if (score <= min) {
                             min = score;
                             index = i;
@@ -178,6 +182,7 @@ public class DriftCorrection extends Observable implements Runnable {
                         }
                     }
 
+                    */
                     // The getMaxFindByOptimization can generate NaN's so we protect against that
                     if ( Double.isNaN(rawCenter[0]) || Double.isNaN(rawCenter[1]) || Double.isNaN(rawCenter[2]) ) continue;
 
@@ -217,14 +222,15 @@ public class DriftCorrection extends Observable implements Runnable {
                     
                     // Move Z stage to winning position. We get zDrift in microns instead of steps to save later to Data
                     if (isRunning() && (correctionMode == Z || correctionMode == XYZ) ) {
-                        zDrift = alpha * (xi_n - xi_0); // eq 4 in McGorty et al. 2013
-
+                        zDrift = -alpha*(xi_n - xi_0); // eq 4 in McGorty et al. 2013
+                        
                         hardwareManager.moveFocusStage(zDrift);
                     }
 
                     // Move XY stage
-                    if (isRunning() && (correctionMode == XY || correctionMode == XYZ) )
+                    if (isRunning() && (correctionMode == XY || correctionMode == XYZ) ){
                         hardwareManager.moveXYStage(xyDrift);
+                    }
 
                     // Add data
                     if (isRunning()) {
@@ -302,6 +308,11 @@ public class DriftCorrection extends Observable implements Runnable {
 
     public void setSleep(long sleep) {
         this.sleep = sleep;
+    }
+    
+    // added 190404 kw
+    public void setAlpha(double alpha){
+        this.alpha = alpha;
     }
 
     public double getThreshold() {
