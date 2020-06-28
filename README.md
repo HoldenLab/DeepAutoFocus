@@ -5,4 +5,4 @@ This code is provided as is and without warranty to support reproducibility and 
 
 We aim increase the user friendliness and documentation of this software & hardware in the near future - watch this space!
 
-LICENSING INFORMATION All files are distributed under the GPLv3 and (c) 2020 Pedro Almada, Ricardo Henriques, Kings College London, Kevin Whitley, Seamus Holden, Newcastle University unless otherwise stated. See LICENSE.txt for full terms.
+LICENSING INFORMATION All files are distributed under the GPLv3 and (c) 2020 Pedro Almada, Ricardo Henriques, University College London, Kevin Whitley, Seamus Holden, Newcastle University unless otherwise stated. See LICENSE.txt for full terms.
