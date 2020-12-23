@@ -4,12 +4,15 @@ import java.awt.event.WindowEvent;
 import mmcorej.CMMCore;
 import org.micromanager.Studio;
 import org.micromanager.internal.MMStudio;
+import org.micromanager.MenuPlugin;
 import org.scijava.plugin.SciJavaPlugin;
+import org.scijava.plugin.Plugin;
 //import org.micromanager.api.MMPlugin; api removed in MM 2.0 (kw 201223)
 //import org.micromanager.api.ScriptInterface;
 
-@org.scijava.plugin.Plugin(type = org.micromanager.MenuPlugin.class)
-public class DriftCorrectionPlugin implements org.micromanager.MenuPlugin, org.scijava.plugin.SciJavaPlugin {
+//@org.scijava.plugin.Plugin(type = org.micromanager.MenuPlugin.class)
+@Plugin(type = MenuPlugin.class)
+public class DriftCorrectionPlugin implements MenuPlugin, SciJavaPlugin {
     static DriftCorrectionGUI driftGui = DriftCorrectionGUI.INSTANCE;
 
     public static final String menuName = "NanoJ Online Drift Correction";
@@ -34,8 +37,10 @@ public class DriftCorrectionPlugin implements org.micromanager.MenuPlugin, org.s
 
     public String getInfo() { return tooltipDescription; }
 
+    @Override
     public String getVersion() { return version; }
 
+    @Override
     public String getCopyright() { return copyright; }
 
     @Override
@@ -43,7 +48,7 @@ public class DriftCorrectionPlugin implements org.micromanager.MenuPlugin, org.s
         return "Beta";
     }
 
-    @Override
+   @Override
     public void onPluginSelected() {
         if (driftGui != null) {
          driftGui.setApp(app_);

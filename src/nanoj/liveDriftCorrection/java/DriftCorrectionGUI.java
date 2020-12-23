@@ -64,11 +64,15 @@ public class DriftCorrectionGUI{
     private static final String ALPHA = "alpha"; // 190404 kw
     private static final String PERIOD = "period";
     private static final String BOUNDS = "bounds";
+    private static final String CAL_STEP_SIZE = "calStepSize"; // 201223 kw
     private static final String CAL_SCALING = "calScaling";
     private static final String CAL_ANGLE = "calAngle";
     private static final String CAL_FLIPPING = "calFlipping";
+    private static final String BACK_STEP_SIZE = "backStepSize"; // 201223 kw
 
     // Preference defaults
+    private static final String BACK_STEP_SIZE_DEFAULT = "50"; // microns 201223 kw
+    private static final String CAL_STEP_SIZE_DEFAULT = "1"; // microns 201223 kw
     private static final String EXPOSURE_TIME_DEFAULT = "33"; // milliseconds
     private static final String ROI_SIZE_DEFAULT = "512";
     private static final String EDGE_CLIP_DEFAULT = "30";
@@ -106,6 +110,8 @@ public class DriftCorrectionGUI{
     private static final String X_STAGE_LIST_LABEL = "X Axis Stage";
     private static final String Y_STAGE_LIST_LABEL = "Y Axis Stage";
     private static final String FOCUS_STAGE_LIST_LABEL = "Z Stage / Focus Device";
+    private static final String BACK_STEP_SIZE_LABEL = "Background subtraction step size (um)"; // 201223 kw
+    private static final String CAL_STEP_SIZE_LABEL = "Calibration step size (um)"; // 201223 kw
     private static final String SCALING = "Scale: ";
     private static final String ANGLE = "Angle: ";
     private static final String FLIP = "Flip X: ";
@@ -175,6 +181,8 @@ public class DriftCorrectionGUI{
     private JButton selectConfigurationFileButton = new DButton(CONFIGURE_LABEL, configurationListener);
     private JButton loadConfigurationButton = new DButton(LOAD_LABEL, configurationListener);
     private JButton unloadConfigurationButton = new DButton(UNLOAD_LABEL, configurationListener);
+    private JTextField backgroundStepSizeBox = new DTextField(BACK_STEP_SIZE, BACK_STEP_SIZE_DEFAULT);
+    private JTextField calibrationStepSizeBox = new DTextField(CAL_STEP_SIZE, CAL_STEP_SIZE_DEFAULT);
     private JLabel calibrationScalingLabel = new DLabel(SCALING + preferences.getDouble(CAL_SCALING, CAL_DEFAULT));
     private JLabel calibrationAngleLabel = new DLabel(ANGLE + preferences.getDouble(CAL_ANGLE, CAL_DEFAULT));
     private JLabel calibrationFlipLabel = new DLabel(FLIP + preferences.getBoolean(CAL_FLIPPING, false));
@@ -259,12 +267,16 @@ public class DriftCorrectionGUI{
         configurationPanel.add(selectConfigurationFileButton);
         configurationPanel.add(loadConfigurationButton);
         configurationPanel.add(unloadConfigurationButton);
+        configurationPanel.add(new DLabel(BACK_STEP_SIZE_LABEL)); // 201223 kw
+        configurationPanel.add(backgroundStepSizeBox);
+        configurationPanel.add(new DButton(GET_BG_LABEL, new GetBackgroundListener()));
+        configurationPanel.add(new DButton(CLEAR_BG_LABEL, new ClearBackgroundListener()));
+        configurationPanel.add(new DLabel(CAL_STEP_SIZE_LABEL)); // 201223 kw
+        configurationPanel.add(calibrationStepSizeBox);
         configurationPanel.add(calibrationScalingLabel);
         configurationPanel.add(calibrationAngleLabel);
         configurationPanel.add(calibrationFlipLabel);
         configurationPanel.add(new DButton(CALIBRATE_LABEL, new CalibrationButtonListener()));
-        configurationPanel.add(new DButton(GET_BG_LABEL, new GetBackgroundListener()));
-        configurationPanel.add(new DButton(CLEAR_BG_LABEL, new ClearBackgroundListener()));
         configurationPanel.add(new DLabel(CAMERA_LIST_LABEL));
         configurationPanel.add(cameraList);
         configurationPanel.add(new DLabel(EXPOSURE_TIME_LABEL));
@@ -356,6 +368,10 @@ public class DriftCorrectionGUI{
 
         processor.setEdgeClip(Integer.parseInt(edgeClipBox.getText()));
         hardwareManager.setStepSize(Double.parseDouble(stepSizeBox.getText())/1000);
+        
+        calibrator.setBackgroundStep(Double.parseDouble(backgroundStepSizeBox.getText())); // 201223 kw
+        calibrator.setStep(Double.parseDouble(calibrationStepSizeBox.getText()));
+        
         driftCorrection.setAlpha((double) (Double.parseDouble(alphaBox.getText()))); //190404 kw
         driftCorrection.setSleep((long) (Double.parseDouble(periodBox.getText())*1000));
         driftCorrection.setThreshold(Double.parseDouble(boundsLimitBox.getText()));

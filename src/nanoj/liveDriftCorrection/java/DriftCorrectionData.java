@@ -251,6 +251,11 @@ public class DriftCorrectionData {
             resultMap.show();
         }
     }
+    
+    // added kw 190412
+    synchronized void clearResultMap(){
+        resultMap.close();
+    }
 
     synchronized void setLatestImage(FloatProcessor image) {
         latestImage.setProcessor(image);

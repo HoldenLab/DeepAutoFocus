@@ -7,6 +7,7 @@ import ij.process.FloatProcessor;
 import nanoj.core.java.array.ArrayCasting;
 import nanoj.core.java.image.drift.EstimateShiftAndTilt;
 import nanoj.core.java.image.transform.CrossCorrelationMap;
+import nanoj.core.java.image.analysis.CalculateImageStatistics;
 import org.micromanager.internal.utils.ReportingUtils;
 
 import java.awt.geom.AffineTransform;
@@ -16,14 +17,21 @@ import java.util.Collections;
 public class DriftCorrectionCalibration {
     private DriftCorrectionHardware hardwareManager;
     private DriftCorrectionProcess processor;
+    private DriftCorrectionData driftData;
 
-    private double step = 1;
+    private double step = 10;
+    private double backgroundStep = 50;
     private int totalSteps = 20;
     private double xMovement;
     private double yMovement;
     private double scale;
-    private double angle;
+    private double angle; 
     private boolean flipX;
+    
+    private ImageStack driftStack;
+    private ImagePlus driftPlus = new ImagePlus();
+    private ImageStack plainStack;
+    private ImagePlus plainPlus = new ImagePlus();
 
     private AffineTransform calibration;
 
@@ -85,16 +93,17 @@ public class DriftCorrectionCalibration {
         calibration = createCalibration(scale , angle, flipX);
 
         // So far, our transform takes stage units and converts to pixels, but we want the inverse of that process
-        calibration.invert();
-
+        //calibration.invert();
+        
         return true;
     }
 
     public FloatProcessor obtainBackgroundImage() throws Exception {
         ImageStack stack = new ImageStack(hardwareManager.getROI().width,  hardwareManager.getROI().height);
 
-        double fieldSize = hardwareManager.getROI().getWidth();
-        fieldSize = hardwareManager.convertPixelsToMicrons(fieldSize);
+        //double fieldSize = hardwareManager.getROI().getWidth();
+        //fieldSize = -hardwareManager.convertPixelsToMicrons(fieldSize); // negative added 190418 kw
+        double fieldSize = backgroundStep; // hack 201223
 
         int halfStep = 2;
 
@@ -164,6 +173,8 @@ public class DriftCorrectionCalibration {
         // If we are working with negative xMovement values, then the coordinates need to be flipped 180 degrees
         if(rotate) newCalibration.quadrantRotate(2);
 
+        newCalibration.quadrantRotate(1); // 190418 kw
+        
         return newCalibration;
     }
 
@@ -183,6 +194,14 @@ public class DriftCorrectionCalibration {
             if (map == null) {
                 continue;
             }
+            
+            if (i==0){
+                ImageStack dStack = new ImageStack(map.getWidth(),map.getHeight());
+                dStack.addSlice(map);
+                driftStack = dStack;
+            }
+            
+            driftStack.addSlice(map);
 
             float[] shift = EstimateShiftAndTilt.getMaxFindByOptimization(map);
             shift = new float[] {
@@ -192,6 +211,9 @@ public class DriftCorrectionCalibration {
             xShift.add(shift[0]);
             yShift.add(shift[1]);
         }
+        
+        driftPlus.setStack(driftStack);
+        driftPlus.show();
 
         // Get Median values to minimize stage error
         //Collections.sort(xShift);
@@ -205,6 +227,14 @@ public class DriftCorrectionCalibration {
 
     //////////////////////////// Getters/Setters
 
+    public double getBackgroundStep(){
+        return backgroundStep;
+    }
+    
+    public void setBackgroundStep(double backgroundStep){
+        this.backgroundStep = backgroundStep;
+    }
+    
     public double getStep() {
         return step;
     }

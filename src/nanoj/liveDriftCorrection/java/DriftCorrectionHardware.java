@@ -254,13 +254,15 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
         };
         double[] output = new double[]{0,0};
         calibration.transform(original,0,output,0,1);
-        return new Point2D.Double(output[0], output[1]);
+        //return new Point2D.Double(output[0], output[1]);
+        return new Point2D.Double(output[0], 0);
     }
 
     public double convertPixelsToMicrons(double value) throws NullPointerException{
         if (calibration == null)
             throw new NullPointerException(CALIBRATION_NOT_SET);
         return value*calibration.getScaleX();
+        //return value*calibration.getShearX(); // temp hack 190416 kw
     }
 
     public void run() {

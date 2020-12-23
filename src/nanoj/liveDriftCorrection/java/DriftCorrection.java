@@ -71,7 +71,7 @@ public class DriftCorrection extends Observable implements Runnable {
                         // Take picture at current position, filter, clip and add to image stack
                         refStack.addSlice(MIDDLE, snapAndProcess());
                         
-                        if (correctionMode == Z || correctionMode == XYZ) {
+                        //if (correctionMode == Z || correctionMode == XYZ) {
                         // Move one stepSize above focus, snap and add to image stack
                         hardwareManager.moveFocusStageInSteps(1);
                         refStack.addSlice(TOP, snapAndProcess(), 0);
@@ -82,7 +82,7 @@ public class DriftCorrection extends Observable implements Runnable {
 
                         // Move back to original position
                         hardwareManager.moveFocusStageInSteps(1);
-                        }
+                        //}
                         
                         driftData.setReferenceStack(refStack);
                         
@@ -100,7 +100,7 @@ public class DriftCorrection extends Observable implements Runnable {
                         FloatProcessor refCCmidMid = refMidMid.getProcessor(2).convertToFloatProcessor();
                     
                         // overriding this alpha for now, just using user input value.
-                        //alpha = (2*refCCmidMid.getMax() - refCCtopMiddle.getMax() - refCCbottomMiddle.getMax()) / (2*hardwareManager.getStepSize()); // eq 6 in McGorty et al. 2013
+                        alpha = (2*refCCmidMid.getMax() - refCCtopMiddle.getMax() - refCCbottomMiddle.getMax()) / (2*hardwareManager.getStepSize()); // eq 6 in McGorty et al. 2013
                         xi_0 = (refCCtopMiddle.getMax() - refCCbottomMiddle.getMax()) / refCCmidMid.getMax();
                     }
 
@@ -195,6 +195,7 @@ public class DriftCorrection extends Observable implements Runnable {
                         notifyObservers(OUT_OF_BOUNDS_ERROR);
                         driftData.setReferenceImage(null);
                         driftData.setReferenceStack(new ImageStack()); // 190401 kw
+                        driftData.clearResultMap(); // 190412 kw
                         break;
                     }
 
@@ -219,7 +220,10 @@ public class DriftCorrection extends Observable implements Runnable {
 
                     // Move XY stage
                     if (isRunning() && (correctionMode == XY || correctionMode == XYZ) ){
-                        hardwareManager.moveXYStage(xyDrift);
+                        Point2D.Double xyDriftCorr = new Point2D.Double(-x,-y);
+                        xyDriftCorr = hardwareManager.convertPixelsToMicrons(xyDriftCorr);
+                        
+                        hardwareManager.moveXYStage(xyDriftCorr);
                     }
 
                     // Add data
@@ -233,6 +237,7 @@ public class DriftCorrection extends Observable implements Runnable {
                     if (!isRunning()) {
                         driftData.setReferenceImage(null);
                         driftData.setReferenceStack(new ImageStack()); // 190401 kw
+                        driftData.clearResultMap(); // 190412 kw
                     }
                     if ((System.currentTimeMillis()-startRun) < sleep && (System.currentTimeMillis()-startRun) > 0)
                         java.lang.Thread.sleep(sleep - (System.currentTimeMillis()-startRun));
