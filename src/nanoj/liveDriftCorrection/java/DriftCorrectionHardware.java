@@ -52,8 +52,8 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
     public static final String NEW_STREAM_IMAGE = "New Stream Image";
 
     // Error messages
-    public static final String X_STAGE_NOT_SET = "Singe axis X stage device not set.";
-    public static final String Y_STAGE_NOT_SET = "Singe axis Y stage device not set.";
+    public static final String X_STAGE_NOT_SET = "Single axis X stage device not set.";
+    public static final String Y_STAGE_NOT_SET = "Single axis Y stage device not set.";
     public static final String XY_STAGE_NOT_SET = "XY stage device not set.";
     public static final String Z_STAGE_NOT_SET = "Z axis (Focus) stage device not set.";
     public static final String CAMERA_NOT_SET = "Camera device not set.";

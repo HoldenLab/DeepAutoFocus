@@ -5,7 +5,7 @@ import mmcorej.CMMCore;
 import org.micromanager.Studio;
 import org.micromanager.internal.MMStudio;
 import org.scijava.plugin.SciJavaPlugin;
-//import org.micromanager.api.MMPlugin;
+//import org.micromanager.api.MMPlugin; api removed in MM 2.0 (kw 201223)
 //import org.micromanager.api.ScriptInterface;
 
 @org.scijava.plugin.Plugin(type = org.micromanager.MenuPlugin.class)
