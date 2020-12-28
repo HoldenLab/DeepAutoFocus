@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.prefs.Preferences;
+import java.text.DecimalFormat;
 
 public class DriftCorrectionGUI{
 
@@ -73,14 +74,15 @@ public class DriftCorrectionGUI{
     // Preference defaults
     private static final String BACK_STEP_SIZE_DEFAULT = "50"; // microns 201223 kw
     private static final String CAL_STEP_SIZE_DEFAULT = "1"; // microns 201223 kw
-    private static final String EXPOSURE_TIME_DEFAULT = "33"; // milliseconds
+    private static final String EXPOSURE_TIME_DEFAULT = "500"; // milliseconds
     private static final String ROI_SIZE_DEFAULT = "512";
     private static final String EDGE_CLIP_DEFAULT = "30";
     private static final String STEP_SIZE_DEFAULT = "150"; // nanometers
     private static final String ALPHA_DEFAULT = "10"; // 190404 kw
-    private static final String PERIOD_DEFAULT = "0.5"; // seconds
+    private static final String PERIOD_DEFAULT = "500"; // milliseconds
     private static final String BOUNDS_DEFAULT = "3"; // microns
     private static final double CAL_DEFAULT = -1;
+    DecimalFormat df = new DecimalFormat("#.###");
 
     // Labels
     private static final String SNAP_IMAGE_LABEL = "Snap";
@@ -96,13 +98,13 @@ public class DriftCorrectionGUI{
     private static final String GET_BG_LABEL = "Get background reference image.";
     private static final String CLEAR_BG_LABEL = "Clear background reference.";
     private static final String CALIBRATE_LABEL = "Calibrate pixel size";
-    private static final String EXPOSURE_TIME_LABEL = "Exposure time for each frame in milliSec.";
+    private static final String EXPOSURE_TIME_LABEL = "Exposure time for each frame (ms)";
     private static final String ROI_BOX_LABEL = "Maximum ROI to analyse";
-    private static final String EDGE_CLIP_LABEL = "How many pixels to trim from the edges";
+    private static final String EDGE_CLIP_LABEL = "Pixels to trim from the edges";
     private static final String STEP_SIZE_LABEL = "Step size (nm) for Z correction";
     private static final String ALPHA_LABEL = "Alpha (scale for corrections)"; //190404 kw
-    private static final String PERIOD_LABEL = "Time between corrections in seconds";
-    private static final String BOUNDS_LABEL = "Maximum translation (microns)";
+    private static final String PERIOD_LABEL = "Time between corrections (ms)";
+    private static final String BOUNDS_LABEL = "Maximum translation (um)";
     private static final String SEPARATE_STAGES_LABEL = "Separate XY stage devices?";
     private static final String SAVE_DIALOG_TITLE = "File name and location (date and time added automatically)";
     private static final String CAMERA_LIST_LABEL = "Camera";
@@ -113,6 +115,7 @@ public class DriftCorrectionGUI{
     private static final String BACK_STEP_SIZE_LABEL = "Background subtraction step size (um)"; // 201223 kw
     private static final String CAL_STEP_SIZE_LABEL = "Calibration step size (um)"; // 201223 kw
     private static final String SCALING = "Scale: ";
+    private static final String SCALE_UNITS = " um/pixel";
     private static final String ANGLE = "Angle: ";
     private static final String FLIP = "Flip X: ";
     private static final String [] correctionModesLabels = new String[]{
@@ -154,11 +157,14 @@ public class DriftCorrectionGUI{
     private DriftCorrectionHardware hardwareManager = new DriftCorrectionHardware(getConfig());
     private DriftCorrectionData driftData = new DriftCorrectionData();
     private DriftCorrectionProcess processor = new DriftCorrectionProcess(driftData);
-    private DriftCorrectionCalibration calibrator = new DriftCorrectionCalibration(hardwareManager, processor);
+    private DriftCorrectionCalibration calibrator = new DriftCorrectionCalibration(hardwareManager, processor, driftData, driftCorrection);
     private StartButtonListener startButtonListener = new StartButtonListener();
     private SeparateXYStagesListener separateXYStagesListener = new SeparateXYStagesListener();
     private HardwareSettingsListener hardwareSettingsListener = new HardwareSettingsListener();
     private ConfigurationListener configurationListener = new ConfigurationListener();
+    
+    // Textbox listeners. 201228 kw
+    private ExposureTimeListener exposureTimeListener = new ExposureTimeListener();
 
     private ArrayList<DeviceList> devices = new ArrayList<DeviceList>();
 
@@ -183,12 +189,12 @@ public class DriftCorrectionGUI{
     private JButton unloadConfigurationButton = new DButton(UNLOAD_LABEL, configurationListener);
     private JTextField backgroundStepSizeBox = new DTextField(BACK_STEP_SIZE, BACK_STEP_SIZE_DEFAULT);
     private JTextField calibrationStepSizeBox = new DTextField(CAL_STEP_SIZE, CAL_STEP_SIZE_DEFAULT);
-    private JLabel calibrationScalingLabel = new DLabel(SCALING + preferences.getDouble(CAL_SCALING, CAL_DEFAULT));
-    private JLabel calibrationAngleLabel = new DLabel(ANGLE + preferences.getDouble(CAL_ANGLE, CAL_DEFAULT));
+    private JLabel calibrationScalingLabel = new DLabel(SCALING + df.format(1/preferences.getDouble(CAL_SCALING, CAL_DEFAULT)) + SCALE_UNITS);
+    private JLabel calibrationAngleLabel = new DLabel(ANGLE + df.format(preferences.getDouble(CAL_ANGLE, CAL_DEFAULT)));
     private JLabel calibrationFlipLabel = new DLabel(FLIP + preferences.getBoolean(CAL_FLIPPING, false));
     private DeviceList cameraList = new DeviceList(DeviceType.CameraDevice, CAMERA);
     private JCheckBox separateXYStages = new DCheckBox(SEPARATE_STAGES_LABEL, separateXYStagesListener, SEPARATE);
-    private JTextField exposureTimeBox = new DTextField(EXPOSURE_TIME, EXPOSURE_TIME_DEFAULT);
+    private JTextField exposureTimeBox = new DTextField(EXPOSURE_TIME, EXPOSURE_TIME_DEFAULT, exposureTimeListener);
     private JTextField roiBox = new DTextField(ROI_SIZE, ROI_SIZE_DEFAULT);
     private JTextField edgeClipBox = new DTextField(EDGE_CLIP, EDGE_CLIP_DEFAULT);
     private JTextField stepSizeBox = new DTextField(STEP_SIZE, STEP_SIZE_DEFAULT);
@@ -373,7 +379,7 @@ public class DriftCorrectionGUI{
         calibrator.setStep(Double.parseDouble(calibrationStepSizeBox.getText()));
         
         driftCorrection.setAlpha((double) (Double.parseDouble(alphaBox.getText()))); //190404 kw
-        driftCorrection.setSleep((long) (Double.parseDouble(periodBox.getText())*1000));
+        driftCorrection.setSleep((long) (Double.parseDouble(periodBox.getText())));
         driftCorrection.setThreshold(Double.parseDouble(boundsLimitBox.getText()));
 
         hardwareManager.setCamera(cameraList.getSelectedItem().toString());
@@ -536,6 +542,17 @@ public class DriftCorrectionGUI{
             key = preferenceKey;
             setText(preferences.get(key, def));
             hardwareSettingsListener.addObserver(this);
+            addActionListener(hardwareSettingsListener);
+        }
+        
+        DTextField(String preferenceKey, String def, ActionListener listener){ // 201228 kw
+            super();
+            setAlignmentX(Component.LEFT_ALIGNMENT);
+            setMaximumSize(dimension);
+            key = preferenceKey;
+            setText(preferences.get(key, def));
+            hardwareSettingsListener.addObserver(this);
+            addActionListener(listener);
             addActionListener(hardwareSettingsListener);
         }
 
@@ -793,6 +810,9 @@ public class DriftCorrectionGUI{
 
         @Override
         public void actionPerformed(ActionEvent e) {
+            
+            calibrator.setBackgroundStep(Double.parseDouble(backgroundStepSizeBox.getText()));
+            
             ReportingUtils.showMessage(procedure_will_move_stage);
             try {
                 driftData.setBackgroundImage(
@@ -818,6 +838,9 @@ public class DriftCorrectionGUI{
 
         @Override
         public void actionPerformed(ActionEvent e) {
+            
+            calibrator.setStep(Double.parseDouble(calibrationStepSizeBox.getText()));
+            
             ReportingUtils.showMessage(procedure_will_move_stage);
             try {
                 if (calibrator.calibrate()) {
@@ -829,14 +852,14 @@ public class DriftCorrectionGUI{
                     preferences.putDouble(CAL_SCALING, scale);
                     preferences.putDouble(CAL_ANGLE, angle);
                     preferences.putBoolean(CAL_FLIPPING, flip);
-                    String scaling = SCALING + scale;
-                    String angling = ANGLE + angle;
+                    String scaling = SCALING + df.format(1/scale);
+                    String angling = ANGLE + df.format(angle);
                     String flipping = FLIP + flip;
                     calibrationScalingLabel.setText(scaling);
                     calibrationAngleLabel.setText(angling);
                     calibrationFlipLabel.setText(flipping);
                     ReportingUtils.showMessage( procedure_succeeded
-                            + "\n" + scaling + "\n" + angling + "\n" + flipping);
+                            + "\n" + scaling + " um/pixel\n" + angling + "\n" + flipping);
                 }
             } catch (Exception e1) {
                 ReportingUtils.showError(e1, CALIBRATION_ERROR);
@@ -895,6 +918,14 @@ public class DriftCorrectionGUI{
                 if (list.getItemCount() > 1)
                     preferences.putInt(list.name, list.getSelectedIndex());
             }
+        }
+    }
+    
+    class ExposureTimeListener implements ActionListener {
+            
+        @Override
+        public void actionPerformed(ActionEvent e){
+            hardwareManager.setExposureTime(Double.parseDouble(exposureTimeBox.getText()));
         }
     }
 
