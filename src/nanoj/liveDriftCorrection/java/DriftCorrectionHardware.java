@@ -254,8 +254,8 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
         };
         double[] output = new double[]{0,0};
         calibration.transform(original,0,output,0,1);
-        //return new Point2D.Double(output[0], output[1]);
-        return new Point2D.Double(output[0], 0);
+        return new Point2D.Double(output[0], output[1]);
+        //return new Point2D.Double(output[0], 0); // why 0? 201228 kw
     }
 
     public double convertPixelsToMicrons(double value) throws NullPointerException{
