@@ -100,7 +100,7 @@ public class DriftCorrection extends Observable implements Runnable {
                         FloatProcessor refCCmidMid = refMidMid.getProcessor(2).convertToFloatProcessor();
                     
                         // overriding this alpha for now, just using user input value.
-                        alpha = (2*refCCmidMid.getMax() - refCCtopMiddle.getMax() - refCCbottomMiddle.getMax()) / (2*hardwareManager.getStepSize()); // eq 6 in McGorty et al. 2013
+                        //alpha = (2*refCCmidMid.getMax() - refCCtopMiddle.getMax() - refCCbottomMiddle.getMax()) / (2*hardwareManager.getStepSize()); // eq 6 in McGorty et al. 2013
                         xi_0 = (refCCtopMiddle.getMax() - refCCbottomMiddle.getMax()) / refCCmidMid.getMax();
                     }
 
@@ -220,7 +220,7 @@ public class DriftCorrection extends Observable implements Runnable {
 
                     // Move XY stage
                     if (isRunning() && (correctionMode == XY || correctionMode == XYZ) ){
-                        Point2D.Double xyDriftCorr = new Point2D.Double(-x,-y);
+                        Point2D.Double xyDriftCorr = new Point2D.Double(x,-y);
                         xyDriftCorr = hardwareManager.convertPixelsToMicrons(xyDriftCorr);
                         
                         hardwareManager.moveXYStage(xyDriftCorr);
