@@ -34,7 +34,7 @@ public class DriftCorrectionGUI{
 
     // Flags and names
     private static final String FRAME_NAME = "NanoJ Live Drift Correction";
-    private static final String START = "Start!";
+    private static final String START = "3. Start!";
     private static final String STOP = "STOP!";
     private static final String CONTROL = "Control";
     private static final String CONFIGURATION = "Configuration";
@@ -45,6 +45,7 @@ public class DriftCorrectionGUI{
     // Preference keys
     private static final String X_POSITION = "xPos";
     private static final String Y_POSITION = "yPos";
+    private static final String FLIP_Y = "flipY";
     private static final String SHOW_LATEST = "showLive";
     private static final String SHOW_MAP = "showMap";
     private static final String SHOW_PLOT = "showPlot";
@@ -82,11 +83,12 @@ public class DriftCorrectionGUI{
     private static final String PERIOD_DEFAULT = "500"; // milliseconds
     private static final String BOUNDS_DEFAULT = "3"; // microns
     private static final double CAL_DEFAULT = -1;
-    DecimalFormat df = new DecimalFormat("#.###");
+    DecimalFormat df = new DecimalFormat("#.##");
 
     // Labels
     private static final String SNAP_IMAGE_LABEL = "Snap";
     private static final String STREAM_IMAGES_BUTTON_LABEL = "Live";
+    private static final String FLIP_Y_LABEL = "Flip Y axis";
     private static final String SHOW_LATEST_BUTTON_LABEL = "Show latest image";
     private static final String SHOW_MAP_BUTTON_LABEL = "Show cross correlation map";
     private static final String SHOW_DRIFT_PLOT_LABEL = "Show drift plots";
@@ -95,9 +97,9 @@ public class DriftCorrectionGUI{
     private static final String CONFIGURE_LABEL = "Select configuration file";
     private static final String LOAD_LABEL = "Load Hardware";
     private static final String UNLOAD_LABEL = "Unload Hardware";
-    private static final String GET_BG_LABEL = "Get background reference image.";
-    private static final String CLEAR_BG_LABEL = "Clear background reference.";
-    private static final String CALIBRATE_LABEL = "Calibrate pixel size";
+    private static final String GET_BG_LABEL = "1. Get background image";
+    private static final String CLEAR_BG_LABEL = "Clear background reference";
+    private static final String CALIBRATE_LABEL = "2. Calibrate pixel size";
     private static final String EXPOSURE_TIME_LABEL = "Exposure time for each frame (ms)";
     private static final String ROI_BOX_LABEL = "Maximum ROI to analyse";
     private static final String EDGE_CLIP_LABEL = "Pixels to trim from the edges";
@@ -115,7 +117,7 @@ public class DriftCorrectionGUI{
     private static final String BACK_STEP_SIZE_LABEL = "Background subtraction step size (um)"; // 201223 kw
     private static final String CAL_STEP_SIZE_LABEL = "Calibration step size (um)"; // 201223 kw
     private static final String SCALING = "Scale: ";
-    private static final String SCALE_UNITS = " um/pixel";
+    private static final String SCALE_UNITS = " nm/pixel";
     private static final String ANGLE = "Angle: ";
     private static final String FLIP = "Flip X: ";
     private static final String [] correctionModesLabels = new String[]{
@@ -171,13 +173,18 @@ public class DriftCorrectionGUI{
     //////////////////////// GUI objects
     private JFrame guiFrame = new JFrame(FRAME_NAME);
     private JTabbedPane guiPanel = new JTabbedPane();
-    private Dimension controlDimensions = new Dimension(300, 400);
-    private Dimension configurationDimensions = new Dimension(300, 850);
+    private Dimension controlDimensions = new Dimension(600, 600);
+    private Dimension configurationDimensions = new Dimension(300, 900);
 
     // Control Panel objects
     private JToggleButton startButton = new DToggleButton(START, startButtonListener);
+    private JToggleButton snapImageButton = new DToggleButton(SNAP_IMAGE_LABEL, new SnapImageListener());
     private JToggleButton streamImagesButton = new DToggleButton(STREAM_IMAGES_BUTTON_LABEL, new StreamImagesListener());
+    private JToggleButton bgImageButton = new DToggleButton(GET_BG_LABEL, new GetBackgroundListener());
+    private JToggleButton calButton = new DToggleButton(CALIBRATE_LABEL, new CalibrationButtonListener());
+    private JToggleButton saveLocationButton = new DToggleButton(SAVE_DRIFT_LOCATION_LABEL, new SaveLocationListener());
     private JComboBox correctionModes = new DComboBox(new CorrectionModeListener(), CORRECTION_MODE);
+    private JCheckBox flipYButton = new DCheckBox(FLIP_Y_LABEL, new FlipYListener(), FLIP_Y);
     private JCheckBox showLatestButton = new DCheckBox(SHOW_LATEST_BUTTON_LABEL, new ShowLatestListener(), SHOW_LATEST);
     private JCheckBox showMapButton = new DCheckBox(SHOW_MAP_BUTTON_LABEL, new ShowMapButtonListener(), SHOW_MAP);
     private JCheckBox showDriftPlotButton = new DCheckBox(SHOW_DRIFT_PLOT_LABEL, new ShowDriftPlotListener(), SHOW_PLOT);
@@ -189,7 +196,7 @@ public class DriftCorrectionGUI{
     private JButton unloadConfigurationButton = new DButton(UNLOAD_LABEL, configurationListener);
     private JTextField backgroundStepSizeBox = new DTextField(BACK_STEP_SIZE, BACK_STEP_SIZE_DEFAULT);
     private JTextField calibrationStepSizeBox = new DTextField(CAL_STEP_SIZE, CAL_STEP_SIZE_DEFAULT);
-    private JLabel calibrationScalingLabel = new DLabel(SCALING + df.format(1/preferences.getDouble(CAL_SCALING, CAL_DEFAULT)) + SCALE_UNITS);
+    private JLabel calibrationScalingLabel = new DLabel(SCALING + df.format(preferences.getDouble(CAL_SCALING, CAL_DEFAULT)*1000) + SCALE_UNITS);
     private JLabel calibrationAngleLabel = new DLabel(ANGLE + df.format(preferences.getDouble(CAL_ANGLE, CAL_DEFAULT)));
     private JLabel calibrationFlipLabel = new DLabel(FLIP + preferences.getBoolean(CAL_FLIPPING, false));
     private DeviceList cameraList = new DeviceList(DeviceType.CameraDevice, CAMERA);
@@ -239,9 +246,21 @@ public class DriftCorrectionGUI{
             preferences.getInt(Y_POSITION, defaultYPosition)
         );
 
-        // Make Start Button HUGE
-        startButton.setPreferredSize(new Dimension(300,150));
-        startButton.setMaximumSize(new Dimension(300,150));
+        // Make large buttons
+        streamImagesButton.setPreferredSize(new Dimension(300,100));
+        streamImagesButton.setMaximumSize(new Dimension(300,100));
+        streamImagesButton.setFont(new Font("Arial", Font.PLAIN, 30));
+        
+        bgImageButton.setPreferredSize(new Dimension(300, 100));
+        bgImageButton.setMaximumSize(new Dimension(300, 100));
+        bgImageButton.setFont(new Font("Arial", Font.PLAIN, 20));
+        
+        calButton.setPreferredSize(new Dimension(300, 100));
+        calButton.setMaximumSize(new Dimension(300, 100));
+        calButton.setFont(new Font("Arial", Font.PLAIN, 20));
+
+        startButton.setPreferredSize(new Dimension(300,100));
+        startButton.setMaximumSize(new Dimension(300,100));
         startButton.setFont(new Font("Arial", Font.PLAIN, 30));
 
         // Trigger the separate stages listener to display the GUI accordingly
@@ -253,38 +272,76 @@ public class DriftCorrectionGUI{
 
         // Create panels
         JPanel controlPanel = new JPanel();
-        controlPanel.setLayout(new BoxLayout(controlPanel,BoxLayout.Y_AXIS));
+        GroupLayout controlPanelLayout = new GroupLayout(controlPanel); // now using GroupLayout 201229 kw
+        controlPanel.setLayout(controlPanelLayout);
+        controlPanelLayout.setAutoCreateGaps(true);
+        controlPanelLayout.setAutoCreateContainerGaps(true);
 
         JPanel configurationPanel = new JPanel();
         configurationPanel.setLayout(new BoxLayout(configurationPanel,BoxLayout.PAGE_AXIS));
 
         // Add GUI elements to CONTROL panel
-        controlPanel.add(startButton);
-        controlPanel.add(new DButton(SNAP_IMAGE_LABEL, new SnapImageListener()));
-        controlPanel.add(streamImagesButton);
-        controlPanel.add(correctionModes);
-        controlPanel.add(showLatestButton);
-        controlPanel.add(showMapButton);
-        controlPanel.add(showDriftPlotButton);
-        controlPanel.add(saveDriftPlotButton);
-        controlPanel.add(new DButton(SAVE_DRIFT_LOCATION_LABEL, new SaveLocationListener()));
+        controlPanelLayout.setHorizontalGroup(
+            controlPanelLayout.createSequentialGroup()
+                .addGroup(controlPanelLayout.createParallelGroup()
+                    .addComponent(snapImageButton)
+                    .addComponent(streamImagesButton)
+                    .addComponent(correctionModes)
+                    .addComponent(showLatestButton)
+                    .addComponent(showMapButton)
+                    .addComponent(showDriftPlotButton)
+                    .addComponent(saveDriftPlotButton)
+                    .addComponent(saveLocationButton))
+                .addGroup(controlPanelLayout.createParallelGroup()
+                    .addComponent(bgImageButton)
+                    .addComponent(calButton)
+                    .addComponent(startButton))
+        );
+        controlPanelLayout.setVerticalGroup(
+            controlPanelLayout.createSequentialGroup()
+                .addGroup(controlPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addComponent(snapImageButton)
+                        .addComponent(bgImageButton))
+                .addComponent(streamImagesButton)
+                .addGroup(controlPanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                    .addComponent(correctionModes)
+                    .addComponent(calButton))
+                .addComponent(showLatestButton) 
+                .addComponent(showMapButton)
+                .addComponent(showDriftPlotButton)
+                .addComponent(saveDriftPlotButton)
+                .addGroup(controlPanelLayout.createParallelGroup(GroupLayout.Alignment.TRAILING)
+                        .addComponent(saveLocationButton)
+                        .addComponent(startButton))
+        );
 
         // Add GUI elements to CONFIGURATION panel
         configurationPanel.add(selectConfigurationFileButton);
         configurationPanel.add(loadConfigurationButton);
         configurationPanel.add(unloadConfigurationButton);
+        configurationPanel.add(new DLabel(CAMERA_LIST_LABEL));
+        configurationPanel.add(cameraList);
+        configurationPanel.add(Box.createRigidArea(new Dimension(1,10)));
+        configurationPanel.add(new DLabel(FOCUS_STAGE_LIST_LABEL));
+        configurationPanel.add(focusDeviceList);
+        configurationPanel.add(Box.createRigidArea(new Dimension(1,10)));
+        configurationPanel.add(separateXYStages);
+        configurationPanel.add(flipYButton);
+        configurationPanel.add(Box.createRigidArea(new Dimension(1,5)));
+        configurationPanel.add(xyStageListLabel);
+        configurationPanel.add(xyStageList);
+        configurationPanel.add(xStageListLabel);
+        configurationPanel.add(xStageList);
+        configurationPanel.add(yStageListLabel);
+        configurationPanel.add(yStageList);
+        configurationPanel.add(new DButton(CLEAR_BG_LABEL, new ClearBackgroundListener()));
         configurationPanel.add(new DLabel(BACK_STEP_SIZE_LABEL)); // 201223 kw
         configurationPanel.add(backgroundStepSizeBox);
-        configurationPanel.add(new DButton(GET_BG_LABEL, new GetBackgroundListener()));
-        configurationPanel.add(new DButton(CLEAR_BG_LABEL, new ClearBackgroundListener()));
         configurationPanel.add(new DLabel(CAL_STEP_SIZE_LABEL)); // 201223 kw
         configurationPanel.add(calibrationStepSizeBox);
         configurationPanel.add(calibrationScalingLabel);
         configurationPanel.add(calibrationAngleLabel);
         configurationPanel.add(calibrationFlipLabel);
-        configurationPanel.add(new DButton(CALIBRATE_LABEL, new CalibrationButtonListener()));
-        configurationPanel.add(new DLabel(CAMERA_LIST_LABEL));
-        configurationPanel.add(cameraList);
         configurationPanel.add(new DLabel(EXPOSURE_TIME_LABEL));
         configurationPanel.add(exposureTimeBox);
         configurationPanel.add(new DLabel(ROI_BOX_LABEL));
@@ -299,18 +356,7 @@ public class DriftCorrectionGUI{
         configurationPanel.add(periodBox);
         configurationPanel.add(new DLabel(BOUNDS_LABEL));
         configurationPanel.add(boundsLimitBox);
-        configurationPanel.add(Box.createRigidArea(new Dimension(1,10)));
-        configurationPanel.add(new DLabel(FOCUS_STAGE_LIST_LABEL));
-        configurationPanel.add(focusDeviceList);
-        configurationPanel.add(Box.createRigidArea(new Dimension(1,10)));
-        configurationPanel.add(separateXYStages);
-        configurationPanel.add(Box.createRigidArea(new Dimension(1,5)));
-        configurationPanel.add(xyStageListLabel);
-        configurationPanel.add(xyStageList);
-        configurationPanel.add(xStageListLabel);
-        configurationPanel.add(xStageList);
-        configurationPanel.add(yStageListLabel);
-        configurationPanel.add(yStageList);
+        
 
         // Build GUI frame with the panels
         guiPanel.addTab(CONTROL, controlPanel);
@@ -706,6 +752,14 @@ public class DriftCorrectionGUI{
             hardwareManager.setStreamImages(streamImagesButton.isSelected());
         }
     }
+    
+    class FlipYListener implements ActionListener {
+        
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            driftData.setflipY(flipYButton.isSelected());
+        }
+    }
 
     class ShowLatestListener implements ActionListener {
 
@@ -852,14 +906,14 @@ public class DriftCorrectionGUI{
                     preferences.putDouble(CAL_SCALING, scale);
                     preferences.putDouble(CAL_ANGLE, angle);
                     preferences.putBoolean(CAL_FLIPPING, flip);
-                    String scaling = SCALING + df.format(1/scale);
+                    String scaling = SCALING + df.format(scale*1000);
                     String angling = ANGLE + df.format(angle);
                     String flipping = FLIP + flip;
-                    calibrationScalingLabel.setText(scaling);
+                    calibrationScalingLabel.setText(scaling + " nm/pixel");
                     calibrationAngleLabel.setText(angling);
                     calibrationFlipLabel.setText(flipping);
                     ReportingUtils.showMessage( procedure_succeeded
-                            + "\n" + scaling + " um/pixel\n" + angling + "\n" + flipping);
+                            + "\n" + scaling + " nm/pixel\n" + angling + "\n" + flipping);
                 }
             } catch (Exception e1) {
                 ReportingUtils.showError(e1, CALIBRATION_ERROR);
