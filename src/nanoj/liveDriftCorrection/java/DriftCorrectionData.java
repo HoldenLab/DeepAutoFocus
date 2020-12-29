@@ -25,6 +25,7 @@ public class DriftCorrectionData {
     private boolean showPlot = false;
     private boolean savePlots = false;
     private boolean showLatest = false;
+    private boolean flipY = false;
     private File dataFile;
     private ImagePlus resultMap = new ImagePlus();
     private ImagePlus plotsImage = new ImagePlus();
@@ -49,7 +50,7 @@ public class DriftCorrectionData {
     // Labels
     private static final String MAP_NAME = "Drift Correction Correlation Map";
     private static final String PLOTS_NAME = "Plot of the measured drift over time";
-    private static final String LIVE_WINDOW_NAME = "Latest image from Drift Correction Camera";
+    private static final String LIVE_WINDOW_NAME = "Drift Correction Camera";
 
     // Errors
     public static final String DATA_FILE_NOT_SET_ERROR = "Data file has not been created yet.";
@@ -218,6 +219,14 @@ public class DriftCorrectionData {
     private synchronized boolean isShowLatestTrue() {
         return showLatest;
     }
+    
+    synchronized void setflipY(boolean flipY) { // 201229 kw
+        this.flipY = flipY;
+    }
+    
+    synchronized boolean getflipY() { // 201229 kw
+        return flipY;
+    }
 
     synchronized void setShowLatest(boolean showLatest) {
         this.showLatest = showLatest;
@@ -258,7 +267,11 @@ public class DriftCorrectionData {
     }
 
     synchronized void setLatestImage(FloatProcessor image) {
+        
+        if (flipY) image.flipVertical(); // 201229 kw
+        
         latestImage.setProcessor(image);
+        
         if (isShowLatestTrue())
             latestImage.show();
     }
