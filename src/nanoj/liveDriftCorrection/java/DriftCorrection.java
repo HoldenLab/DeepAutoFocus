@@ -182,6 +182,9 @@ public class DriftCorrection extends Observable implements Runnable {
                     // We subtract the rawCenter from the image center to obtain the drift
                     double x  = (double) rawCenter[0]  - (resultStack.getWidth()/2);
                     double y  = (double) rawCenter[1]  - (resultStack.getHeight()/2);
+                    
+                    if (driftData.getflipY()) y = -y; // 201229 kw
+                    
                     Point2D.Double xyDrift = new Point2D.Double(x,y);
 
                     // Convert from pixel units to microns
