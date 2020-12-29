@@ -262,7 +262,6 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
         if (calibration == null)
             throw new NullPointerException(CALIBRATION_NOT_SET);
         return value*calibration.getScaleX();
-        //return value*calibration.getShearX(); // temp hack 190416 kw
     }
 
     public void run() {

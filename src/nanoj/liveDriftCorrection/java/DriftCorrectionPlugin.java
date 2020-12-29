@@ -7,10 +7,7 @@ import org.micromanager.internal.MMStudio;
 import org.micromanager.MenuPlugin;
 import org.scijava.plugin.SciJavaPlugin;
 import org.scijava.plugin.Plugin;
-//import org.micromanager.api.MMPlugin; api removed in MM 2.0 (kw 201223)
-//import org.micromanager.api.ScriptInterface;
 
-//@org.scijava.plugin.Plugin(type = org.micromanager.MenuPlugin.class)
 @Plugin(type = MenuPlugin.class)
 public class DriftCorrectionPlugin implements MenuPlugin, SciJavaPlugin {
     static DriftCorrectionGUI driftGui = DriftCorrectionGUI.INSTANCE;
