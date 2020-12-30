@@ -1,7 +1,5 @@
 package nanoj.liveDriftCorrection.java;
 
-import java.awt.event.WindowEvent;
-import mmcorej.CMMCore;
 import org.micromanager.Studio;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.MenuPlugin;
@@ -19,11 +17,6 @@ public class DriftCorrectionPlugin implements MenuPlugin, SciJavaPlugin {
     private MMStudio app_;
 
     public void dispose() {}
-
-    /* commented out because ScriptInterface is deprecated in 2.0 -kw 190226
-    public void setApp(ScriptInterface app) {
-        driftGui.setApp((MMStudio) app);
-    }*/
 
     public void show() {
         driftGui.initiateThreads();
