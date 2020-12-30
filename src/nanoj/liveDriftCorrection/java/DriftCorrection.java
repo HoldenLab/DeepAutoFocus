@@ -4,6 +4,7 @@ import ij.ImageStack;
 import ij.measure.Calibration;
 import ij.measure.Measurements;
 import ij.process.FloatProcessor;
+import ij.process.ImageProcessor;
 import ij.process.FloatStatistics;
 import nanoj.core.java.image.drift.EstimateShiftAndTilt;
 import nanoj.core.java.image.transform.CrossCorrelationMap;
@@ -20,10 +21,18 @@ public class DriftCorrection extends Observable implements Runnable {
     private DriftCorrectionProcess processor;
 
     private int correctionMode = 0;
+    
+    // added 201230 kw
+    private ImageStack resultStack = null;
+    private ImageProcessor resultImage = null;
+    private FloatProcessor ccSliceMiddle = null;
 
     private static final int XYZ = 0;
     private static final int Z = 1;
     private static final int XY = 2;
+    
+    private double imCentx = 0;
+    private double imCenty = 0;
 
     // Settings
     private long sleep = 200; // time in between loops in milliseconds
@@ -63,93 +72,84 @@ public class DriftCorrection extends Observable implements Runnable {
                     if (driftData.getReferenceImage() == null) driftData.setReferenceImage(snapAndProcess());
                     
                     // If we've just started, get the reference stack (190401 kw)
-                    if (driftData.getReferenceStack().size() == 0){
-                        ImageStack refStack = new ImageStack(
+                    if (correctionMode == Z || correctionMode == XYZ) {
+                        if (driftData.getReferenceStack().size() == 0){
+                            ImageStack refStack = new ImageStack(
                                 driftData.getReferenceImage().getWidth(),
                                 driftData.getReferenceImage().getHeight()
-                        );
-                        // Take picture at current position, filter, clip and add to image stack
-                        refStack.addSlice(MIDDLE, snapAndProcess());
+                            );
+                            // Take picture at current position, filter, clip and add to image stack
+                            refStack.addSlice(MIDDLE, snapAndProcess());
                         
-                        //if (correctionMode == Z || correctionMode == XYZ) {
-                        // Move one stepSize above focus, snap and add to image stack
-                        hardwareManager.moveFocusStageInSteps(1);
-                        refStack.addSlice(TOP, snapAndProcess(), 0);
+                            // Move one stepSize above focus, snap and add to image stack
+                            hardwareManager.moveFocusStageInSteps(1);
+                            refStack.addSlice(TOP, snapAndProcess(), 0);
 
-                        // Move two stepSizes below the focus, snap and add to image stack
-                        hardwareManager.moveFocusStageInSteps(-2);
-                        refStack.addSlice(BOTTOM, snapAndProcess());
+                            // Move two stepSizes below the focus, snap and add to image stack
+                            hardwareManager.moveFocusStageInSteps(-2);
+                            refStack.addSlice(BOTTOM, snapAndProcess());
 
-                        // Move back to original position
-                        hardwareManager.moveFocusStageInSteps(1);
-                        //}
+                            // Move back to original position
+                            hardwareManager.moveFocusStageInSteps(1);
+
+                            // added 190401 kw
+                            FloatProcessor refSliceBottom = refStack.getProcessor(3).convertToFloatProcessor();
+                            FloatProcessor refSliceMiddle = refStack.getProcessor(2).convertToFloatProcessor();
+                            FloatProcessor refSliceTop = refStack.getProcessor(1).convertToFloatProcessor();
+
+                            ImageStack refBottomMiddle = CrossCorrelationMap.calculateCrossCorrelationMap(refSliceBottom, refStack, true);
+                            ImageStack refTopMiddle = CrossCorrelationMap.calculateCrossCorrelationMap(refSliceTop, refStack, true);
+                            ImageStack refMidMid = CrossCorrelationMap.calculateCrossCorrelationMap(refSliceMiddle, refStack, true);
+
+                            FloatProcessor refCCbottomMiddle = refBottomMiddle.getProcessor(2).convertToFloatProcessor();
+                            FloatProcessor refCCtopMiddle = refTopMiddle.getProcessor(2).convertToFloatProcessor();
+                            FloatProcessor refCCmidMid = refMidMid.getProcessor(2).convertToFloatProcessor();
                         
-                        driftData.setReferenceStack(refStack);
+                            // offset maxima because minima usually not at zero
+                            double refCCbottomMidMax = refCCbottomMiddle.getMax();
+                            double refCCtopMidMax = refCCtopMiddle.getMax();
+                            double refCCmidMidMax = refCCmidMid.getMax();
+                    
+                            // overriding this alpha for now, just using user input value.
+                            //alpha = (2*refCCmidMidMax - refCCtopMidMax - refCCbottomMidMax) * hardwareManager.getStepSize() / 2; // eq 6 in McGorty et al. 2013. corrected so that stepsize is in numerator!
+                            xi_0 = (refCCtopMidMax - refCCbottomMidMax) / refCCmidMidMax;
                         
-                        // added 190401 kw
-                        FloatProcessor refSliceBottom = driftData.getReferenceStack().getProcessor(3).convertToFloatProcessor();
-                        FloatProcessor refSliceMiddle = driftData.getReferenceStack().getProcessor(2).convertToFloatProcessor();
-                        FloatProcessor refSliceTop = driftData.getReferenceStack().getProcessor(1).convertToFloatProcessor();
-                    
-                        ImageStack refBottomMiddle = CrossCorrelationMap.calculateCrossCorrelationMap(refSliceBottom, driftData.getReferenceStack(), true);
-                        ImageStack refTopMiddle = CrossCorrelationMap.calculateCrossCorrelationMap(refSliceTop, driftData.getReferenceStack(), true);
-                        ImageStack refMidMid = CrossCorrelationMap.calculateCrossCorrelationMap(refSliceMiddle, driftData.getReferenceStack(), true);
+                            driftData.setReferenceStack(refStack);
+                        }           
 
-                        FloatProcessor refCCbottomMiddle = refBottomMiddle.getProcessor(2).convertToFloatProcessor();
-                        FloatProcessor refCCtopMiddle = refTopMiddle.getProcessor(2).convertToFloatProcessor();
-                        FloatProcessor refCCmidMid = refMidMid.getProcessor(2).convertToFloatProcessor();
-                    
-                        // overriding this alpha for now, just using user input value.
-                        //alpha = (2*refCCmidMid.getMax() - refCCtopMiddle.getMax() - refCCbottomMiddle.getMax()) / (2*hardwareManager.getStepSize()); // eq 6 in McGorty et al. 2013
-                        xi_0 = (refCCtopMiddle.getMax() - refCCbottomMiddle.getMax()) / refCCmidMid.getMax();
-                    }
-
-                    /* Deprecated 190404
-                    // This is the stack where all the images are placed. Images will be clipped
-                    // so we create the stack with the same dimensions as the reference image.
-                    ImageStack stack = new ImageStack(
-                            driftData.getReferenceImage().getWidth(),
-                            driftData.getReferenceImage().getHeight()
-                    );
-
-                    // First, take the three images to test the correlation against.
-                    // Each image should be processed to remove background.
-                    // We also clip the images as the edges in some cameras can include blooming.
-                    // (eg, Hamamatsu Flash4 cropped to 512*512)
-
-                    // Take picture at current position, filter, clip and add to image stack
-                    stack.addSlice(MIDDLE, snapAndProcess());
-
-                    if (correctionMode == Z || correctionMode == XYZ) {
-                        // Move one stepSize above focus, snap and add to image stack
-                        hardwareManager.moveFocusStageInSteps(1);
-                        stack.addSlice(TOP, snapAndProcess(), 0);
-
-                        // Move two stepSizes below the focus, snap and add to image stack
-                        hardwareManager.moveFocusStageInSteps(-2);
-                        stack.addSlice(BOTTOM, snapAndProcess());
-
-                        // Move back to original position
-                        hardwareManager.moveFocusStageInSteps(1);
-                    }
-                    
-                    // Calculate the Cross Correlation maps
-                    ImageStack resultStack =
-                            CrossCorrelationMap.calculateCrossCorrelationMap(
-                                    driftData.getReferenceImage(), stack, true);
-                    driftData.setResultMap(resultStack);
-                    */                    
-
-                    ImageStack resultStack =
+                        resultStack =
                             CrossCorrelationMap.calculateCrossCorrelationMap(
                                     snapAndProcess(), driftData.getReferenceStack(), true);
-                    driftData.setResultMap(resultStack);
+                        driftData.setResultMap(resultStack);
 
-                    // Measure XYZ drift
-                    FloatProcessor ccSliceBottom = resultStack.getProcessor(3).convertToFloatProcessor();
-                    FloatProcessor ccSliceMiddle = resultStack.getProcessor(2).convertToFloatProcessor();
-                    FloatProcessor ccSliceTop = resultStack.getProcessor(1).convertToFloatProcessor();
-                    xi_n = (ccSliceTop.getMax() - ccSliceBottom.getMax()) / ccSliceMiddle.getMax(); // eq 5 in McGorty et al. 2013
+                        // Measure XYZ drift
+                        FloatProcessor ccSliceBottom = resultStack.getProcessor(3).convertToFloatProcessor();
+                        ccSliceMiddle = resultStack.getProcessor(2).convertToFloatProcessor();
+                        FloatProcessor ccSliceTop = resultStack.getProcessor(1).convertToFloatProcessor();
+                        
+                        // offset maxima because minima not at zero
+                        double ccSliceBottomMax = ccSliceBottom.getMax();
+                        double ccSliceTopMax = ccSliceTop.getMax();
+                        double ccSliceMiddleMax = ccSliceMiddle.getMax();
+                        
+                        xi_n = (ccSliceTopMax - ccSliceBottomMax) / ccSliceMiddleMax; // eq 5 in McGorty et al. 2013
+                        
+                        imCentx = resultStack.getWidth()/2;
+                        imCenty = resultStack.getHeight()/2;
+                    }
+                    
+                    // XY drift correction ONLY 201230 kw
+                    else {
+                        resultImage =
+                            CrossCorrelationMap.calculateCrossCorrelationMap(
+                                    snapAndProcess(), driftData.getReferenceImage(), true);
+                        driftData.setResultMap(resultImage);
+
+                        ccSliceMiddle = resultImage.convertToFloatProcessor();
+                        
+                        imCentx = resultImage.getWidth()/2;
+                        imCenty = resultImage.getHeight()/2;
+                    }
                     
                     float[] rawCenter = new float[3];
                     float[] currentCenter = EstimateShiftAndTilt.getMaxFindByOptimization(ccSliceMiddle);
@@ -180,8 +180,8 @@ public class DriftCorrection extends Observable implements Runnable {
                     // A static image will have it's correlation map peak in the exact center of the image
                     // A moving image will have the peak shifted in relation to the center
                     // We subtract the rawCenter from the image center to obtain the drift
-                    double x  = (double) rawCenter[0]  - (resultStack.getWidth()/2);
-                    double y  = (double) rawCenter[1]  - (resultStack.getHeight()/2);
+                    double x  = (double) rawCenter[0]  - imCentx;
+                    double y  = (double) rawCenter[1]  - imCenty;
                     
                     if (driftData.getflipY()) y = -y; // 201229 kw
                     
