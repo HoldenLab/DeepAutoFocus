@@ -1,10 +1,8 @@
 package nanoj.liveDriftCorrection.java;
 
-import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.MainFrame;
-//import org.micromanager.internal.conf2.ConfiguratorDlg2;
 import org.micromanager.internal.utils.ReportingUtils;
 
 import javax.swing.*;
@@ -73,15 +71,15 @@ public class DriftCorrectionGUI{
     private static final String BACK_STEP_SIZE = "backStepSize"; // 201223 kw
 
     // Preference defaults
-    private static final String BACK_STEP_SIZE_DEFAULT = "50"; // microns 201223 kw
-    private static final String CAL_STEP_SIZE_DEFAULT = "1"; // microns 201223 kw
+    private static final String BACK_STEP_SIZE_DEFAULT = "100"; // microns 201223 kw
+    private static final String CAL_STEP_SIZE_DEFAULT = "5"; // microns 201223 kw
     private static final String EXPOSURE_TIME_DEFAULT = "500"; // milliseconds
-    private static final String ROI_SIZE_DEFAULT = "512";
-    private static final String EDGE_CLIP_DEFAULT = "30";
-    private static final String STEP_SIZE_DEFAULT = "150"; // nanometers
-    private static final String ALPHA_DEFAULT = "10"; // 190404 kw
+    private static final String ROI_SIZE_DEFAULT = "420";
+    private static final String EDGE_CLIP_DEFAULT = "0";
+    private static final String STEP_SIZE_DEFAULT = "1500"; // nanometers
+    private static final String ALPHA_DEFAULT = "1.5"; // 190404 kw
     private static final String PERIOD_DEFAULT = "500"; // milliseconds
-    private static final String BOUNDS_DEFAULT = "3"; // microns
+    private static final String BOUNDS_DEFAULT = "10"; // microns
     private static final double CAL_DEFAULT = -1;
     DecimalFormat df = new DecimalFormat("#.##");
 
@@ -159,7 +157,7 @@ public class DriftCorrectionGUI{
     private DriftCorrectionHardware hardwareManager = new DriftCorrectionHardware(getConfig());
     private DriftCorrectionData driftData = new DriftCorrectionData();
     private DriftCorrectionProcess processor = new DriftCorrectionProcess(driftData);
-    private DriftCorrectionCalibration calibrator = new DriftCorrectionCalibration(hardwareManager, processor, driftData, driftCorrection);
+    private DriftCorrectionCalibration calibrator = new DriftCorrectionCalibration(hardwareManager, processor, driftData);
     private StartButtonListener startButtonListener = new StartButtonListener();
     private SeparateXYStagesListener separateXYStagesListener = new SeparateXYStagesListener();
     private HardwareSettingsListener hardwareSettingsListener = new HardwareSettingsListener();
@@ -894,6 +892,7 @@ public class DriftCorrectionGUI{
         public void actionPerformed(ActionEvent e) {
             
             calibrator.setStep(Double.parseDouble(calibrationStepSizeBox.getText()));
+            calibrator.runAcquisition(true);
             
             ReportingUtils.showMessage(procedure_will_move_stage);
             try {
