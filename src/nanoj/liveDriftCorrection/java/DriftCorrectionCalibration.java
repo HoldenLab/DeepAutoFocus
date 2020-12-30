@@ -19,6 +19,7 @@ public class DriftCorrectionCalibration {
     private DriftCorrectionProcess processor;
     private DriftCorrectionData driftData;
 
+    boolean runCal = false;
     private double step = 10;
     private double backgroundStep = 50;
     private int totalSteps = 20;
@@ -39,9 +40,10 @@ public class DriftCorrectionCalibration {
     public static final String NO_X_MOVEMENT_ERROR = "No movement detected in the X axis!";
     public static final String NO_Y_MOVEMENT_ERROR = "No movement detected in the Y axis!";
 
-    public DriftCorrectionCalibration(DriftCorrectionHardware hardware, DriftCorrectionProcess processor) {
+    public DriftCorrectionCalibration(DriftCorrectionHardware hardware, DriftCorrectionProcess processor, DriftCorrectionData driftData) {
         hardwareManager = hardware;
         this.processor = processor;
+        this.driftData = driftData;
     }
 
 
@@ -53,10 +55,17 @@ public class DriftCorrectionCalibration {
         // Move along X and Y in steps until reaching totalSteps range
         // i = 0 ensures we have a picture at the starting position
         // i <= travel ensures we reach the total travel range
-        for (double i = 0; i<= travel; i += step) {
+        /*for (double i = 0; i<= travel; i += step) {
+            hardwareManager.moveXYStage(step, step);
+            images.add(snapAndProcess());
+        }*/
+        double i = 0;
+        while (i<=travel && isRunning()) {
+            i += step;
             hardwareManager.moveXYStage(step, step);
             images.add(snapAndProcess());
         }
+        runAcquisition(false);
 
         // Move stage back to original position
         hardwareManager.moveXYStage(-travel, -travel);
@@ -99,11 +108,14 @@ public class DriftCorrectionCalibration {
     }
 
     public FloatProcessor obtainBackgroundImage() throws Exception {
+
+        driftData.setShowLatest(true);
+        
         ImageStack stack = new ImageStack(hardwareManager.getROI().width,  hardwareManager.getROI().height);
 
         //double fieldSize = hardwareManager.getROI().getWidth();
         //fieldSize = -hardwareManager.convertPixelsToMicrons(fieldSize); // negative added 190418 kw
-        double fieldSize = backgroundStep; // hack 201223
+        double fieldSize = -backgroundStep; // hack 201223
 
         int halfStep = 2;
 
@@ -249,6 +261,14 @@ public class DriftCorrectionCalibration {
 
     public void setTotalSteps(int totalSteps){
         this.totalSteps = totalSteps;
+    }
+    
+    public void runAcquisition(boolean run) {
+        this.runCal = run;
+    }
+    
+    private boolean isRunning() {
+        return runCal;
     }
 
     public AffineTransform getCalibration() {
