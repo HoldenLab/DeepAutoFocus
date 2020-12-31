@@ -1,6 +1,6 @@
 package nanoj.liveDriftCorrection.java;
 
-import com.sun.corba.se.impl.io.TypeMismatchException;
+//import com.sun.corba.se.impl.io.TypeMismatchException;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.gui.Plot;
@@ -300,7 +300,7 @@ public class DriftCorrectionData {
     }
 
     synchronized void addZShift(double zShiftPoint, double timeStamp) {
-        if (dataTypeIs() != Z) throw new TypeMismatchException(DATA_MISMATCH_ERROR + dataTypeIs());
+        //if (dataTypeIs() != Z) throw new TypeMismatchException(DATA_MISMATCH_ERROR + dataTypeIs());
         if ( Double.isNaN(zShiftPoint) ) return;
         addTimeStamp(timeStamp);
         if (zDrift.size() == 0) zDrift.add(zShiftPoint);
@@ -315,7 +315,7 @@ public class DriftCorrectionData {
     }
 
     synchronized void addXYshift(double xShiftPoint, double yShiftPoint, double timeStamp) {
-        if (dataTypeIs() != XY) throw new TypeMismatchException(DATA_MISMATCH_ERROR + dataTypeIs());
+        //if (dataTypeIs() != XY) throw new TypeMismatchException(DATA_MISMATCH_ERROR + dataTypeIs());
         if ( Double.isNaN(xShiftPoint) || Double.isNaN(yShiftPoint) ) return;
         addTimeStamp(timeStamp);
 
@@ -332,7 +332,7 @@ public class DriftCorrectionData {
     }
 
     synchronized void addXYZshift(double xShiftPoint, double yShiftPoint, double zShiftPoint, double timeStamp) {
-        if (dataTypeIs() != XYZ) throw new TypeMismatchException(DATA_MISMATCH_ERROR + dataTypeIs());
+        //if (dataTypeIs() != XYZ) throw new TypeMismatchException(DATA_MISMATCH_ERROR + dataTypeIs());
         if ( Double.isNaN(xShiftPoint) || Double.isNaN(yShiftPoint) || Double.isNaN(zShiftPoint) ) return;
         addTimeStamp(timeStamp);
 
