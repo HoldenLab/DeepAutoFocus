@@ -27,8 +27,9 @@ public class DriftCorrectionBGSub extends Observable implements Runnable {
     private DriftCorrectionProcess processor;
     private DriftCorrectionData driftData;
     
-    private double backgroundStep = 50;
+    private boolean alive = true;
     private boolean runAcquisition = false;
+    private double backgroundStep = 50;
     private FloatProcessor bgImage = null;
     
     public static final String BGSUB_ERROR = "Background subtraction routine interrupted.";
@@ -43,35 +44,36 @@ public class DriftCorrectionBGSub extends Observable implements Runnable {
     @Override
     public void run() {
         try {
-            ImageStack stack = new ImageStack(hardwareManager.getROI().width,  hardwareManager.getROI().height);
+            while(itIsAlive()) {
+                while(isRunning()) {
+                    ImageStack stack = new ImageStack(hardwareManager.getROI().width,  hardwareManager.getROI().height);
             
-            double fieldSize = -backgroundStep; // hack 201223
-            int halfStep = 2;
+                    double fieldSize = -backgroundStep; // hack 201223
+                    int halfStep = 2;
             
-            hardwareManager.moveXYStage(-fieldSize*halfStep,-fieldSize*halfStep);
-            
-            while(isRunning()) {
-                for (int i = 0; i<=halfStep*2; i++) {
-                    for (int j = 0; j<=halfStep*2; j++) {
-                    hardwareManager.snap();
-                    stack.addSlice(hardwareManager.getImage());
-                    hardwareManager.moveXYStage(fieldSize, 0);
-                    }
-                hardwareManager.moveXYStage(-fieldSize*(halfStep*2+1), fieldSize);
-                }
-                hardwareManager.moveXYStage(halfStep*fieldSize, -(halfStep+1)*fieldSize);
+                    hardwareManager.moveXYStage(-fieldSize*halfStep,-fieldSize*halfStep);
                 
-                runAcquisition(false);
-            }
-            
-            // set newly acquired background image
-            setBackgroundImage(stack);
-            driftData.setBackgroundImage(
-                    processor.clip(bgImage)
-            );
-            
-            ReportingUtils.showMessage(procedure_succeeded);
+                    for (int i = 0; i<=halfStep*2; i++) {
 
+                        for (int j = 0; j<=halfStep*2; j++) {
+                        hardwareManager.snap();
+                        stack.addSlice(hardwareManager.getImage());
+                        hardwareManager.moveXYStage(fieldSize, 0);
+                        }
+                    hardwareManager.moveXYStage(-fieldSize*(halfStep*2+1), fieldSize);
+                    }
+                    hardwareManager.moveXYStage(halfStep*fieldSize, -(halfStep+1)*fieldSize);
+                
+                    // set newly acquired background image
+                    setBackgroundImage(stack);
+                    driftData.setBackgroundImage(processor.clip(bgImage));
+
+                    ReportingUtils.showMessage(procedure_succeeded);
+
+                    runAcquisition(false);
+                }
+                java.lang.Thread.sleep(500);
+            }
         } catch (Exception e) {
             ReportingUtils.showError(e, BGSUB_ERROR);
         } finally {
@@ -86,6 +88,14 @@ public class DriftCorrectionBGSub extends Observable implements Runnable {
     
     public boolean isRunning() {
         return runAcquisition;
+    }
+    
+    public boolean itIsAlive() {
+        return alive;
+    }
+
+    public void setAlive(boolean alive) {
+        this.alive = alive;
     }
     
     public void setBackgroundImage(ImageStack stack) {
