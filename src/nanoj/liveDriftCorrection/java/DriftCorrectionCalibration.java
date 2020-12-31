@@ -13,15 +13,18 @@ import org.micromanager.internal.utils.ReportingUtils;
 import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Observable;
+import java.text.DecimalFormat;
 
-public class DriftCorrectionCalibration {
+public class DriftCorrectionCalibration extends Observable implements Runnable {
     private DriftCorrectionHardware hardwareManager;
     private DriftCorrectionProcess processor;
     private DriftCorrectionData driftData;
 
-    boolean runCal = false;
+    private boolean alive = true;
+    private boolean runAcquisition = false;
     private double step = 10;
-    private double backgroundStep = 50;
+    //private double backgroundStep = 50;
     private int totalSteps = 20;
     private double xMovement;
     private double yMovement;
@@ -39,6 +42,12 @@ public class DriftCorrectionCalibration {
     public static final String NO_MOVEMENT_ERROR = "No movement Detected!";
     public static final String NO_X_MOVEMENT_ERROR = "No movement detected in the X axis!";
     public static final String NO_Y_MOVEMENT_ERROR = "No movement detected in the Y axis!";
+    public static final String CAL_ERROR = "Background subtraction routine interrupted.";
+    private static final String SCALING = "Scale: ";
+    private static final String ANGLE = "Angle: ";
+    private static final String FLIP = "Flip X: ";
+    private static final String procedure_succeeded = "The procedure has succeeded!";
+    DecimalFormat df = new DecimalFormat("#.##");
 
     public DriftCorrectionCalibration(DriftCorrectionHardware hardware, DriftCorrectionProcess processor, DriftCorrectionData driftData) {
         hardwareManager = hardware;
@@ -46,8 +55,75 @@ public class DriftCorrectionCalibration {
         this.driftData = driftData;
     }
 
+    @Override
+    public void run () {
+        try {
+            while(itIsAlive()) {
+                while(isRunning()) {
+                    ArrayList<FloatProcessor> images = new ArrayList<FloatProcessor>();
 
-    public boolean calibrate() throws Exception {
+                    double travel = totalSteps * step;
+                    // Move along X and Y in steps until reaching totalSteps range
+                    // i = 0 ensures we have a picture at the starting position
+                    // i <= travel ensures we reach the total travel range
+                    for (double i = 0; i<= travel; i += step) {
+                        hardwareManager.moveXYStage(step, step);
+                        images.add(snapAndProcess());
+                    }
+                    
+                    // Move stage back to original position
+                    hardwareManager.moveXYStage(-travel, -travel);
+
+                    // Calculate the median XY movement for each set of images and register it to xmovement and ymovement
+                    calculateMovement(images);
+
+                    // Make sure we detected something
+                    if (xMovement == 0 && yMovement == 0) {
+                        ReportingUtils.showError(NO_MOVEMENT_ERROR);
+                        runAcquisition(false);
+                    }
+                    else if (xMovement == 0) {
+                        ReportingUtils.showError(NO_X_MOVEMENT_ERROR);
+                        runAcquisition(false);
+                    }
+                    else if (yMovement == 0) {
+                        ReportingUtils.showError(NO_Y_MOVEMENT_ERROR);
+                        runAcquisition(false);
+                    }
+                
+                    // We now calculate the angle of the observed movement versus the original movement we told it to perform.
+                    // Subtract from the expected angle (45° degrees or pi/4 radians) the observed angle
+                    angle = (Math.PI/4) - Math.atan(yMovement/xMovement);
+
+                    // We calculate the vector magnitudes and deduce the scale from that
+                    scale = Math.sqrt((Math.pow(step, 2))+(Math.pow(step, 2)))/
+                            Math.sqrt(Math.pow(xMovement, 2) + Math.pow(yMovement, 2));
+
+                    // If we are working with negative xMovement values, then the coordinates need to be flipped 180 degrees
+                    flipX = xMovement < 0;
+
+                    // Create affine transform
+                    calibration = createCalibration(scale , angle, flipX);
+                    
+                    hardwareManager.setCalibration(calibration);
+                    
+                    // tell GUI you're done with the cal routine 201231 kw
+                    setChanged();
+                    notifyObservers();
+                    
+                    runAcquisition(false);
+                }
+                java.lang.Thread.sleep(500);
+            }
+        } catch (Exception e) {
+            ReportingUtils.showError(e, CAL_ERROR);
+        } finally {
+            notifyObservers();
+            runAcquisition(false);
+        }
+    }
+    
+    /*public boolean calibrate() throws Exception {
         ArrayList<FloatProcessor> images = new ArrayList<FloatProcessor>();
 
         double travel = totalSteps * step;
@@ -55,17 +131,10 @@ public class DriftCorrectionCalibration {
         // Move along X and Y in steps until reaching totalSteps range
         // i = 0 ensures we have a picture at the starting position
         // i <= travel ensures we reach the total travel range
-        /*for (double i = 0; i<= travel; i += step) {
-            hardwareManager.moveXYStage(step, step);
-            images.add(snapAndProcess());
-        }*/
-        double i = 0;
-        while (i<=travel && isRunning()) {
-            i += step;
+        for (double i = 0; i<= travel; i += step) {
             hardwareManager.moveXYStage(step, step);
             images.add(snapAndProcess());
         }
-        runAcquisition(false);
 
         // Move stage back to original position
         hardwareManager.moveXYStage(-travel, -travel);
@@ -105,9 +174,9 @@ public class DriftCorrectionCalibration {
         //calibration.invert();
         
         return true;
-    }
+    }*/
 
-    public FloatProcessor obtainBackgroundImage() throws Exception {
+    /*public FloatProcessor obtainBackgroundImage() throws Exception {
 
         driftData.setShowLatest(true);
         
@@ -118,17 +187,6 @@ public class DriftCorrectionCalibration {
         double fieldSize = -backgroundStep; // hack 201223
 
         int halfStep = 2;
-
-        // modified kw 190401
-        hardwareManager.moveXYStage(-fieldSize*halfStep,-fieldSize*halfStep);
-        /*for (int i = -halfStep; i<=halfStep; i++) {
-            hardwareManager.moveXYStage(0, fieldSize*i);
-            for (int j = -halfStep; j<=halfStep; j++) {
-                hardwareManager.moveXYStage(fieldSize*j, 0);
-                hardwareManager.snap();
-                stack.addSlice(hardwareManager.getImage());
-            }
-        }*/
         
         for (int i = 0; i<=halfStep*2; i++) {
             for (int j = 0; j<=halfStep*2; j++) {
@@ -145,7 +203,7 @@ public class DriftCorrectionCalibration {
         projector.doProjection();
 
         return projector.getProjection().getProcessor().convertToFloatProcessor();
-    }
+    }*/
 
     // This method exists because the camera we are using sometimes doesn't respect the ROI size which clashes with
     // the background image
@@ -239,13 +297,31 @@ public class DriftCorrectionCalibration {
 
     //////////////////////////// Getters/Setters
 
-    public double getBackgroundStep(){
+    // is thread alive 201231 kw
+    public boolean itIsAlive() {
+        return alive;
+    }
+
+    public void setAlive(boolean alive) {
+        this.alive = alive;
+    }
+    
+    // is cal routine running 201231 kw
+    public void runAcquisition(boolean run) {
+        this.runAcquisition = run;
+    }
+    
+    public boolean isRunning() {
+        return runAcquisition;
+    }
+    
+    /*public double getBackgroundStep(){
         return backgroundStep;
     }
     
     public void setBackgroundStep(double backgroundStep){
         this.backgroundStep = backgroundStep;
-    }
+    }*/
     
     public double getStep() {
         return step;
@@ -261,14 +337,6 @@ public class DriftCorrectionCalibration {
 
     public void setTotalSteps(int totalSteps){
         this.totalSteps = totalSteps;
-    }
-    
-    public void runAcquisition(boolean run) {
-        this.runCal = run;
-    }
-    
-    private boolean isRunning() {
-        return runCal;
     }
 
     public AffineTransform getCalibration() {
