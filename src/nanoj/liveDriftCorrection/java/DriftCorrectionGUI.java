@@ -158,6 +158,7 @@ public class DriftCorrectionGUI{
     private DriftCorrectionData driftData = new DriftCorrectionData();
     private DriftCorrectionProcess processor = new DriftCorrectionProcess(driftData);
     private DriftCorrectionCalibration calibrator = new DriftCorrectionCalibration(hardwareManager, processor, driftData);
+    private DriftCorrectionBGSub bgSub = new DriftCorrectionBGSub(hardwareManager, processor, driftData);
     private StartButtonListener startButtonListener = new StartButtonListener();
     private SeparateXYStagesListener separateXYStagesListener = new SeparateXYStagesListener();
     private HardwareSettingsListener hardwareSettingsListener = new HardwareSettingsListener();
@@ -419,7 +420,8 @@ public class DriftCorrectionGUI{
         processor.setEdgeClip(Integer.parseInt(edgeClipBox.getText()));
         hardwareManager.setStepSize(Double.parseDouble(stepSizeBox.getText())/1000);
         
-        calibrator.setBackgroundStep(Double.parseDouble(backgroundStepSizeBox.getText())); // 201223 kw
+        //calibrator.setBackgroundStep(Double.parseDouble(backgroundStepSizeBox.getText())); // 201223 kw
+        bgSub.setBackgroundStep(Double.parseDouble(backgroundStepSizeBox.getText()));
         calibrator.setStep(Double.parseDouble(calibrationStepSizeBox.getText()));
         
         driftCorrection.setAlpha((double) (Double.parseDouble(alphaBox.getText()))); //190404 kw
@@ -863,15 +865,20 @@ public class DriftCorrectionGUI{
         @Override
         public void actionPerformed(ActionEvent e) {
             
-            calibrator.setBackgroundStep(Double.parseDouble(backgroundStepSizeBox.getText()));
+            //calibrator.setBackgroundStep(Double.parseDouble(backgroundStepSizeBox.getText()));
+            bgSub.setBackgroundStep(Double.parseDouble(backgroundStepSizeBox.getText()));
             
             ReportingUtils.showMessage(procedure_will_move_stage);
             try {
-                driftData.setBackgroundImage(
+                // Start bg image acquisition and change its button to STOP. 201231 kw
+                bgSub.runAcquisition(true);
+                bgImageButton.setText(STOP);
+                
+                /*driftData.setBackgroundImage(
                         processor.clip(calibrator.obtainBackgroundImage())
                 );
                 driftData.setLatestImage(driftData.getBackgroundImage());
-                ReportingUtils.showMessage(procedure_succeeded);
+                ReportingUtils.showMessage(procedure_succeeded);*/
             } catch (Exception e1) {
                 ReportingUtils.showError(e1, HARDWARE_CONNECTION_ERROR);
             }
