@@ -34,10 +34,13 @@ public class DriftCorrectionGUI{
     private static final String FRAME_NAME = "NanoJ Live Drift Correction";
     private static final String START = "3. Start!";
     private static final String STOP = "STOP!";
+    private static final String STOP_LIVE = "Stop Live";
     private static final String CONTROL = "Control";
     private static final String CONFIGURATION = "Configuration";
     private static final String CORRECTION_THREAD_NAME = "Drift Correction Thread";
     private static final String HARDWARE_THREAD_NAME = "Hardware Manager Thread";
+    private static final String BG_SUB_THREAD_NAME = "Background subtraction Thread";
+    private static final String CAL_THREAD_NAME = "Calibration Thread";
     private static final String INIT = "Initial load";
 
     // Preference keys
@@ -159,6 +162,8 @@ public class DriftCorrectionGUI{
     private DriftCorrectionProcess processor = new DriftCorrectionProcess(driftData);
     private DriftCorrectionCalibration calibrator = new DriftCorrectionCalibration(hardwareManager, processor, driftData);
     private DriftCorrectionBGSub bgSub = new DriftCorrectionBGSub(hardwareManager, processor, driftData);
+    private GetBackgroundListener bgSubListener = new GetBackgroundListener();
+    private CalibrationButtonListener calListener = new CalibrationButtonListener();
     private StartButtonListener startButtonListener = new StartButtonListener();
     private SeparateXYStagesListener separateXYStagesListener = new SeparateXYStagesListener();
     private HardwareSettingsListener hardwareSettingsListener = new HardwareSettingsListener();
@@ -179,8 +184,8 @@ public class DriftCorrectionGUI{
     private JToggleButton startButton = new DToggleButton(START, startButtonListener);
     private JToggleButton snapImageButton = new DToggleButton(SNAP_IMAGE_LABEL, new SnapImageListener());
     private JToggleButton streamImagesButton = new DToggleButton(STREAM_IMAGES_BUTTON_LABEL, new StreamImagesListener());
-    private JToggleButton bgImageButton = new DToggleButton(GET_BG_LABEL, new GetBackgroundListener());
-    private JToggleButton calButton = new DToggleButton(CALIBRATE_LABEL, new CalibrationButtonListener());
+    private JToggleButton bgImageButton = new DToggleButton(GET_BG_LABEL, bgSubListener);
+    private JToggleButton calButton = new DToggleButton(CALIBRATE_LABEL, calListener);
     private JToggleButton saveLocationButton = new DToggleButton(SAVE_DRIFT_LOCATION_LABEL, new SaveLocationListener());
     private JComboBox correctionModes = new DComboBox(new CorrectionModeListener(), CORRECTION_MODE);
     private JCheckBox flipYButton = new DCheckBox(FLIP_Y_LABEL, new FlipYListener(), FLIP_Y);
@@ -380,17 +385,32 @@ public class DriftCorrectionGUI{
         driftData.setShowPlot(preferences.getBoolean(SHOW_PLOT, false));
         driftData.setSavePlots(preferences.getBoolean(SAVE_PLOTS, false));
         driftData.setDataFile(new File(preferences.get(DRIFT_FILE_LOCATION, defaultDriftFileLocation)));
+        driftData.setflipY(preferences.getBoolean(FLIP_Y, false));
 
         // Create the drift correction object
         driftCorrection = new DriftCorrection(hardwareManager, driftData, processor);
         driftCorrection.setCorrectionMode(correctionModes.getSelectedIndex());
         driftCorrection.addObserver(startButtonListener);
+        
+        // Create bg subtraction object
+        bgSub = new DriftCorrectionBGSub(hardwareManager, processor, driftData);
+        bgSub.addObserver(bgSubListener);
+        
+        // Create cal object
+        calibrator = new DriftCorrectionCalibration(hardwareManager, processor, driftData);
+        calibrator.addObserver(calListener);
 
         Thread driftCorrectionThread = new Thread(driftCorrection, CORRECTION_THREAD_NAME);
         driftCorrectionThread.start();
 
         Thread hardwareManagerThread = new Thread(hardwareManager, HARDWARE_THREAD_NAME);
         hardwareManagerThread.start();
+        
+        Thread bgCorrThread = new Thread(bgSub, BG_SUB_THREAD_NAME);
+        bgCorrThread.start();
+        
+        Thread calThread = new Thread(calibrator, CAL_THREAD_NAME);
+        calThread.start();
 
         // Load devices upon starting the thread if hardware has been previously defined
         try {
@@ -747,8 +767,12 @@ public class DriftCorrectionGUI{
                     ReportingUtils.showError(e1, HARDWARE_CONNECTION_ERROR);
                 }
                 driftData.setShowLatest(true);
+                streamImagesButton.setText(STOP_LIVE);
             }
-            else driftData.setShowLatest(showLatestButton.isSelected());
+            else {
+                driftData.setShowLatest(showLatestButton.isSelected());
+                streamImagesButton.setText(STREAM_IMAGES_BUTTON_LABEL);
+            }
             hardwareManager.setStreamImages(streamImagesButton.isSelected());
         }
     }
@@ -860,27 +884,50 @@ public class DriftCorrectionGUI{
         }
     }
 
-    class GetBackgroundListener implements ActionListener {
+    class GetBackgroundListener implements ActionListener, Observer {
 
         @Override
         public void actionPerformed(ActionEvent e) {
             
-            //calibrator.setBackgroundStep(Double.parseDouble(backgroundStepSizeBox.getText()));
-            bgSub.setBackgroundStep(Double.parseDouble(backgroundStepSizeBox.getText()));
-            
-            ReportingUtils.showMessage(procedure_will_move_stage);
-            try {
-                // Start bg image acquisition and change its button to STOP. 201231 kw
-                bgSub.runAcquisition(true);
-                bgImageButton.setText(STOP);
+            if (bgImageButton.isSelected()) {
                 
-                /*driftData.setBackgroundImage(
+                // Give the hardware manager the current settings
+                try {
+                    giveHardwareSettings();
+                } catch (Exception e1) {
+                    bgSub.runAcquisition(false);
+                    bgImageButton.setSelected(false);
+                    ReportingUtils.showError(e1, HARDWARE_CONNECTION_ERROR);
+
+                }
+                
+                //calibrator.setBackgroundStep(Double.parseDouble(backgroundStepSizeBox.getText()));
+                bgSub.setBackgroundStep(Double.parseDouble(backgroundStepSizeBox.getText()));
+            
+                ReportingUtils.showMessage(procedure_will_move_stage);
+                try {
+                    // Start bg image acquisition 201231 kw
+                    bgSub.runAcquisition(true);
+                
+                    /*driftData.setBackgroundImage(
                         processor.clip(calibrator.obtainBackgroundImage())
-                );
-                driftData.setLatestImage(driftData.getBackgroundImage());
-                ReportingUtils.showMessage(procedure_succeeded);*/
-            } catch (Exception e1) {
-                ReportingUtils.showError(e1, HARDWARE_CONNECTION_ERROR);
+                    );
+                    driftData.setLatestImage(driftData.getBackgroundImage());
+                    ReportingUtils.showMessage(procedure_succeeded);*/
+                } catch (Exception e1) {
+                    ReportingUtils.showError(e1, HARDWARE_CONNECTION_ERROR);
+                }
+            }
+            else {
+                bgSub.runAcquisition(false);
+            }
+        }
+        @Override
+        public void update(Observable o, Object arg) {
+            // If the bg sub routine stops for some reason, change back the start button
+            if (!bgSub.isRunning()) {
+                ReportingUtils.showMessage("" + arg);
+                bgImageButton.setSelected(false);
             }
         }
     }
@@ -893,38 +940,53 @@ public class DriftCorrectionGUI{
         }
     }
 
-    class CalibrationButtonListener implements ActionListener {
+    class CalibrationButtonListener implements ActionListener, Observer {
 
         @Override
         public void actionPerformed(ActionEvent e) {
             
-            calibrator.setStep(Double.parseDouble(calibrationStepSizeBox.getText()));
-            calibrator.runAcquisition(true);
-            
-            ReportingUtils.showMessage(procedure_will_move_stage);
-            try {
-                if (calibrator.calibrate()) {
-                    giveHardwareSettings();
-                    hardwareManager.setCalibration(calibrator.getCalibration());
-                    double scale = calibrator.getScale();
-                    double angle = calibrator.getAngle();
-                    boolean flip = calibrator.getFlipX();
-                    preferences.putDouble(CAL_SCALING, scale);
-                    preferences.putDouble(CAL_ANGLE, angle);
-                    preferences.putBoolean(CAL_FLIPPING, flip);
-                    String scaling = SCALING + df.format(scale*1000);
-                    String angling = ANGLE + df.format(angle);
-                    String flipping = FLIP + flip;
-                    calibrationScalingLabel.setText(scaling + " nm/pixel");
-                    calibrationAngleLabel.setText(angling);
-                    calibrationFlipLabel.setText(flipping);
-                    ReportingUtils.showMessage( procedure_succeeded
-                            + "\n" + scaling + " nm/pixel\n" + angling + "\n" + flipping);
-                }
-            } catch (Exception e1) {
-                ReportingUtils.showError(e1, CALIBRATION_ERROR);
-            }
+            if (calButton.isSelected()) {
+                calibrator.setStep(Double.parseDouble(calibrationStepSizeBox.getText()));
+                
+                ReportingUtils.showMessage(procedure_will_move_stage);
 
+                try {
+                    giveHardwareSettings();
+                    
+                    calibrator.runAcquisition(true);
+
+                } catch (Exception e1) {
+                    ReportingUtils.showError(e1, CALIBRATION_ERROR);
+                }
+            }
+            else {
+                calibrator.runAcquisition(false);
+            }
+        }
+        @Override
+        public void update(Observable o, Object arg) {
+            // If the cal sub routine stops for some reason, change back the button
+            if (!calibrator.isRunning()) {
+                ReportingUtils.showMessage("" + arg);
+                calButton.setSelected(false);
+            }
+            // end of cal routine - import values to GUI 201231 kw
+            else {
+                double scale = calibrator.getScale();
+                double angle = calibrator.getAngle();
+                boolean flip = calibrator.getFlipX();
+                preferences.putDouble(CAL_SCALING, scale);
+                preferences.putDouble(CAL_ANGLE, angle);
+                preferences.putBoolean(CAL_FLIPPING, flip);
+                String scaling = SCALING + df.format(scale*1000);
+                String angling = ANGLE + df.format(angle);
+                String flipping = FLIP + flip;
+                calibrationScalingLabel.setText(scaling + " nm/pixel");
+                calibrationAngleLabel.setText(angling);
+                calibrationFlipLabel.setText(flipping);
+                ReportingUtils.showMessage( procedure_succeeded
+                        + "\n" + scaling + " nm/pixel\n" + angling + "\n" + flipping);
+            }
         }
     }
 
