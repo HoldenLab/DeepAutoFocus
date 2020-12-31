@@ -11,6 +11,7 @@
     <description>Builds, tests, and runs the project DriftCorrectRH.</description>
     <property name="sourcefile" value="E:/development/git/micro-manager/plugins/DriftCorrectRH/src/nanoj/liveDriftCorrection/java/DriftCorrection.java"/>
     <property name="sourcefile" value="E:/development/git/micro-manager/plugins/DriftCorrectRH/src/nanoj/liveDriftCorrection/java/DriftCorrectionCalibration.java"/>
+	<property name="sourcefile" value="E:/development/git/micro-manager/plugins/DriftCorrectRH/src/nanoj/liveDriftCorrection/java/DriftCorrectionBGSub.java"/>
     <property name="sourcefile" value="E:/development/git/micro-manager/plugins/DriftCorrectRH/src/nanoj/liveDriftCorrection/java/DriftCorrectionData.java"/>
     <property name="sourcefile" value="E:/development/git/micro-manager/plugins/DriftCorrectRH/src/nanoj/liveDriftCorrection/java/DriftCorrectionGUI.java"/>
     <property name="sourcefile" value="E:/development/git/micro-manager/plugins/DriftCorrectRH/src/nanoj/liveDriftCorrection/java/DriftCorrectionHardware.java"/>
