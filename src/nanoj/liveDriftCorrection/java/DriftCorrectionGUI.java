@@ -150,7 +150,7 @@ public class DriftCorrectionGUI{
     private static final String procedure_succeeded = "The procedure has succeeded!";
 
     // Static objects
-    private static MainFrame mainFrame;
+    //private static MainFrame mainFrame;
 
     // Non-static objects
     private Preferences preferences = Preferences.userRoot().node(this.getClass().getName());
@@ -228,7 +228,7 @@ public class DriftCorrectionGUI{
 
     // Constructor is private to make the GUI a singleton
     private DriftCorrectionGUI() {
-        mainFrame = MMStudio.getFrame();
+        //mainFrame = MMStudio.getFrame();
 
         // Load calibration from non-volatile storage
         hardwareManager.setCalibration(DriftCorrectionCalibration.createCalibration(
