@@ -2,7 +2,7 @@ package nanoj.liveDriftCorrection.java;
 
 import mmcorej.DeviceType;
 import org.micromanager.internal.MMStudio;
-import org.micromanager.internal.MainFrame;
+//import org.micromanager.internal.MainFrame;
 import org.micromanager.internal.utils.ReportingUtils;
 
 import javax.swing.*;
@@ -133,6 +133,8 @@ public class DriftCorrectionGUI{
     public static final String ROI_LARGER_THAN_CAMERA =
             "The requested ROI size is too large.\n" +
                     "It should only be as large as the smallest dimension of the camera (width or height).";
+    public static final String ROI_NOT_DIV_4 =
+            "The requested ROI size is not divisible by 4.";
     public static final String HARDWARE_NOT_SET = "Hardware not set, please configure first.";
     public static final String HARDWARE_NOT_LOADED = "Hardware not loaded, please load first.";
     public static final String WIZARD_LAUNCHING_ERROR = "Error during launch of Drift Hardware Configuration Wizard!";
@@ -461,7 +463,7 @@ public class DriftCorrectionGUI{
             yLocation = (hardwareManager.getCameraHeight() / 2) - (roiSize /2);
         }
         hardwareManager.setROI(xLocation, yLocation, roiSize, roiSize);
-        hardwareManager.snap();
+        //hardwareManager.snap();
 
         hardwareManager.setFocusDevice(focusDeviceList.getSelectedItem().toString());
 
@@ -1026,6 +1028,11 @@ public class DriftCorrectionGUI{
                     ReportingUtils.showError(ROI_LARGER_THAN_CAMERA);
                     int size = Math.min(hardwareManager.getCameraHeight(), hardwareManager.getCameraWidth());
                     roiBox.setText("" + size);
+                } else if (Integer.parseInt(roiBox.getText()) % 4 != 0 &&
+                        Integer.parseInt(roiBox.getText()) > 10) { // new error in case not divisible by 4 (also needs to be >10 or other error triggered). 210205 kw
+                    ReportingUtils.showMessage(ROI_NOT_DIV_4);
+                    int newROIsize = (int) Math.round(Integer.parseInt(roiBox.getText())/4) * 4;
+                    roiBox.setText("" + newROIsize);
                 }
             } catch (Exception e1) {
                 ReportingUtils.showError(e1, HARDWARE_CONNECTION_ERROR);

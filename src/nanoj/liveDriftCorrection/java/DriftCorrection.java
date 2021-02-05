@@ -1,11 +1,11 @@
 package nanoj.liveDriftCorrection.java;
 
 import ij.ImageStack;
-import ij.measure.Calibration;
-import ij.measure.Measurements;
+//import ij.measure.Calibration;
+//import ij.measure.Measurements;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
-import ij.process.FloatStatistics;
+//import ij.process.FloatStatistics;
 import nanoj.core.java.image.drift.EstimateShiftAndTilt;
 import nanoj.core.java.image.transform.CrossCorrelationMap;
 import org.micromanager.internal.utils.ReportingUtils;

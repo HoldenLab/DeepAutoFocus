@@ -2,17 +2,17 @@ package nanoj.liveDriftCorrection.java;
 
 import ij.ImagePlus;
 import ij.ImageStack;
-import ij.plugin.ZProjector;
+//import ij.plugin.ZProjector;
 import ij.process.FloatProcessor;
 import nanoj.core.java.array.ArrayCasting;
 import nanoj.core.java.image.drift.EstimateShiftAndTilt;
 import nanoj.core.java.image.transform.CrossCorrelationMap;
-import nanoj.core.java.image.analysis.CalculateImageStatistics;
+//import nanoj.core.java.image.analysis.CalculateImageStatistics;
 import org.micromanager.internal.utils.ReportingUtils;
 
 import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
-import java.util.Collections;
+//import java.util.Collections;
 import java.util.Observable;
 import java.text.DecimalFormat;
 

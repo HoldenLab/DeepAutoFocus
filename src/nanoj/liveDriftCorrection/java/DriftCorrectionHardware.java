@@ -1,8 +1,8 @@
 package nanoj.liveDriftCorrection.java;
 
-import ij.ImagePlus;
-import ij.ImageStack;
-import ij.plugin.ZProjector;
+//import ij.ImagePlus;
+//import ij.ImageStack;
+//import ij.plugin.ZProjector;
 import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ShortProcessor;
