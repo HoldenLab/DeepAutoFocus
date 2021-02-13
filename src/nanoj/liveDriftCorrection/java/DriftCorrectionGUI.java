@@ -77,7 +77,7 @@ public class DriftCorrectionGUI{
     private static final String BACK_STEP_SIZE_DEFAULT = "100"; // microns 201223 kw
     private static final String CAL_STEP_SIZE_DEFAULT = "5"; // microns 201223 kw
     private static final String EXPOSURE_TIME_DEFAULT = "500"; // milliseconds
-    private static final String ROI_SIZE_DEFAULT = "420";
+    private static final String ROI_SIZE_DEFAULT = "2000";
     private static final String EDGE_CLIP_DEFAULT = "0";
     private static final String STEP_SIZE_DEFAULT = "1500"; // nanometers
     private static final String ALPHA_DEFAULT = "1.5"; // 190404 kw
