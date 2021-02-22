@@ -6,4 +6,4 @@ The version in the v1.0.0 release is associated with the Whitley et al bioRxiv 2
 
 We have now updated the plugin to include lateral drift correction based on image cross-correlation as a v1.1.0 release. This has also been improved with regard to distributability. Full installation and accompanying hardware instructions are available on the <a href="">LifeHack microscope website</a>.
 
-LICENSING INFORMATION All files are distributed under the GPLv3 and (c) 2020 Pedro Almada, Ricardo Henriques, University College London, Kevin Whitley, Seamus Holden, Newcastle University unless otherwise stated. See LICENSE.txt for full terms.
+LICENSING INFORMATION All files are distributed under the GPLv3 and (c) 2020 Kevin Whitley, Seamus Holden, Newcastle University, Pedro Almada, Ricardo Henriques, University College London unless otherwise stated. See LICENSE.txt for full terms.
