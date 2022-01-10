@@ -64,7 +64,8 @@ public class DriftCorrectionGUI{
     private static final String ROI_SIZE = "roiSize";
     private static final String EDGE_CLIP = "edgeClip";
     private static final String STEP_SIZE = "stepSize";
-    private static final String ALPHA = "alpha"; // 190404 kw
+    private static final String KP = "Kp"; // 190404 kw
+    private static final String KI = "Ki"; // 220110 kw
     private static final String PERIOD = "period";
     private static final String BOUNDS = "bounds";
     private static final String CAL_STEP_SIZE = "calStepSize"; // 201223 kw
@@ -80,7 +81,8 @@ public class DriftCorrectionGUI{
     private static final String ROI_SIZE_DEFAULT = "2000";
     private static final String EDGE_CLIP_DEFAULT = "0";
     private static final String STEP_SIZE_DEFAULT = "1500"; // nanometers
-    private static final String ALPHA_DEFAULT = "1.5"; // 190404 kw
+    private static final String KP_DEFAULT = "1.5"; // 190404 kw
+    private static final String KI_DEFAULT = "0.5"; // 220110 kw
     private static final String PERIOD_DEFAULT = "500"; // milliseconds
     private static final String BOUNDS_DEFAULT = "10"; // microns
     private static final double CAL_DEFAULT = -1;
@@ -105,7 +107,8 @@ public class DriftCorrectionGUI{
     private static final String ROI_BOX_LABEL = "Maximum ROI to analyse";
     private static final String EDGE_CLIP_LABEL = "Pixels to trim from the edges";
     private static final String STEP_SIZE_LABEL = "Step size (nm) for Z correction";
-    private static final String ALPHA_LABEL = "Alpha (scale for corrections)"; //190404 kw
+    private static final String KP_LABEL = "Kp (Proportional gain)"; //190404 kw
+    private static final String KI_LABEL = "Ki (Integral gain)"; // 220110 kw
     private static final String PERIOD_LABEL = "Time between corrections (ms)";
     private static final String BOUNDS_LABEL = "Maximum translation (um)";
     private static final String SEPARATE_STAGES_LABEL = "Separate XY stage devices?";
@@ -211,7 +214,8 @@ public class DriftCorrectionGUI{
     private JTextField roiBox = new DTextField(ROI_SIZE, ROI_SIZE_DEFAULT);
     private JTextField edgeClipBox = new DTextField(EDGE_CLIP, EDGE_CLIP_DEFAULT);
     private JTextField stepSizeBox = new DTextField(STEP_SIZE, STEP_SIZE_DEFAULT);
-    private JTextField alphaBox = new DTextField(ALPHA, ALPHA_DEFAULT); // 190404 kw
+    private JTextField KpBox = new DTextField(KP, KP_DEFAULT); // 190404 kw
+    private JTextField KiBox = new DTextField(KI, KI_DEFAULT); // 220110 kw
     private JTextField periodBox = new DTextField(PERIOD, PERIOD_DEFAULT);
     private JTextField boundsLimitBox = new DTextField(BOUNDS, BOUNDS_DEFAULT);
     private DeviceList focusDeviceList = new DeviceList(DeviceType.StageDevice, Z_STAGE);
@@ -356,8 +360,10 @@ public class DriftCorrectionGUI{
         configurationPanel.add(edgeClipBox);
         configurationPanel.add(new DLabel(STEP_SIZE_LABEL));
         configurationPanel.add(stepSizeBox);
-        configurationPanel.add(new DLabel(ALPHA_LABEL)); //190404 kw
-        configurationPanel.add(alphaBox);
+        configurationPanel.add(new DLabel(KP_LABEL)); //190404 kw
+        configurationPanel.add(KpBox);
+        configurationPanel.add(new DLabel(KI_LABEL)); //220110 kw
+        configurationPanel.add(KiBox);
         configurationPanel.add(new DLabel(PERIOD_LABEL));
         configurationPanel.add(periodBox);
         configurationPanel.add(new DLabel(BOUNDS_LABEL));
@@ -446,7 +452,8 @@ public class DriftCorrectionGUI{
         bgSub.setBackgroundStep(Double.parseDouble(backgroundStepSizeBox.getText()));
         calibrator.setStep(Double.parseDouble(calibrationStepSizeBox.getText()));
         
-        driftCorrection.setAlpha((double) (Double.parseDouble(alphaBox.getText()))); //190404 kw
+        driftCorrection.setKp((double) (Double.parseDouble(KpBox.getText()))); //190404 kw
+        driftCorrection.setKi((double) (Double.parseDouble(KiBox.getText()))); //220110 kw
         driftCorrection.setSleep((long) (Double.parseDouble(periodBox.getText())));
         driftCorrection.setThreshold(Double.parseDouble(boundsLimitBox.getText()));
 

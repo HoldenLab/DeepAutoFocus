@@ -50,10 +50,15 @@ public class DriftCorrection extends Observable implements Runnable {
 
     // Running variables
     private long startTimeStamp;
+    private double oldTime;
+    private double dt;
     private double threshold;
-    private double alpha = 0; // 190401 kw
-    private double xi_0 = 0;
-    private double xi_n = 0;
+    private double Kp = 0; // Proportional gain. 190401 kw
+    private double Ki = 0; // Integral gain. 220110 kw
+    private double SP = 0; // Z-correction setpoint
+    private double PV = 0; // Z-correction process variable
+    private double z_err = 0; // Z-correction error (for proportional gain)
+    private double err_int = 0; // Z-correction error sum (for integral gain)
 
 
     public DriftCorrection(DriftCorrectionHardware manager, DriftCorrectionData data, DriftCorrectionProcess processor) {
@@ -112,7 +117,7 @@ public class DriftCorrection extends Observable implements Runnable {
                     
                             // overriding this alpha for now, just using user input value.
                             //alpha = (2*refCCmidMidMax - refCCtopMidMax - refCCbottomMidMax) * hardwareManager.getStepSize() / 2; // eq 6 in McGorty et al. 2013. corrected so that stepsize is in numerator!
-                            xi_0 = (refCCtopMidMax - refCCbottomMidMax) / refCCmidMidMax;
+                            SP = (refCCtopMidMax - refCCbottomMidMax) / refCCmidMidMax; // Z-correction setpoint
                         
                             driftData.setReferenceStack(refStack);
                         }           
@@ -132,7 +137,7 @@ public class DriftCorrection extends Observable implements Runnable {
                         double ccSliceTopMax = ccSliceTop.getMax();
                         double ccSliceMiddleMax = ccSliceMiddle.getMax();
                         
-                        xi_n = (ccSliceTopMax - ccSliceBottomMax) / ccSliceMiddleMax; // eq 5 in McGorty et al. 2013
+                        PV = (ccSliceTopMax - ccSliceBottomMax) / ccSliceMiddleMax; // eq 5 in McGorty et al. 2013
                         
                         imCentx = resultStack.getWidth()/2;
                         imCenty = resultStack.getHeight()/2;
@@ -215,8 +220,15 @@ public class DriftCorrection extends Observable implements Runnable {
                     */
                     
                     // Move Z stage to more appropriate position. We get zDrift in microns instead of steps to save later to Data. (added 190403 kw)
+                    // Now using PI controller instead of equation in McGorty 2013 paper (220110 kw)
                     if (isRunning() && (correctionMode == Z || correctionMode == XYZ) ) {
-                        zDrift = -alpha*(xi_n - xi_0); // eq 4 in McGorty et al. 2013
+                        dt = getTimeElapsed() - oldTime; // time since last loop iteration
+                        err_int = err_int + z_err*dt; // Z-correction error integral (use previous error value before calculating one for this loop) 220110
+                        z_err = SP - PV; // Z-correction error 220110
+                        
+                        zDrift = (Kp * z_err) + (Ki * err_int); // PI controller 220110 kw
+                        
+                        oldTime = getTimeElapsed(); // time of current loop (store for next loop iteration)
                         
                         hardwareManager.moveFocusStage(zDrift);
                     }
@@ -309,8 +321,13 @@ public class DriftCorrection extends Observable implements Runnable {
     }
     
     // added 190404 kw
-    public void setAlpha(double alpha){
-        this.alpha = alpha;
+    public void setKp(double Kp){
+        this.Kp = Kp;
+    }
+    
+    // added 220110 kw
+    public void setKi(double Ki){
+        this.Ki = Ki;
     }
 
     public double getThreshold() {
