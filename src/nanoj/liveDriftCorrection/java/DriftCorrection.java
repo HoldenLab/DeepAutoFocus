@@ -59,6 +59,8 @@ public class DriftCorrection extends Observable implements Runnable {
     private double PV = 0; // Z-correction process variable
     private double z_err = 0; // Z-correction error (for proportional gain)
     private double err_int = 0; // Z-correction error sum (for integral gain)
+    private int Delay = 10;
+    private int n = 0;
 
 
     public DriftCorrection(DriftCorrectionHardware manager, DriftCorrectionData data, DriftCorrectionProcess processor) {
@@ -226,7 +228,11 @@ public class DriftCorrection extends Observable implements Runnable {
                         err_int = err_int + z_err*dt; // Z-correction error integral (use previous error value before calculating one for this loop) 220110
                         z_err = SP - PV; // Z-correction error 220110
                         
-                        zDrift = (Kp * z_err) + (Ki * err_int); // PI controller 220110 kw
+                        if(n<Delay){
+                            zDrift = (Kp * z_err);
+                            n++;
+                        }
+                        else zDrift = (Kp * z_err) - Ki*dt*((driftData.getDelayedZDrift(Delay)-driftData.getLatestZDrift())/(driftData.getDelayedTimeStamp(Delay)-driftData.getLatestTimeStamp()));
                         
                         oldTime = getTimeElapsed(); // time of current loop (store for next loop iteration)
                         
