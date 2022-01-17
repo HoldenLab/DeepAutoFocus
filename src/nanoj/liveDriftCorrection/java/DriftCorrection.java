@@ -59,7 +59,7 @@ public class DriftCorrection extends Observable implements Runnable {
     private double PV = 0; // Z-correction process variable
     private double z_err = 0; // Z-correction error (for proportional gain)
     private double err_int = 0; // Z-correction error sum (for integral gain)
-    private int Delay = 10;
+    private int Delay = 100;
     private int n = 0;
 
 
@@ -335,6 +335,11 @@ public class DriftCorrection extends Observable implements Runnable {
     // added 220110 kw
     public void setKi(double Ki){
         this.Ki = Ki;
+    }
+    
+    // added 220110 kw
+    public void setDelay(int Delay){
+        this.Delay = Delay;
     }
 
     public double getThreshold() {

@@ -321,7 +321,7 @@ public class DriftCorrectionData {
     }
     
     synchronized double getDelayedZDrift(int Delay) {
-        return zDrift.get(zDrift.size()-(Delay+1));
+        return zDrift.get(zDrift.size()-(Delay-1));
     }
     
     synchronized double getLatestTimeStamp() {
@@ -329,7 +329,7 @@ public class DriftCorrectionData {
     }
     
     synchronized double getDelayedTimeStamp(int Delay) {
-        return timeStamps.get(timeStamps.size()-(Delay+1))*60000;
+        return timeStamps.get(timeStamps.size()-(Delay-1))*60000;
     }
 
     synchronized void addZShift(double zShiftPoint, double timeStamp) {
