@@ -316,19 +316,22 @@ public class DriftCorrectionData {
         this.zDrift = zShift;
     }
     
-    synchronized double getLatestZDrift() {
+    synchronized double getLatestZDrift() { //220117 JE
         return zDrift.get(zDrift.size()-1);
     }
     
-    synchronized double getDelayedZDrift(int Delay) {
+    synchronized double getDelayedZDrift(int Delay) { //220117 JE
         return zDrift.get(zDrift.size()-(Delay-1));
     }
+    synchronized int getLenZDrift() { //220117 JE
+        return zDrift.size();
+    }
     
-    synchronized double getLatestTimeStamp() {
+    synchronized double getLatestTimeStamp() { //220117 JE
         return timeStamps.get(timeStamps.size()-1)*60000;
     }
     
-    synchronized double getDelayedTimeStamp(int Delay) {
+    synchronized double getDelayedTimeStamp(int Delay) { //220117 JE
         return timeStamps.get(timeStamps.size()-(Delay-1))*60000;
     }
 

@@ -60,7 +60,6 @@ public class DriftCorrection extends Observable implements Runnable {
     private double z_err = 0; // Z-correction error (for proportional gain)
     private double err_int = 0; // Z-correction error sum (for integral gain)
     private int Delay = 100;
-    private int n = 0;
 
 
     public DriftCorrection(DriftCorrectionHardware manager, DriftCorrectionData data, DriftCorrectionProcess processor) {
@@ -228,11 +227,10 @@ public class DriftCorrection extends Observable implements Runnable {
                         err_int = err_int + z_err*dt; // Z-correction error integral (use previous error value before calculating one for this loop) 220110
                         z_err = SP - PV; // Z-correction error 220110
                         
-                        if(n<Delay){
+                        if(driftData.getLenZDrift()<Delay){
                             zDrift = (Kp * z_err);
-                            n++;
                         }
-                        else zDrift = (Kp * z_err) - Ki*dt*((driftData.getDelayedZDrift(Delay)-driftData.getLatestZDrift())/(driftData.getDelayedTimeStamp(Delay)-driftData.getLatestTimeStamp()));
+                        else zDrift = (Kp * z_err) - Ki*dt*((driftData.getDelayedZDrift(Delay)-driftData.getLatestZDrift())/(driftData.getDelayedTimeStamp(Delay)-driftData.getLatestTimeStamp())); // updated with predictive term 220117 JE
                         
                         oldTime = getTimeElapsed(); // time of current loop (store for next loop iteration)
                         
@@ -249,8 +247,8 @@ public class DriftCorrection extends Observable implements Runnable {
 
                     // Add data
                     if (isRunning()) {
-                        //if (correctionMode == Z) driftData.addZShift(zDrift, getTimeElapsed());
-                        if (correctionMode == Z) driftData.addPIshift(SP, PV, zDrift, getTimeElapsed()); // for debugging/tuning PI controller parameters
+                        if (correctionMode == Z) driftData.addZShift(zDrift, getTimeElapsed());
+                        //if (correctionMode == Z) driftData.addPIshift(SP, PV, zDrift, getTimeElapsed()); // for debugging/tuning PI controller parameters
                         else if (correctionMode == XY) driftData.addXYshift(xyDrift.x, xyDrift.y, getTimeElapsed());
                         else if (correctionMode == XYZ) driftData.addXYZshift(xyDrift.x, xyDrift.y, zDrift, getTimeElapsed());
                     }
