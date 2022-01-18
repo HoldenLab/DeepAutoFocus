@@ -55,6 +55,7 @@ public class DriftCorrection extends Observable implements Runnable {
     private double threshold;
     private double Kp = 0; // Proportional gain. 190401 kw
     private double Ki = 0; // Integral gain. 220110 kw
+    private double Kl = 1; // Lateral gain 220118 JE
     private double SP = 0; // Z-correction setpoint
     private double PV = 0; // Z-correction process variable
     private double z_err = 0; // Z-correction error (for proportional gain)
@@ -186,8 +187,8 @@ public class DriftCorrection extends Observable implements Runnable {
                     // A static image will have it's correlation map peak in the exact center of the image
                     // A moving image will have the peak shifted in relation to the center
                     // We subtract the rawCenter from the image center to obtain the drift
-                    double x  = (double) rawCenter[0]  - imCentx;
-                    double y  = (double) rawCenter[1]  - imCenty;
+                    double x  = Kl*(double) rawCenter[0]  - imCentx;
+                    double y  = Kl*(double) rawCenter[1]  - imCenty;
                     
                     if (driftData.getflipY()) y = -y; // 201229 kw
                     
@@ -230,7 +231,7 @@ public class DriftCorrection extends Observable implements Runnable {
                         if(driftData.getLenZDrift()<Delay){
                             zDrift = (Kp * z_err);
                         }
-                        else zDrift = (Kp * z_err) - Ki*dt*((driftData.getDelayedZDrift(Delay)-driftData.getLatestZDrift())/(driftData.getDelayedTimeStamp(Delay)-driftData.getLatestTimeStamp())); // updated with predictive term 220117 JE
+                        else zDrift = (Kp * z_err) - Ki*dt*((driftData.getDelayedZDrift(Delay)-driftData.getLatestZDrift())/(driftData.getDelayedTimeStamp(Delay)-driftData.getLatestTimeStamp())); // updated with predictive term 220117 JE // may want to add some averaging of points in the future
                         
                         oldTime = getTimeElapsed(); // time of current loop (store for next loop iteration)
                         
@@ -335,7 +336,12 @@ public class DriftCorrection extends Observable implements Runnable {
         this.Ki = Ki;
     }
     
-    // added 220110 kw
+    // added 220118 JE
+    public void setKl(double Kl){
+        this.Kl = Kl;
+    }
+    
+    // added 220117 JE
     public void setDelay(int Delay){
         this.Delay = Delay;
     }
