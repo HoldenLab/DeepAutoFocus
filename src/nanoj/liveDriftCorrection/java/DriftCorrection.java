@@ -24,6 +24,7 @@ public class DriftCorrection extends Observable implements Runnable {
     
     // added 201230 kw
     private ImageStack resultStack = null;
+    private ImageStack refStackCC = null;
     private ImageProcessor resultImage = null;
     private FloatProcessor ccSliceMiddle = null;
 
@@ -77,8 +78,12 @@ public class DriftCorrection extends Observable implements Runnable {
                     if (driftData.getReferenceImage() == null) driftData.setReferenceImage(snapAndProcess());
                     
                     // If we've just started, get the reference stack (190401 kw)
-                    if (correctionMode == Z || correctionMode == XYZ) {
+                    if (correctionMode == Z || correctionMode == XYZ) {                      
                         if (driftData.getReferenceStack().size() == 0){
+                                           
+                            // set error integral (for PID loop) to zero
+                            err_int = 0;
+                            
                             ImageStack refStack = new ImageStack(
                                 driftData.getReferenceImage().getWidth(),
                                 driftData.getReferenceImage().getHeight()
@@ -96,8 +101,18 @@ public class DriftCorrection extends Observable implements Runnable {
 
                             // Move back to original position
                             hardwareManager.moveFocusStageInSteps(1);
-
-                            // added 190401 kw
+                            
+                            refStackCC = CrossCorrelationMap.calculateCrossCorrelationMap(snapAndProcess(), refStack, true);
+                            
+                            FloatProcessor refCCbottom = refStackCC.getProcessor(3).convertToFloatProcessor();
+                            FloatProcessor refCCmiddle = refStackCC.getProcessor(2).convertToFloatProcessor();
+                            FloatProcessor refCCtop = refStackCC.getProcessor(1).convertToFloatProcessor();
+                            
+                            double refCCbottomMidMax = refCCbottom.getMax();
+                            double refCCtopMidMax = refCCtop.getMax();
+                            double refCCmidMidMax = refCCmiddle.getMax();
+                            
+                            /* added 190401 kw
                             FloatProcessor refSliceBottom = refStack.getProcessor(3).convertToFloatProcessor();
                             FloatProcessor refSliceMiddle = refStack.getProcessor(2).convertToFloatProcessor();
                             FloatProcessor refSliceTop = refStack.getProcessor(1).convertToFloatProcessor();
@@ -113,13 +128,14 @@ public class DriftCorrection extends Observable implements Runnable {
                             // offset maxima because minima usually not at zero
                             double refCCbottomMidMax = refCCbottomMiddle.getMax();
                             double refCCtopMidMax = refCCtopMiddle.getMax();
-                            double refCCmidMidMax = refCCmidMid.getMax();
+                            double refCCmidMidMax = refCCmidMid.getMax();*/
                     
                             // overriding this alpha for now, just using user input value.
                             //alpha = (2*refCCmidMidMax - refCCtopMidMax - refCCbottomMidMax) * hardwareManager.getStepSize() / 2; // eq 6 in McGorty et al. 2013. corrected so that stepsize is in numerator!
                             SP = (refCCtopMidMax - refCCbottomMidMax) / refCCmidMidMax; // Z-correction setpoint
                         
                             driftData.setReferenceStack(refStack);
+
                         }           
 
                         resultStack =
@@ -222,7 +238,7 @@ public class DriftCorrection extends Observable implements Runnable {
                     // Move Z stage to more appropriate position. We get zDrift in microns instead of steps to save later to Data. (added 190403 kw)
                     // Now using PI controller instead of equation in McGorty 2013 paper (220110 kw)
                     if (isRunning() && (correctionMode == Z || correctionMode == XYZ) ) {
-                        dt = getTimeElapsed() - oldTime; // time since last loop iteration
+                        dt = (getTimeElapsed() - oldTime)/1000; // [s] time since last loop iteration
                         err_int = err_int + z_err*dt; // Z-correction error integral (use previous error value before calculating one for this loop) 220110
                         z_err = SP - PV; // Z-correction error 220110
                         
@@ -243,10 +259,17 @@ public class DriftCorrection extends Observable implements Runnable {
 
                     // Add data
                     if (isRunning()) {
-                        //if (correctionMode == Z) driftData.addZShift(zDrift, getTimeElapsed());
-                        if (correctionMode == Z) driftData.addPIshift(SP, PV, zDrift, getTimeElapsed()); // for debugging/tuning PI controller parameters
-                        else if (correctionMode == XY) driftData.addXYshift(xyDrift.x, xyDrift.y, getTimeElapsed());
-                        else if (correctionMode == XYZ) driftData.addXYZshift(xyDrift.x, xyDrift.y, zDrift, getTimeElapsed());
+                        switch (correctionMode) {
+                            case Z:
+                                driftData.addZShift(zDrift, getTimeElapsed());
+                                break;
+                            case XY:
+                                driftData.addXYshift(xyDrift.x, xyDrift.y, getTimeElapsed());
+                                break;
+                            case XYZ:
+                                driftData.addXYZshift(xyDrift.x, xyDrift.y, zDrift, getTimeElapsed());
+                                break;
+                        }
                     }
 
                     // If the acquisition was stopped, clear the reference image.
