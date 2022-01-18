@@ -187,8 +187,8 @@ public class DriftCorrection extends Observable implements Runnable {
                     // A static image will have it's correlation map peak in the exact center of the image
                     // A moving image will have the peak shifted in relation to the center
                     // We subtract the rawCenter from the image center to obtain the drift
-                    double x  = Kl*(double) rawCenter[0]  - imCentx;
-                    double y  = Kl*(double) rawCenter[1]  - imCenty;
+                    double x  = Kl*((double) rawCenter[0]  - imCentx); // updated with gain parameter 220118 JE
+                    double y  = Kl*((double) rawCenter[1]  - imCenty); // updated with gain parameter 220118 JE
                     
                     if (driftData.getflipY()) y = -y; // 201229 kw
                     
