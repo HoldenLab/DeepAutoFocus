@@ -250,8 +250,8 @@ public class DriftCorrection extends Observable implements Runnable {
                     if (isRunning()) {
                         if (correctionMode == Z) driftData.addZShift(zDrift, getTimeElapsed());
                         //if (correctionMode == Z) driftData.addPIshift(SP, PV, zDrift, getTimeElapsed()); // for debugging/tuning PI controller parameters
-                        else if (correctionMode == XY) driftData.addXYshift(xyDrift.x, xyDrift.y, getTimeElapsed());
-                        else if (correctionMode == XYZ) driftData.addXYZshift(xyDrift.x, xyDrift.y, zDrift, getTimeElapsed());
+                        else if (correctionMode == XY) driftData.addXYshift((xyDrift.x)/Kl, (xyDrift.y)/Kl, getTimeElapsed());
+                        else if (correctionMode == XYZ) driftData.addXYZshift((xyDrift.x)/Kl, (xyDrift.y)/Kl, zDrift, getTimeElapsed());
                     }
 
                     // If the acquisition was stopped, clear the reference image.
