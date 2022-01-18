@@ -81,6 +81,13 @@ public class DriftCorrection extends Observable implements Runnable {
                     // If we've just started, get the reference stack (190401 kw)
                     if (correctionMode == Z || correctionMode == XYZ) {
                         if (driftData.getReferenceStack().size() == 0){
+                            
+                            //Initialise variables for new run 220118 JE
+                            SP = 0; 
+                            PV = 0;
+                            z_err = 0;
+                            err_int = 0;
+                            
                             ImageStack refStack = new ImageStack(
                                 driftData.getReferenceImage().getWidth(),
                                 driftData.getReferenceImage().getHeight()
