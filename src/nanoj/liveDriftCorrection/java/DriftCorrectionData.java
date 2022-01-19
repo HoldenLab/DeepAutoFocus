@@ -327,6 +327,26 @@ public class DriftCorrectionData {
         return zDrift.size();
     }
     
+    synchronized double getLatestXDrift() { //220119 JE
+        return xDrift.get(xDrift.size()-1);
+    }
+    
+    synchronized double getDelayedXDrift(int Delay) { //220119 JE
+        return xDrift.get(xDrift.size()-(Delay-1));
+    }
+    
+    synchronized int getLenLDrift() { //220119 JE
+        return xDrift.size();
+    }
+    
+    synchronized double getLatestYDrift() { //220119 JE
+        return yDrift.get(yDrift.size()-1);
+    }
+    
+    synchronized double getDelayedYDrift(int Delay) { //220119 JE
+        return yDrift.get(yDrift.size()-(Delay-1));
+    }
+    
     synchronized double getLatestTimeStamp() { //220117 JE
         return timeStamps.get(timeStamps.size()-1)*60000;
     }

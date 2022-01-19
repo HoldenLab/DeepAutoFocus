@@ -54,11 +54,13 @@ public class DriftCorrection extends Observable implements Runnable {
     private double dt;
     private double threshold;
     private double Kp = 0; // Proportional gain. 190401 kw
-    private double Ki = 0; // Integral gain. 220110 kw
+    private double Kt = 0; // Trend gain. 220118 JE
     private double Kl = 1; // Lateral gain 220118 JE
     private double SP = 0; // Z-correction setpoint
     private double PV = 0; // Z-correction process variable
     private double z_err = 0; // Z-correction error (for proportional gain)
+    private double xErr = 0; // 220119 JE
+    private double yErr = 0; // 220119 JE
     private double err_int = 0; // Z-correction error sum (for integral gain)
     private int Delay = 100;
 
@@ -87,6 +89,8 @@ public class DriftCorrection extends Observable implements Runnable {
                             PV = 0;
                             z_err = 0;
                             err_int = 0;
+                            xErr = 0;
+                            yErr = 0;
                             
                             ImageStack refStack = new ImageStack(
                                 driftData.getReferenceImage().getWidth(),
@@ -194,8 +198,23 @@ public class DriftCorrection extends Observable implements Runnable {
                     // A static image will have it's correlation map peak in the exact center of the image
                     // A moving image will have the peak shifted in relation to the center
                     // We subtract the rawCenter from the image center to obtain the drift
-                    double x  = Kl*((double) rawCenter[0]  - imCentx); // updated with gain parameter 220118 JE
-                    double y  = Kl*((double) rawCenter[1]  - imCenty); // updated with gain parameter 220118 JE
+                    dt = getTimeElapsed() - oldTime;
+                    xErr = (double) rawCenter[0]  - imCentx;
+                    yErr = (double) rawCenter[1]  - imCenty;
+                    
+                    double x = 0;
+                    double y = 0;
+                    
+                    if(driftData.getLenLDrift()<Delay){
+                        x  = Kl*(xErr); // updated with gain parameter 220118 JE
+                        y  = Kl*(yErr); // updated with gain parameter 220118 JE
+                        }
+                    else{
+                        x = (Kl * xErr) - Kt*dt*((driftData.getDelayedXDrift(Delay)-driftData.getLatestXDrift())/(driftData.getDelayedTimeStamp(Delay)-driftData.getLatestTimeStamp()));
+                        y = (Kl * yErr) - Kt*dt*((driftData.getDelayedYDrift(Delay)-driftData.getLatestYDrift())/(driftData.getDelayedTimeStamp(Delay)-driftData.getLatestTimeStamp()));
+                    }
+                    
+                    
                     
                     if (driftData.getflipY()) y = -y; // 201229 kw
                     
@@ -231,19 +250,20 @@ public class DriftCorrection extends Observable implements Runnable {
                     // Move Z stage to more appropriate position. We get zDrift in microns instead of steps to save later to Data. (added 190403 kw)
                     // Now using PI controller instead of equation in McGorty 2013 paper (220110 kw)
                     if (isRunning() && (correctionMode == Z || correctionMode == XYZ) ) {
-                        dt = getTimeElapsed() - oldTime; // time since last loop iteration
                         err_int = err_int + z_err*dt; // Z-correction error integral (use previous error value before calculating one for this loop) 220110
                         z_err = SP - PV; // Z-correction error 220110
                         
                         if(driftData.getLenZDrift()<Delay){
                             zDrift = (Kp * z_err);
                         }
-                        else zDrift = (Kp * z_err) - Ki*dt*((driftData.getDelayedZDrift(Delay)-driftData.getLatestZDrift())/(driftData.getDelayedTimeStamp(Delay)-driftData.getLatestTimeStamp())); // updated with predictive term 220117 JE // may want to add some averaging of points in the future
+                        else zDrift = (Kp * z_err) - Kt*dt*((driftData.getDelayedZDrift(Delay)-driftData.getLatestZDrift())/(driftData.getDelayedTimeStamp(Delay)-driftData.getLatestTimeStamp())); // updated with predictive term 220117 JE // may want to add some averaging of points in the future
                         
-                        oldTime = getTimeElapsed(); // time of current loop (store for next loop iteration)
+                        
                         
                         hardwareManager.moveFocusStage(zDrift);
                     }
+                    
+                    oldTime = getTimeElapsed(); // time of current loop (store for next loop iteration)
 
                     // Move XY stage
                     if (isRunning() && (correctionMode == XY || correctionMode == XYZ) ){
@@ -339,8 +359,8 @@ public class DriftCorrection extends Observable implements Runnable {
     }
     
     // added 220110 kw
-    public void setKi(double Ki){
-        this.Ki = Ki;
+    public void setKt(double Kt){
+        this.Kt = Kt;
     }
     
     // added 220118 JE
