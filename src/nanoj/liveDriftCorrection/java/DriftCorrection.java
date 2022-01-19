@@ -24,6 +24,7 @@ public class DriftCorrection extends Observable implements Runnable {
     
     // added 201230 kw
     private ImageStack resultStack = null;
+    private ImageStack refStackCC = null; //from Kevin's version 220119 JE
     private ImageProcessor resultImage = null;
     private FloatProcessor ccSliceMiddle = null;
 
