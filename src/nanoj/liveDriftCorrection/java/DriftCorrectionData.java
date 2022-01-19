@@ -39,6 +39,7 @@ public class DriftCorrectionData {
     private ArrayList<Double> xDrift = new ArrayList<Double>();
     private ArrayList<Double> yDrift = new ArrayList<Double>();
     private ArrayList<Double> zDrift = new ArrayList<Double>();
+    private ArrayList<Double> zPosition = new ArrayList<Double>(); // current Z position 220111 kw
     private ArrayList<Double> SPdrift = new ArrayList<Double>(); // set point for PI controller 220110
     private ArrayList<Double> PVdrift = new ArrayList<Double>(); // process variable for PI controller 220110
     private ArrayList<Double> OPdrift = new ArrayList<Double>(); // output for PI controller 220110
@@ -128,41 +129,38 @@ public class DriftCorrectionData {
             double[] xShift = ArrayCasting.toArray(this.xDrift, 1d);
             double[] yShift = ArrayCasting.toArray(this.yDrift, 1d);
             double[] zShift = ArrayCasting.toArray(this.zDrift, 1d);
-            double[] SPshift = ArrayCasting.toArray(this.SPdrift, 1d);
-            double[] PVshift = ArrayCasting.toArray(this.PVdrift, 1d);
-            double[] OPshift = ArrayCasting.toArray(this.OPdrift, 1d);
+            double[] zPos = ArrayCasting.toArray(this.zPosition, 1d);
             double[] timeStamps = ArrayCasting.toArray(this.timeStamps, 1d);
 
-            if (dataTypeIs() == Z) {
-                plot = new Plot("Z-drift", "Time (min)", "Z-Drift (microns)", timeStamps, zShift, Plot.LINE);
-                plots.add(plot.getProcessor());
-
-            } else if (dataTypeIs() == XY) {
-                plot = new Plot("X-drift", "Time (min)", "X-Drift (microns)", timeStamps, xShift, Plot.LINE);
-                plots.add(plot.getProcessor());
-                plot = new Plot("Y-drift", "Time (min)", "Y-Drift (microns)", timeStamps, yShift, Plot.LINE);
-                plots.add(plot.getProcessor());
-
-            } else if (dataTypeIs() == XYZ) {
-                plot = new Plot("X-drift", "Time (min)", "X-Drift (microns)", timeStamps, xShift, Plot.LINE);
-                plots.add(plot.getProcessor());
-
-                plot = new Plot("Y-drift", "Time (min)", "Y-Drift (microns)", timeStamps, yShift, Plot.LINE);
-                plots.add(plot.getProcessor());
-
-                plot = new Plot("Z-drift", "Time (min)", "Z-Drift (microns)", timeStamps, zShift, Plot.LINE);
-                plots.add(plot.getProcessor());
+            switch (dataTypeIs()) {
+                case Z:
+                    plot = new Plot("Z drift", "Time (min)", "Total Z Drift (microns)", timeStamps, zShift, Plot.LINE);
+                    plots.add(plot.getProcessor());
                 
-            } else if (dataTypeIs() == PID) {
-                plot = new Plot("SP drift", "Time (min)", "SP drift", timeStamps, SPshift, Plot.LINE);
-                plots.add(plot.getProcessor());
+                    plot = new Plot("Z position", "Time (min)", "Z position (microns)", timeStamps, zPos, Plot.LINE);
+                    plots.add(plot.getProcessor());
+                    
+                    break;
+                case XY:
+                    plot = new Plot("X-drift", "Time (min)", "X-Drift (microns)", timeStamps, xShift, Plot.LINE);
+                    plots.add(plot.getProcessor());
+                    
+                    plot = new Plot("Y-drift", "Time (min)", "Y-Drift (microns)", timeStamps, yShift, Plot.LINE);
+                    plots.add(plot.getProcessor());
+
+                    break;
+                case XYZ:
+                    plot = new Plot("X-drift", "Time (min)", "X-Drift (microns)", timeStamps, xShift, Plot.LINE);
+                    plots.add(plot.getProcessor());
+
+                    plot = new Plot("Y-drift", "Time (min)", "Y-Drift (microns)", timeStamps, yShift, Plot.LINE);
+                    plots.add(plot.getProcessor());
+
+                    plot = new Plot("Z-drift", "Time (min)", "Z-Drift (microns)", timeStamps, zShift, Plot.LINE);
+                    plots.add(plot.getProcessor());
                 
-                plot = new Plot("PV drift", "Time (min)", "PV drift", timeStamps, PVshift, Plot.LINE);
-                plots.add(plot.getProcessor());
-                
-                plot = new Plot("OP drift", "Time (min)", "OP drift", timeStamps, OPshift, Plot.LINE);
-                plots.add(plot.getProcessor());
-            }
+                    break;
+            } 
 
             if (plots.size() > 0) {
                 int width = plots.get(0).getWidth();
@@ -316,6 +314,10 @@ public class DriftCorrectionData {
         this.zDrift = zShift;
     }
     
+    private synchronized void setZPositionData(ArrayList<Double> zPosition) {
+        this.zPosition = zPosition;
+    }
+    
     synchronized double getLatestZDrift() { //220117 JE
         return zDrift.get(zDrift.size()-1);
     }
@@ -359,8 +361,14 @@ public class DriftCorrectionData {
         //if (dataTypeIs() != Z) throw new TypeMismatchException(DATA_MISMATCH_ERROR + dataTypeIs());
         if ( Double.isNaN(zShiftPoint) ) return;
         addTimeStamp(timeStamp);
-        if (zDrift.size() == 0) zDrift.add(zShiftPoint);
-        else zDrift.add(zShiftPoint + zDrift.get(zDrift.size()-1));
+        if (zDrift.size() == 0){
+            zDrift.add(zShiftPoint);
+            zPosition.add(zShiftPoint);
+        }
+        else {
+            zDrift.add(zShiftPoint + zDrift.get(zDrift.size()-1));
+            zPosition.add(zShiftPoint);
+        }
         if (!zDrift.isEmpty()) {
             if (isShowPlotTrue()) showPlots();
             if (isSavePlotsTrue()) {
@@ -484,6 +492,7 @@ public class DriftCorrectionData {
         setXShiftData(xDrift = new ArrayList<Double>());
         setYShiftData(yDrift = new ArrayList<Double>());
         setZShiftData(zDrift = new ArrayList<Double>());
+        setZPositionData(zPosition = new ArrayList<Double>());
         setTimeStamps(timeStamps = new ArrayList<Double>());
     }
 
