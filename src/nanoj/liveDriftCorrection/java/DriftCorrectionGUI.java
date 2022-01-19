@@ -66,8 +66,6 @@ public class DriftCorrectionGUI{
     private static final String STEP_SIZE = "stepSize";
     private static final String KP = "Kp"; // 190404 kw
     private static final String KI = "Ki"; // 220110 kw
-    private static final String KL = "Kl"; // 220118 JE
-    private static final String DELAY = "Delay"; // 220117 JE
     private static final String PERIOD = "period";
     private static final String BOUNDS = "bounds";
     private static final String CAL_STEP_SIZE = "calStepSize"; // 201223 kw
@@ -85,8 +83,6 @@ public class DriftCorrectionGUI{
     private static final String STEP_SIZE_DEFAULT = "1500"; // nanometers
     private static final String KP_DEFAULT = "1"; // 190404 kw
     private static final String KI_DEFAULT = "0.5"; // 220110 kw
-    private static final String KL_DEFAULT = "1"; // 220118 JE
-    private static final String DELAY_DEFAULT = "20"; // 220110 kw
     private static final String PERIOD_DEFAULT = "500"; // milliseconds
     private static final String BOUNDS_DEFAULT = "10"; // microns
     private static final double CAL_DEFAULT = -1;
@@ -113,8 +109,6 @@ public class DriftCorrectionGUI{
     private static final String STEP_SIZE_LABEL = "Step size (nm) for Z correction";
     private static final String KP_LABEL = "Kp (Proportional gain)"; //190404 kw
     private static final String KI_LABEL = "Ki (Integral gain)"; // 220110 kw
-    private static final String KL_LABEL = "Kl (Lateral gain)"; // 220118 JE
-    private static final String DELAY_LABEL = "Gap between points for predictive correction"; // 220117 JE
     private static final String PERIOD_LABEL = "Time between corrections (ms)";
     private static final String BOUNDS_LABEL = "Maximum translation (um)";
     private static final String SEPARATE_STAGES_LABEL = "Separate XY stage devices?";
@@ -222,8 +216,6 @@ public class DriftCorrectionGUI{
     private JTextField stepSizeBox = new DTextField(STEP_SIZE, STEP_SIZE_DEFAULT);
     private JTextField KpBox = new DTextField(KP, KP_DEFAULT); // 190404 kw
     private JTextField KiBox = new DTextField(KI, KI_DEFAULT); // 220110 kw
-    private JTextField KlBox = new DTextField(KL, KL_DEFAULT); // 220110 kw
-    private JTextField DelayBox = new DTextField(DELAY, DELAY_DEFAULT); // 220110 kw
     private JTextField periodBox = new DTextField(PERIOD, PERIOD_DEFAULT);
     private JTextField boundsLimitBox = new DTextField(BOUNDS, BOUNDS_DEFAULT);
     private DeviceList focusDeviceList = new DeviceList(DeviceType.StageDevice, Z_STAGE);
@@ -372,10 +364,6 @@ public class DriftCorrectionGUI{
         configurationPanel.add(KpBox);
         configurationPanel.add(new DLabel(KI_LABEL)); //220110 kw
         configurationPanel.add(KiBox);
-        configurationPanel.add(new DLabel(KL_LABEL)); //220110 kw
-        configurationPanel.add(KlBox);
-        configurationPanel.add(new DLabel(DELAY_LABEL)); //220110 kw
-        configurationPanel.add(DelayBox);
         configurationPanel.add(new DLabel(PERIOD_LABEL));
         configurationPanel.add(periodBox);
         configurationPanel.add(new DLabel(BOUNDS_LABEL));
@@ -466,8 +454,6 @@ public class DriftCorrectionGUI{
         
         driftCorrection.setKp((double) (Double.parseDouble(KpBox.getText()))); //190404 kw
         driftCorrection.setKi((double) (Double.parseDouble(KiBox.getText()))); //220110 kw
-        driftCorrection.setKl((double) (Double.parseDouble(KlBox.getText()))); //220118 JE
-        driftCorrection.setDelay((int) (Double.parseDouble(DelayBox.getText()))); //220117 JE
         driftCorrection.setSleep((long) (Double.parseDouble(periodBox.getText())));
         driftCorrection.setThreshold(Double.parseDouble(boundsLimitBox.getText()));
 
