@@ -151,7 +151,8 @@ public class DriftCorrection extends Observable implements Runnable {
                         // offset maxima because minima not at zero
                         double ccSliceBottomMax = ccSliceBottom.getMax();
                         double ccSliceTopMax = ccSliceTop.getMax();
-                        double ccSliceMiddleMax = ccSliceMiddle.getMax();
+                        //double ccSliceMiddleMax = ccSliceMiddle.getMax();
+                        double ccSliceMiddleMax = getAbsMax(ccSliceMiddle);
                         
                         PV = (ccSliceTopMax - ccSliceBottomMax) / ccSliceMiddleMax; // eq 5 in McGorty et al. 2013
                         
@@ -360,5 +361,23 @@ public class DriftCorrection extends Observable implements Runnable {
 
     public void setThreshold(double threshold) {
         this.threshold = threshold;
+    }
+    
+    // added 220118 kw
+    public double getAbsMax(FloatProcessor fp) {
+        
+        FloatProcessor absFP = fp;
+        absFP.abs();
+        
+        float[] centerPos = EstimateShiftAndTilt.getMaxFindByOptimization(absFP);
+        double centerPos_x = (double) centerPos[0];
+        double centerPos_y = (double) centerPos[1];
+        
+        double maxPos = fp.getInterpolatedPixel(centerPos_x, centerPos_y);
+        
+        // The getMaxFindByOptimization can generate NaN's so we protect against that
+        //if (Double.isNaN(centerPos[0]) || Double.isNaN(centerPos[1]) || Double.isNaN(centerPos[2]))
+
+        return maxPos; // position of the first largest found
     }
 }
