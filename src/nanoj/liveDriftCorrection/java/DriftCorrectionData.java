@@ -357,17 +357,17 @@ public class DriftCorrectionData {
         return timeStamps.get(timeStamps.size()-(Delay-1))*60000;
     }
 
-    synchronized void addZShift(double zShiftPoint, double timeStamp) {
+    synchronized void addZShift(double zShiftPoint, double z_err, double timeStamp) {
         //if (dataTypeIs() != Z) throw new TypeMismatchException(DATA_MISMATCH_ERROR + dataTypeIs());
         if ( Double.isNaN(zShiftPoint) ) return;
         addTimeStamp(timeStamp);
         if (zDrift.size() == 0){
             zDrift.add(zShiftPoint);
-            zPosition.add(zShiftPoint);
+            zPosition.add(z_err);
         }
         else {
             zDrift.add(zShiftPoint + zDrift.get(zDrift.size()-1));
-            zPosition.add(zShiftPoint);
+            zPosition.add(z_err);
         }
         if (!zDrift.isEmpty()) {
             if (isShowPlotTrue()) showPlots();

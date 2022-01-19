@@ -53,6 +53,7 @@ public class DriftCorrection extends Observable implements Runnable {
     private long startTimeStamp;
     private double oldTime;
     private double dt;
+    private double TimeDelay;
     private double threshold;
     private double Kp = 0; // Proportional gain. 190401 kw
     private double Kt = 0; // Trend gain. 220118 JE
@@ -212,7 +213,7 @@ public class DriftCorrection extends Observable implements Runnable {
                     // A static image will have it's correlation map peak in the exact center of the image
                     // A moving image will have the peak shifted in relation to the center
                     // We subtract the rawCenter from the image center to obtain the drift
-                    dt = getTimeElapsed() - oldTime;
+                    dt = (getTimeElapsed() - oldTime)/1000;
                     xErr = (double) rawCenter[0]  - imCentx;
                     yErr = (double) rawCenter[1]  - imCenty;
                     
@@ -224,11 +225,12 @@ public class DriftCorrection extends Observable implements Runnable {
                         y  = Kl*(yErr); // updated with gain parameter 220118 JE
                         }
                     else{
-                        x = (Kl * xErr) - Kt*dt*((driftData.getDelayedXDrift(Delay)-driftData.getLatestXDrift())/(driftData.getDelayedTimeStamp(Delay)-driftData.getLatestTimeStamp()));
-                        y = (Kl * yErr) - Kt*dt*((driftData.getDelayedYDrift(Delay)-driftData.getLatestYDrift())/(driftData.getDelayedTimeStamp(Delay)-driftData.getLatestTimeStamp()));
+                        TimeDelay = (driftData.getDelayedTimeStamp(Delay)-driftData.getLatestTimeStamp())/1000;
+                        x = (Kl * xErr) - Kt*dt*((driftData.getDelayedXDrift(Delay)-driftData.getLatestXDrift())/TimeDelay);
+                        y = (Kl * yErr) - Kt*dt*((driftData.getDelayedYDrift(Delay)-driftData.getLatestYDrift())/TimeDelay);
                     }
                     
-                    
+                    oldTime = getTimeElapsed(); // time of current loop (store for next loop iteration)
                     
                     if (driftData.getflipY()) y = -y; // 201229 kw
                     
@@ -270,14 +272,12 @@ public class DriftCorrection extends Observable implements Runnable {
                         if(driftData.getLenZDrift()<Delay){
                             zDrift = (Kp * z_err);
                         }
-                        else zDrift = (Kp * z_err) - Kt*dt*((driftData.getDelayedZDrift(Delay)-driftData.getLatestZDrift())/(driftData.getDelayedTimeStamp(Delay)-driftData.getLatestTimeStamp())); // updated with predictive term 220117 JE // may want to add some averaging of points in the future
+                        else zDrift = (Kp * z_err) - Kt*dt*((driftData.getDelayedZDrift(Delay)-driftData.getLatestZDrift())/TimeDelay); // updated with predictive term 220117 JE // may want to add some averaging of points in the future
                         
                         
                         
                         hardwareManager.moveFocusStage(zDrift);
                     }
-                    
-                    oldTime = getTimeElapsed(); // time of current loop (store for next loop iteration)
 
                     // Move XY stage
                     if (isRunning() && (correctionMode == XY || correctionMode == XYZ) ){
@@ -289,7 +289,7 @@ public class DriftCorrection extends Observable implements Runnable {
 
                     // Add data
                     if (isRunning()) {
-                        if (correctionMode == Z) driftData.addZShift(zDrift, getTimeElapsed());
+                        if (correctionMode == Z) driftData.addZShift(zDrift, z_err, getTimeElapsed());
                         //if (correctionMode == Z) driftData.addPIshift(SP, PV, zDrift, getTimeElapsed()); // for debugging/tuning PI controller parameters
                         else if (correctionMode == XY) driftData.addXYshift((xyDrift.x)/Kl, (xyDrift.y)/Kl, getTimeElapsed());
                         else if (correctionMode == XYZ) driftData.addXYZshift((xyDrift.x)/Kl, (xyDrift.y)/Kl, zDrift, getTimeElapsed());
