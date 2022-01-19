@@ -78,7 +78,12 @@ public class DriftCorrection extends Observable implements Runnable {
                 while (isRunning()) {
                     long startRun = System.currentTimeMillis();
                     // If we've just started, get the reference image
-                    if (driftData.getReferenceImage() == null) driftData.setReferenceImage(snapAndProcess());
+                    if (driftData.getReferenceImage() == null){
+                        driftData.setReferenceImage(snapAndProcess());
+                        //Initialise variables for new run 220119 JE
+                        xErr = 0;
+                        yErr = 0;
+                    } 
                     
                     // If we've just started, get the reference stack (190401 kw)
                     if (correctionMode == Z || correctionMode == XYZ) {
@@ -89,8 +94,6 @@ public class DriftCorrection extends Observable implements Runnable {
                             PV = 0;
                             z_err = 0;
                             err_int = 0;
-                            xErr = 0;
-                            yErr = 0;
                             
                             ImageStack refStack = new ImageStack(
                                 driftData.getReferenceImage().getWidth(),
@@ -110,7 +113,17 @@ public class DriftCorrection extends Observable implements Runnable {
                             // Move back to original position
                             hardwareManager.moveFocusStageInSteps(1);
 
-                            // added 190401 kw
+                            refStackCC = CrossCorrelationMap.calculateCrossCorrelationMap(snapAndProcess(), refStack, true);
+                            
+                            FloatProcessor refCCbottom = refStackCC.getProcessor(3).convertToFloatProcessor();
+                            FloatProcessor refCCmiddle = refStackCC.getProcessor(2).convertToFloatProcessor();
+                            FloatProcessor refCCtop = refStackCC.getProcessor(1).convertToFloatProcessor();
+                            
+                            double refCCbottomMidMax = refCCbottom.getMax();
+                            double refCCtopMidMax = refCCtop.getMax();
+                            double refCCmidMidMax = refCCmiddle.getMax();
+
+                            /* added 190401 kw
                             FloatProcessor refSliceBottom = refStack.getProcessor(3).convertToFloatProcessor();
                             FloatProcessor refSliceMiddle = refStack.getProcessor(2).convertToFloatProcessor();
                             FloatProcessor refSliceTop = refStack.getProcessor(1).convertToFloatProcessor();
@@ -126,7 +139,7 @@ public class DriftCorrection extends Observable implements Runnable {
                             // offset maxima because minima usually not at zero
                             double refCCbottomMidMax = refCCbottomMiddle.getMax();
                             double refCCtopMidMax = refCCtopMiddle.getMax();
-                            double refCCmidMidMax = refCCmidMid.getMax();
+                            double refCCmidMidMax = refCCmidMid.getMax();*/
                     
                             // overriding this alpha for now, just using user input value.
                             //alpha = (2*refCCmidMidMax - refCCtopMidMax - refCCbottomMidMax) * hardwareManager.getStepSize() / 2; // eq 6 in McGorty et al. 2013. corrected so that stepsize is in numerator!
