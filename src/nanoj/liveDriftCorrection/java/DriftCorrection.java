@@ -225,9 +225,9 @@ public class DriftCorrection extends Observable implements Runnable {
                         y  = Kl*(yErr); // updated with gain parameter 220118 JE
                         }
                     else{
-                        TimeDelay = (driftData.getDelayedTimeStamp(Delay)-driftData.getLatestTimeStamp())/1000;
-                        x = (Kl * xErr) - Kt*dt*((driftData.getDelayedXDrift(Delay)-driftData.getLatestXDrift())/TimeDelay);
-                        y = (Kl * yErr) - Kt*dt*((driftData.getDelayedYDrift(Delay)-driftData.getLatestYDrift())/TimeDelay);
+                        TimeDelay = (driftData.getLatestTimeStamp()-driftData.getDelayedTimeStamp(Delay))/1000;
+                        x = (Kl * xErr) - Kt*dt*((driftData.getLatestXDrift()-driftData.getDelayedXDrift(Delay))/TimeDelay);
+                        y = (Kl * yErr) - Kt*dt*((driftData.getLatestYDrift()-driftData.getDelayedYDrift(Delay))/TimeDelay);
                     }
                     
                     oldTime = getTimeElapsed(); // time of current loop (store for next loop iteration)
@@ -272,7 +272,7 @@ public class DriftCorrection extends Observable implements Runnable {
                         if(driftData.getLenZDrift()<Delay){
                             zDrift = (Kp * z_err);
                         }
-                        else zDrift = (Kp * z_err) - Kt*dt*((driftData.getDelayedZDrift(Delay)-driftData.getLatestZDrift())/TimeDelay); // updated with predictive term 220117 JE // may want to add some averaging of points in the future
+                        else zDrift = (Kp * z_err) - Kt*dt*((driftData.getLatestZDrift()-driftData.getDelayedZDrift(Delay))/TimeDelay); // updated with predictive term 220117 JE // may want to add some averaging of points in the future
                         
                         
                         
