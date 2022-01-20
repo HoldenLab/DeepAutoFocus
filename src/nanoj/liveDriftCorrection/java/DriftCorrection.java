@@ -220,12 +220,12 @@ public class DriftCorrection extends Observable implements Runnable {
                     double x = 0;
                     double y = 0;
                     
-                    if(driftData.getLenLDrift()<Delay){
+                    if(driftData.getLenLDrift()<Delay+1){
                         x  = Kl*(xErr); // updated with gain parameter 220118 JE
                         y  = Kl*(yErr); // updated with gain parameter 220118 JE
                         }
                     else{
-                        TimeDelay = (driftData.getLatestTimeStamp()-driftData.getDelayedTimeStamp(Delay))/1000;
+                        TimeDelay = driftData.getLatestTimeStamp()-driftData.getDelayedTimeStamp(Delay);
                         x = (Kl * xErr) - Kt*dt*((driftData.getLatestXDrift()-driftData.getDelayedXDrift(Delay))/TimeDelay);
                         y = (Kl * yErr) - Kt*dt*((driftData.getLatestYDrift()-driftData.getDelayedYDrift(Delay))/TimeDelay);
                     }
@@ -269,12 +269,10 @@ public class DriftCorrection extends Observable implements Runnable {
                         err_int = err_int + z_err*dt; // Z-correction error integral (use previous error value before calculating one for this loop) 220110
                         z_err = SP - PV; // Z-correction error 220110
                         
-                        if(driftData.getLenZDrift()<Delay){
+                        if(driftData.getLenZDrift()<Delay+1){
                             zDrift = (Kp * z_err);
                         }
                         else zDrift = (Kp * z_err) - Kt*dt*((driftData.getLatestZDrift()-driftData.getDelayedZDrift(Delay))/TimeDelay); // updated with predictive term 220117 JE // may want to add some averaging of points in the future
-                        
-                        
                         
                         hardwareManager.moveFocusStage(zDrift);
                     }
@@ -291,8 +289,8 @@ public class DriftCorrection extends Observable implements Runnable {
                     if (isRunning()) {
                         if (correctionMode == Z) driftData.addZShift(zDrift, z_err, getTimeElapsed());
                         //if (correctionMode == Z) driftData.addPIshift(SP, PV, zDrift, getTimeElapsed()); // for debugging/tuning PI controller parameters
-                        else if (correctionMode == XY) driftData.addXYshift((xyDrift.x)/Kl, (xyDrift.y)/Kl, getTimeElapsed());
-                        else if (correctionMode == XYZ) driftData.addXYZshift((xyDrift.x)/Kl, (xyDrift.y)/Kl, zDrift, getTimeElapsed());
+                        else if (correctionMode == XY) driftData.addXYshift((xyDrift.x), (xyDrift.y), getTimeElapsed());
+                        else if (correctionMode == XYZ) driftData.addXYZshift((xyDrift.x), (xyDrift.y), zDrift, getTimeElapsed());
                     }
 
                     // If the acquisition was stopped, clear the reference image.

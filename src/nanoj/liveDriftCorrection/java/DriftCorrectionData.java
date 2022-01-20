@@ -323,18 +323,18 @@ public class DriftCorrectionData {
     }
     
     synchronized double getDelayedZDrift(int Delay) { //220117 JE
-        return zDrift.get(zDrift.size()-(Delay-1));
+        return zDrift.get(zDrift.size()-(Delay+1));
     }
     synchronized int getLenZDrift() { //220117 JE
         return zDrift.size();
     }
     
     synchronized double getLatestXDrift() { //220119 JE
-        return xDrift.get(xDrift.size()-1);
+        return xDrift.get(xDrift.size()+1);
     }
     
     synchronized double getDelayedXDrift(int Delay) { //220119 JE
-        return xDrift.get(xDrift.size()-(Delay-1));
+        return xDrift.get(xDrift.size()-(Delay+1));
     }
     
     synchronized int getLenLDrift() { //220119 JE
@@ -346,15 +346,15 @@ public class DriftCorrectionData {
     }
     
     synchronized double getDelayedYDrift(int Delay) { //220119 JE
-        return yDrift.get(yDrift.size()-(Delay-1));
+        return yDrift.get(yDrift.size()-(Delay+1));
     }
     
     synchronized double getLatestTimeStamp() { //220117 JE
-        return timeStamps.get(timeStamps.size()-1)*60000;
+        return timeStamps.get(timeStamps.size()-1)*60; //returns seconds
     }
     
     synchronized double getDelayedTimeStamp(int Delay) { //220117 JE
-        return timeStamps.get(timeStamps.size()-(Delay-1))*60000;
+        return timeStamps.get(timeStamps.size()-(Delay+1))*60; //returns seconds
     }
 
     synchronized void addZShift(double zShiftPoint, double z_err, double timeStamp) {
@@ -382,7 +382,6 @@ public class DriftCorrectionData {
         //if (dataTypeIs() != XY) throw new TypeMismatchException(DATA_MISMATCH_ERROR + dataTypeIs());
         if ( Double.isNaN(xShiftPoint) || Double.isNaN(yShiftPoint) ) return;
         addTimeStamp(timeStamp);
-
         addXYPoint(xShiftPoint, yShiftPoint);
 
         if (!xDrift.isEmpty()) {
