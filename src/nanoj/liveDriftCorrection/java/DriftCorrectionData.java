@@ -318,42 +318,42 @@ public class DriftCorrectionData {
         this.zPosition = zPosition;
     }
     
-    synchronized double getLatestZDrift() { //220117 JE
+    public synchronized double getLatestZDrift() { //220117 JE
         return zDrift.get(zDrift.size()-1);
     }
     
-    synchronized double getDelayedZDrift(int Delay) { //220117 JE
+    public synchronized double getDelayedZDrift(int Delay) { //220117 JE
         return zDrift.get(zDrift.size()-(Delay+1));
     }
-    synchronized int getLenZDrift() { //220117 JE
+    public synchronized int getLenZDrift() { //220117 JE
         return zDrift.size();
     }
     
-    synchronized double getLatestXDrift() { //220119 JE
+    public synchronized double getLatestXDrift() { //220119 JE
         return xDrift.get(xDrift.size()+1);
     }
     
-    synchronized double getDelayedXDrift(int Delay) { //220119 JE
+    public synchronized double getDelayedXDrift(int Delay) { //220119 JE
         return xDrift.get(xDrift.size()-(Delay+1));
     }
     
-    synchronized int getLenLDrift() { //220119 JE
+    public synchronized int getLenLDrift() { //220119 JE
         return xDrift.size();
     }
     
-    synchronized double getLatestYDrift() { //220119 JE
+    public synchronized double getLatestYDrift() { //220119 JE
         return yDrift.get(yDrift.size()-1);
     }
     
-    synchronized double getDelayedYDrift(int Delay) { //220119 JE
+    public synchronized double getDelayedYDrift(int Delay) { //220119 JE
         return yDrift.get(yDrift.size()-(Delay+1));
     }
     
-    synchronized double getLatestTimeStamp() { //220117 JE
+    public synchronized double getLatestTimeStamp() { //220117 JE
         return timeStamps.get(timeStamps.size()-1)*60; //returns seconds
     }
     
-    synchronized double getDelayedTimeStamp(int Delay) { //220117 JE
+    public synchronized double getDelayedTimeStamp(int Delay) { //220117 JE
         return timeStamps.get(timeStamps.size()-(Delay+1))*60; //returns seconds
     }
 
