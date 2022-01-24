@@ -350,17 +350,18 @@ public class DriftCorrectionData {
     }
     
     public synchronized double getLatestTimeStamp() { //220117 JE
-        return timeStamps.get(timeStamps.size()-1)*60; //returns seconds
+        return this.timeStamps.get(this.timeStamps.size()-1)/1000; //returns seconds
     }
     
     public synchronized double getDelayedTimeStamp(int Delay) { //220117 JE
-        return timeStamps.get(timeStamps.size()-(Delay+1))*60; //returns seconds
+        return this.timeStamps.get(this.timeStamps.size()-(Delay+1))/1000; //returns seconds
     }
 
     synchronized void addZShift(double zShiftPoint, double z_err, double timeStamp) {
         //if (dataTypeIs() != Z) throw new TypeMismatchException(DATA_MISMATCH_ERROR + dataTypeIs());
         if ( Double.isNaN(zShiftPoint) ) return;
-        addTimeStamp(timeStamp);
+        //addTimeStamp(timeStamp);
+        timeStamps.add(timeStamp);
         if (zDrift.size() == 0){
             zDrift.add(zShiftPoint);
             zPosition.add(z_err);
