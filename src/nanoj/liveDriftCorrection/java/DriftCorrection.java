@@ -148,7 +148,7 @@ public class DriftCorrection extends Observable implements Runnable {
                             SP = (refCCtopMidMax - refCCbottomMidMax) / refCCmidMidMax; // Z-correction setpoint
                         
                             driftData.setReferenceStack(refStack);
-                        }           
+                        }
 
                         resultStack =
                             CrossCorrelationMap.calculateCrossCorrelationMap(
@@ -219,15 +219,18 @@ public class DriftCorrection extends Observable implements Runnable {
                     
                     double x = 0;
                     double y = 0;
-                    
-                    if(driftData.getLenLDrift()<Delay+1){
-                        x  = Kl*(xErr); // updated with gain parameter 220118 JE
-                        y  = Kl*(yErr); // updated with gain parameter 220118 JE
-                        }
-                    else{
+                    if(driftData.getLenTimeStamps()>Delay+1){
                         TimeDelay = driftData.getLatestTimeStamp()-driftData.getDelayedTimeStamp(Delay);
-                        x = (Kl * xErr) - Kt*dt*((driftData.getLatestXDrift()-driftData.getDelayedXDrift(Delay))/TimeDelay);
-                        y = (Kl * yErr) - Kt*dt*((driftData.getLatestYDrift()-driftData.getDelayedYDrift(Delay))/TimeDelay);
+                    }
+                    if (correctionMode == XY || correctionMode == XYZ){
+                        if(driftData.getLenTimeStamps()<=Delay+1){
+                            x  = Kl*(xErr); // updated with gain parameter 220118 JE
+                            y  = Kl*(yErr); // updated with gain parameter 220118 JE
+                        }
+                        else{                        
+                            x = (Kl * xErr) - Kt*dt*((driftData.getLatestXDrift()-driftData.getDelayedXDrift(Delay))/TimeDelay);
+                            y = (Kl * yErr) - Kt*dt*((driftData.getLatestYDrift()-driftData.getDelayedYDrift(Delay))/TimeDelay);
+                        }
                     }
                     
                     oldTime = getTimeElapsed(); // time of current loop (store for next loop iteration)
@@ -269,7 +272,8 @@ public class DriftCorrection extends Observable implements Runnable {
                         err_int = err_int + z_err*dt; // Z-correction error integral (use previous error value before calculating one for this loop) 220110
                         z_err = SP - PV; // Z-correction error 220110
                         
-                        if(driftData.getLenZDrift()<Delay+1){
+                        if(driftData.getLenTimeStamps()<=Delay+1){
+                            //ReportingUtils.showMessage("T " + driftData.getLenTimeStamps() + ", Z" +driftData.getLenZDrift());
                             zDrift = (Kp * z_err);
                         }
                         else zDrift = (Kp * z_err) - Kt*dt*((driftData.getLatestZDrift()-driftData.getDelayedZDrift(Delay))/TimeDelay); // updated with predictive term 220117 JE // may want to add some averaging of points in the future
