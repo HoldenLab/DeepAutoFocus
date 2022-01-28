@@ -285,13 +285,24 @@ public class DriftCorrection extends Observable implements Runnable {
                         hardwareManager.moveXYStage(xyDriftCorr);
                     }
 
-                    // Add data
-                    if (isRunning()) {
-                        if (correctionMode == Z) driftData.addZShift(zDrift, z_err, getTimeElapsed());
-                        //if (correctionMode == Z) driftData.addPIshift(SP, PV, zDrift, getTimeElapsed()); // for debugging/tuning PI controller parameters
-                        else if (correctionMode == XY) driftData.addXYshift((xyDrift.x), (xyDrift.y), getTimeElapsed());
-                        else if (correctionMode == XYZ) driftData.addXYZshift((xyDrift.x), (xyDrift.y), zDrift, getTimeElapsed());
+                    // Add data //changed to switch statement from ifs 220128 JE
+                    switch(correctionMode){
+                        case Z:
+                             driftData.addZShift(zDrift, z_err, getTimeElapsed());
+                             break;
+                        case XY:
+                            driftData.addXYshift((xyDrift.x), (xyDrift.y), getTimeElapsed());
+                            break;
+                        case XYZ:
+                            driftData.addXYZshift((xyDrift.x), (xyDrift.y), zDrift, getTimeElapsed());
+                            break;
                     }
+//                    if (isRunning()) {
+//                        if (correctionMode == Z) driftData.addZShift(zDrift, z_err, getTimeElapsed());
+                        //if (correctionMode == Z) driftData.addPIshift(SP, PV, zDrift, getTimeElapsed()); // for debugging/tuning PI controller parameters
+//                        else if (correctionMode == XY) driftData.addXYshift((xyDrift.x), (xyDrift.y), getTimeElapsed());
+//                        else if (correctionMode == XYZ) driftData.addXYZshift((xyDrift.x), (xyDrift.y), zDrift, getTimeElapsed());
+//                    }
 
                     // If the acquisition was stopped, clear the reference image.
                     if (!isRunning()) {
