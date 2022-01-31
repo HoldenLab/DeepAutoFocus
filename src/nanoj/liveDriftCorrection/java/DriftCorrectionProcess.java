@@ -98,9 +98,9 @@ public class DriftCorrectionProcess implements Measurements {
     }
     
     public double CenterHeightFind(FloatProcessor image){ // 220131 JE
-        int x = image.getWidth()/2 - 1;
-        int y = image.getHeight()/2 - 1;
-        image.setRoi(x,y, 3, 3);
+        int x = image.getWidth()/2 - 3;
+        int y = image.getHeight()/2 - 3;
+        image.setRoi(x,y, 7, 7);
         FloatProcessor region = image.crop().convertToFloatProcessor();
         region.smooth();
         region.abs();
