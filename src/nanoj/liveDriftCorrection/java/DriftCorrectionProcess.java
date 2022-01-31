@@ -104,7 +104,6 @@ public class DriftCorrectionProcess implements Measurements {
         FloatProcessor region = image.crop().convertToFloatProcessor();
         region.smooth();
         region.abs();
-        double MaxPix = region.getMax();
         float[] max = CalculateImageStatistics.getMax(region);
         int xMax = (int) max[0];
         int yMax = (int) max[1];
