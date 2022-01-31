@@ -25,6 +25,8 @@ public class DriftCorrection extends Observable implements Runnable {
     // added 201230 kw
     private ImageStack resultStack = null;
     private ImageStack refStackCC = null; //from Kevin's version 220119 JE
+    private ImageStack refTopTopCC = null; // 220131 JE
+    private ImageStack refBottomBottomCC = null; // 220131 JE
     private ImageProcessor resultImage = null;
     private FloatProcessor ccSliceMiddle = null;
 
@@ -65,6 +67,9 @@ public class DriftCorrection extends Observable implements Runnable {
     private double xErr = 0; // 220119 JE
     private double yErr = 0; // 220119 JE
     private int Delay = 100;
+    private double Top = 0; // 220131 JE
+    private double Bottom = 0; // 220131 JE
+    private double Middle = 0; // 220131 JE
 
 
     public DriftCorrection(DriftCorrectionHardware manager, DriftCorrectionData data, DriftCorrectionProcess processor) {
@@ -114,15 +119,26 @@ public class DriftCorrection extends Observable implements Runnable {
                             // Move back to original position
                             hardwareManager.moveFocusStageInSteps(1);
 
-                            refStackCC = CrossCorrelationMap.calculateCrossCorrelationMap(snapAndProcess(), refStack, true);
+                            //refStackCC = CrossCorrelationMap.calculateCrossCorrelationMap(snapAndProcess(), refStack, true);
+                            refStackCC = CrossCorrelationMap.calculateCrossCorrelationMap(refStackCC.getProcessor(1).convertToFloatProcessor(), refStack, true);
+                            refTopTopCC = CrossCorrelationMap.calculateCrossCorrelationMap(refStackCC.getProcessor(2).convertToFloatProcessor(), refStackCC.getProcessor(2).convertToFloatProcessor(), true);
+                            refBottomBottomCC = CrossCorrelationMap.calculateCrossCorrelationMap(refStackCC.getProcessor(3).convertToFloatProcessor(), refStackCC.getProcessor(3).convertToFloatProcessor(), true);
                             
                             FloatProcessor refCCbottom = refStackCC.getProcessor(3).convertToFloatProcessor();
                             FloatProcessor refCCmiddle = refStackCC.getProcessor(2).convertToFloatProcessor();
                             FloatProcessor refCCtop = refStackCC.getProcessor(1).convertToFloatProcessor();
+                            FloatProcessor refTopTopProc = refTopTopCC.convertToFloatProcessor();
+                            FloatProcessor refBottomBottomProc = refBottomBottomCC.convertToFloatProcessor();
                             
-                            double refCCbottomMidMax = refCCbottom.getMax();
-                            double refCCtopMidMax = refCCtop.getMax();
-                            double refCCmidMidMax = refCCmiddle.getMax();
+                            //double refCCbottomMidMax = refCCbottom.getMax();
+                            //double refCCtopMidMax = refCCtop.getMax();
+                            //double refCCmidMidMax = refCCmiddle.getMax();
+                            
+                            double refCCbottomMidMax = Process.CenterHeightFind(refCCbottom);
+                            double refCCtopMidMax = Process.CenterHeightFind(refCCtop);
+                            double refCCmidMidMax = Process.CenterHeightFind(refCCmiddle);
+                            double refCCTopTopMax = Process.CenterHeightFind(refTopTopProc);
+                            double refCCBottomBottomMax = Process.CenterHeightFind(refBottomBottomProc);
 
                             /* added 190401 kw
                             FloatProcessor refSliceBottom = refStack.getProcessor(3).convertToFloatProcessor();
@@ -144,14 +160,18 @@ public class DriftCorrection extends Observable implements Runnable {
                     
                             // overriding this alpha for now, just using user input value.
                             //alpha = (2*refCCmidMidMax - refCCtopMidMax - refCCbottomMidMax) * hardwareManager.getStepSize() / 2; // eq 6 in McGorty et al. 2013. corrected so that stepsize is in numerator!
-                            SP = (refCCtopMidMax - refCCbottomMidMax) / refCCmidMidMax; // Z-correction setpoint
+                            
+                            Top = (refCCtopMidMax/refCCTopTopMax)+0.6
+                            Bottom = (refCCbottomMidMax/refCCBottomBottomMax)+0.6
+                            Middle = (refCCmidMidMax/refCCmidMidMax)+0.6
+                            SP = (Top - Bottom) / Middle; // Z-correction setpoint
+
+                            //SP = (refCCtopMidMax - refCCbottomMidMax) / refCCmidMidMax; // Z-correction setpoint
                         
                             driftData.setReferenceStack(refStack);
                         }
 
-                        resultStack =
-                            CrossCorrelationMap.calculateCrossCorrelationMap(
-                                    snapAndProcess(), driftData.getReferenceStack(), true);
+                        resultStack = CrossCorrelationMap.calculateCrossCorrelationMap(snapAndProcess(), driftData.getReferenceStack(), true);
                         driftData.setResultMap(resultStack);
 
                         // Measure XYZ drift
@@ -160,11 +180,21 @@ public class DriftCorrection extends Observable implements Runnable {
                         FloatProcessor ccSliceTop = resultStack.getProcessor(1).convertToFloatProcessor();
                         
                         // offset maxima because minima not at zero
-                        double ccSliceBottomMax = ccSliceBottom.getMax();
-                        double ccSliceTopMax = ccSliceTop.getMax();
-                        double ccSliceMiddleMax = ccSliceMiddle.getMax();
+                        //double ccSliceBottomMax = ccSliceBottom.getMax();
+                        //double ccSliceTopMax = ccSliceTop.getMax();
+                        //double ccSliceMiddleMax = ccSliceMiddle.getMax();
+
+                        double ccSliceBottomMax = Process.CenterHeightFind(ccSliceBottom);
+                        double ccSliceTopMax = Process.CenterHeightFind(ccSliceTop);
+                        double ccSliceMiddleMax = Process.CenterHeightFind(ccSliceMiddle);
+
+                        Top = (ccSliceTopMax/refCCTopTopMax)+0.6
+                        Bottom = (ccSliceBottomMax/refCCBottomBottomMax)+0.6
+                        Middle = (ccSliceMiddleMax/refCCmidMidMax)+0.6
                         
-                        PV = (ccSliceTopMax - ccSliceBottomMax) / ccSliceMiddleMax; // eq 5 in McGorty et al. 2013
+                        PV = (Top - Bottom) / Middle // eq 5 in McGorty et al. 2013 // 220131 JE
+
+                        //PV = (ccSliceTopMax - ccSliceBottomMax) / ccSliceMiddleMax; // eq 5 in McGorty et al. 2013
                         
                         imCentx = resultStack.getWidth()/2;
                         imCenty = resultStack.getHeight()/2;
