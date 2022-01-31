@@ -61,9 +61,9 @@ public class DriftCorrection extends Observable implements Runnable {
     private double SP = 0; // Z-correction setpoint
     private double PV = 0; // Z-correction process variable
     private double z_err = 0; // Z-correction error (for proportional gain)
+    private double lin_zDrift = 0; // Z-correction error (for proportional gain)
     private double xErr = 0; // 220119 JE
     private double yErr = 0; // 220119 JE
-    private double err_int = 0; // Z-correction error sum (for integral gain)
     private int Delay = 100;
 
 
@@ -95,7 +95,6 @@ public class DriftCorrection extends Observable implements Runnable {
                             SP = 0; 
                             PV = 0;
                             z_err = 0;
-                            err_int = 0;
                             
                             ImageStack refStack = new ImageStack(
                                 driftData.getReferenceImage().getWidth(),
@@ -269,15 +268,16 @@ public class DriftCorrection extends Observable implements Runnable {
                     // Move Z stage to more appropriate position. We get zDrift in microns instead of steps to save later to Data. (added 190403 kw)
                     // Now using PI controller instead of equation in McGorty 2013 paper (220110 kw)
                     if (isRunning() && (correctionMode == Z || correctionMode == XYZ) ) {
-                        err_int = err_int + z_err*dt; // Z-correction error integral (use previous error value before calculating one for this loop) 220110
                         z_err = SP - PV; // Z-correction error 220110
                         
                         if(driftData.getLenTimeStamps()<=Delay+1){
-                            //ReportingUtils.showMessage("T " + driftData.getLenTimeStamps() + ", Z" +driftData.getLenZDrift());
                             zDrift = (Kp * z_err);
                         }
-                        else zDrift = (Kp * z_err) - Kt*dt*((driftData.getLatestZDrift()-driftData.getDelayedZDrift(Delay))/TimeDelay); // updated with predictive term 220117 JE // may want to add some averaging of points in the future
-                        
+                        else{
+                            //lin_zDrift = Kt*dt*((driftData.getLatestZDrift()-driftData.getDelayedZDrift(Delay))/TimeDelay);
+                            //zDrift = (Kp * (z_err)) + lin_zDrift;
+                            zDrift = (Kp * z_err) + Kt*dt*((driftData.getLatestZDrift()-driftData.getDelayedZDrift(Delay))/TimeDelay); // updated with predictive term 220117 JE // may want to add some averaging of points in the future
+                        }
                         hardwareManager.moveFocusStage(zDrift);
                     }
 

@@ -319,12 +319,15 @@ public class DriftCorrectionData {
     }
     
     public synchronized double getLatestZDrift() { //220117 JE
-        return zDrift.get(zDrift.size()-1);
+        return PointMean(zDrift, zDrift.size()-1,2);
+        //return zDrift.get(zDrift.size()-1);
     }
     
     public synchronized double getDelayedZDrift(int Delay) { //220117 JE
-        return zDrift.get(zDrift.size()-(Delay+1));
+        return PointMean(zDrift, zDrift.size()-(Delay+1),3);
+        //return zDrift.get(zDrift.size()-(Delay+1));
     }
+    
     public synchronized int getLenTimeStamps() { //220117 JE
         return timeStamps.size();
     }
@@ -496,4 +499,12 @@ public class DriftCorrectionData {
         setTimeStamps(timeStamps = new ArrayList<Double>());
     }
 
+    public double PointMean(ArrayList<Double> DataList, int index, int range) {
+        double[] Data = ArrayCasting.toArray(DataList, 1d);
+        double sum = 0;
+        for (int i = index-1; i < index+(range-1); i++) {
+            sum += Data[i];
+        }
+        return sum / 3;
+    }
 }
