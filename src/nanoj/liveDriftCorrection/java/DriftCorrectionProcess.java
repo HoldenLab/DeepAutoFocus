@@ -6,6 +6,7 @@ import ij.process.FHT;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import nanoj.core.java.image.calculator.FloatProcessorCalculator;
+import nanoj.core.java.image.analysis.CalculateImageStatistics;
 
 import java.awt.*;
 
@@ -94,6 +95,22 @@ public class DriftCorrectionProcess implements Measurements {
         int height = image.getHeight() - edgeClip*2;
         image.setRoi(edgeClip,edgeClip, width, height);
         return image.crop().convertToFloatProcessor();
+    }
+    
+    public double CenterHeightFind(FloatProcessor image){ // 220131 JE
+        int x = image.getWidth()/2 - 1;
+        int y = image.getHeight()/2 - 1;
+        image.setRoi(x,y, 3, 3);
+        FloatProcessor region = image.crop().convertToFloatProcessor();
+        region.smooth();
+        region.abs();
+        double MaxPix = region.getMax();
+        float[] max = CalculateImageStatistics.getMax(region);
+        int xMax = (int) max[0];
+        int yMax = (int) max[1];
+        double PeakPix = region.getPixelValue(xMax,yMax);
+        
+        return PeakPix;
     }
 
     public FloatProcessor backgroundCorrect(FloatProcessor image) throws Exception {
