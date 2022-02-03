@@ -55,7 +55,8 @@ public class DriftCorrection extends Observable implements Runnable {
     private long startTimeStamp;
     private double oldTime;
     private double dt;
-    private double TimeDelay;
+    private double LongTimeDelay;
+    private double ShortTimeDelay;
     private double threshold;
     private double Kp = 0; // Proportional gain. 190401 kw
     private double Kt = 0; // Trend gain. 220118 JE
@@ -255,16 +256,19 @@ public class DriftCorrection extends Observable implements Runnable {
                     double x = 0;
                     double y = 0;
                     if(driftData.getLenTimeStamps()>Delay+1){
-                        TimeDelay = driftData.getLatestTimeStamp()-driftData.getDelayedTimeStamp(Delay);
+                        LongTimeDelay = driftData.getLatestTimeStamp()-driftData.getDelayedTimeStamp(Delay);
+                        ShortTimeDelay = driftData.getLatestTimeStamp()-driftData.getDelayedTimeStamp(Delay/10);
                     }
                     if (correctionMode == XY || correctionMode == XYZ){
                         if(driftData.getLenTimeStamps()<=Delay+1){
                             x  = Kl*(xErr); // updated with gain parameter 220118 JE
                             y  = Kl*(yErr); // updated with gain parameter 220118 JE
                         }
-                        else{                        
-                            x = (Kl * xErr) + Kt*dt*((driftData.getLatestXDrift()-driftData.getDelayedXDrift(Delay))/TimeDelay); // updated with predictive term 220122 JE
-                            y = (Kl * yErr) + Kt*dt*((driftData.getLatestYDrift()-driftData.getDelayedYDrift(Delay))/TimeDelay); // updated with predictive term 220122 JE
+                        else{
+                            double LatestXDrift = driftData.getLatestXDrift();
+                            double LatestYDrift = driftData.getLatestYDrift();
+                            x = (Kl * xErr);// + Kt*dt*((0.5*((LatestXDrift-driftData.getDelayedXDrift(Delay))/LongTimeDelay))+(0.5*((LatestXDrift-driftData.getDelayedXDrift(Delay/10))/ShortTimeDelay))); // updated with predictive term 220122 JE
+                            y = (Kl * yErr);// + Kt*dt*((0.5*((LatestYDrift-driftData.getDelayedYDrift(Delay))/LongTimeDelay))+(0.5*((LatestYDrift-driftData.getDelayedYDrift(Delay/10))/ShortTimeDelay))); // updated with predictive term 220122 JE
                         }
                     }
                     
@@ -312,7 +316,8 @@ public class DriftCorrection extends Observable implements Runnable {
                         else{
                             //lin_zDrift = Kt*dt*((driftData.getLatestZDrift()-driftData.getDelayedZDrift(Delay))/TimeDelay);
                             //zDrift = (Kp * (z_err)) + lin_zDrift;
-                            zDrift = (Kp * z_err) + Kt*dt*((driftData.getLatestZDrift()-driftData.getDelayedZDrift(Delay))/TimeDelay); // updated with predictive term 220117 JE
+                            double LatestZDrift = driftData.getLatestZDrift();
+                            zDrift = (Kp * z_err) + Kt*dt*((0.5*((LatestZDrift-driftData.getDelayedZDrift(Delay))/LongTimeDelay))+(0.5*((LatestZDrift-driftData.getDelayedZDrift(Delay/10))/ShortTimeDelay))); // updated with predictive term 220117 JE //new predictiver term 220203
                         }
                         hardwareManager.moveFocusStage(zDrift);
                     }
