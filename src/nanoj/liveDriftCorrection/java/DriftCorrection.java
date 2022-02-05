@@ -270,10 +270,10 @@ public class DriftCorrection extends Observable implements Runnable {
                             double LatestYDrift = driftData.getLatestYDrift();
                             //x = (Klp * xErr) + Klt*dt*((0.7*((LatestXDrift-driftData.getDelayedXDrift(Delay))/LongTimeDelay))+(0.3*((LatestXDrift-driftData.getDelayedXDrift(Delay/10))/ShortTimeDelay))); // updated with predictive term 220122 JE
                             //y = (Klp * yErr) + Klt*dt*((0.7*((LatestYDrift-driftData.getDelayedYDrift(Delay))/LongTimeDelay))+(0.3*((LatestYDrift-driftData.getDelayedYDrift(Delay/10))/ShortTimeDelay))); // updated with predictive term 220122 JE
-                            double linx = Klt*dt*((0.7*((LatestXDrift-driftData.getDelayedXDrift(Delay))/LongTimeDelay))+(0.3*((LatestXDrift-driftData.getDelayedXDrift(Delay/10))/ShortTimeDelay))); // updated with predictive term 220122 JE
-                            double liny = Klt*dt*((0.7*((LatestYDrift-driftData.getDelayedYDrift(Delay))/LongTimeDelay))+(0.3*((LatestYDrift-driftData.getDelayedYDrift(Delay/10))/ShortTimeDelay))); // updated with predictive term 220122 JE
-                            x = (Klp * (xErr-linx)) + linx;
-                            y = (Klp * (yErr-liny)) + liny;
+                            double linx = dt*((0.7*((LatestXDrift-driftData.getDelayedXDrift(Delay))/LongTimeDelay))+(0.3*((LatestXDrift-driftData.getDelayedXDrift(Delay/10))/ShortTimeDelay))); // updated with predictive term 220122 JE
+                            double liny = dt*((0.7*((LatestYDrift-driftData.getDelayedYDrift(Delay))/LongTimeDelay))+(0.3*((LatestYDrift-driftData.getDelayedYDrift(Delay/10))/ShortTimeDelay))); // updated with predictive term 220122 JE
+                            x = (Klp * (xErr-linx)) + Klt*linx;
+                            y = (Klp * (yErr-liny)) + Klt*liny;
                         }
                     }
                     
@@ -322,7 +322,9 @@ public class DriftCorrection extends Observable implements Runnable {
                             //lin_zDrift = Kt*dt*((driftData.getLatestZDrift()-driftData.getDelayedZDrift(Delay))/TimeDelay);
                             //zDrift = (Kzp * (z_err)) + lin_zDrift;
                             double LatestZDrift = driftData.getLatestZDrift();
-                            zDrift = (Kzp * z_err) + Kzt*dt*((0.5*((LatestZDrift-driftData.getDelayedZDrift(Delay))/LongTimeDelay))+(0.5*((LatestZDrift-driftData.getDelayedZDrift(Delay/10))/ShortTimeDelay))); // updated with predictive term 220117 JE //new predictiver term 220203
+                            double linz =  dt*((0.7*((LatestZDrift-driftData.getDelayedZDrift(Delay))/LongTimeDelay))+(0.3*((LatestZDrift-driftData.getDelayedZDrift(Delay/10))/ShortTimeDelay)));
+                            zDrift = (Kzp * (z_err-linz)) + Kzt*linz
+                            //zDrift = (Kzp * z_err) + Kzt*dt*((0.5*((LatestZDrift-driftData.getDelayedZDrift(Delay))/LongTimeDelay))+(0.5*((LatestZDrift-driftData.getDelayedZDrift(Delay/10))/ShortTimeDelay))); // updated with predictive term 220117 JE //new predictiver term 220203
                         }
                         hardwareManager.moveFocusStage(zDrift);
                     }
