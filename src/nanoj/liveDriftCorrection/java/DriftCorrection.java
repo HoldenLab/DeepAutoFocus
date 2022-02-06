@@ -204,8 +204,8 @@ public class DriftCorrection extends Observable implements Runnable {
 
                         //PV = (ccSliceTopMax - ccSliceBottomMax) / ccSliceMiddleMax; // eq 5 in McGorty et al. 2013
                         
-                        imCentx = resultStack.getWidth()/2;
-                        imCenty = resultStack.getHeight()/2;
+                        imCentx = resultStack.getWidth()/2 + EstimateShiftAndTilt.getMaxFindByOptimization(refCCmiddle); // added zero correction 220603 JE
+                        imCenty = resultStack.getHeight()/2 + EstimateShiftAndTilt.getMaxFindByOptimization(refCCmiddle); // added zero correction 220603 JE
                     }
                     
                     // XY drift correction ONLY 201230 kw
@@ -217,8 +217,8 @@ public class DriftCorrection extends Observable implements Runnable {
 
                         ccSliceMiddle = resultImage.convertToFloatProcessor();
                         
-                        imCentx = resultImage.getWidth()/2;
-                        imCenty = resultImage.getHeight()/2;
+                        imCentx = resultImage.getWidth()/2 + EstimateShiftAndTilt.getMaxFindByOptimization(refCCmiddle); // added zero correction 220603 JE
+                        imCenty = resultImage.getHeight()/2 + EstimateShiftAndTilt.getMaxFindByOptimization(refCCmiddle); // added zero correction 220603 JE
                     }
                     
                     float[] rawCenter = new float[3];
