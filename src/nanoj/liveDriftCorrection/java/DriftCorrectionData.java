@@ -319,13 +319,13 @@ public class DriftCorrectionData {
     }
     
     public synchronized double getLatestZDrift() { //220117 JE
-        return PointMean(zDrift, zDrift.size()-1,2);
-        //return zDrift.get(zDrift.size()-1);
+        //return PointMean(zDrift, zDrift.size()-1,2);
+        return zDrift.get(zDrift.size()-1);
     }
     
     public synchronized double getDelayedZDrift(int Delay) { //220117 JE
-        return PointMean(zDrift, zDrift.size()-(Delay+1),3);
-        //return zDrift.get(zDrift.size()-(Delay+1));
+        //return PointMean(zDrift, zDrift.size()-(Delay+1),3);
+        return zDrift.get(zDrift.size()-(Delay+1));
     }
     
     public synchronized int getLenTimeStamps() { //220117 JE
