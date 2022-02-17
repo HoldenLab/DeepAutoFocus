@@ -204,8 +204,8 @@ public class DriftCorrection extends Observable implements Runnable {
 
                         //PV = (ccSliceTopMax - ccSliceBottomMax) / ccSliceMiddleMax; // eq 5 in McGorty et al. 2013
                         
-                        imCentx = resultStack.getWidth()/2;
-                        imCenty = resultStack.getHeight()/2;
+                        imCentx = resultStack.getWidth()/2 + EstimateShiftAndTilt.getMaxFindByOptimization(refCCmiddle); // added zero correction 220603 JE
+                        imCenty = resultStack.getHeight()/2 + EstimateShiftAndTilt.getMaxFindByOptimization(refCCmiddle); // added zero correction 220603 JE
                     }
                     
                     // XY drift correction ONLY 201230 kw
@@ -217,8 +217,8 @@ public class DriftCorrection extends Observable implements Runnable {
 
                         ccSliceMiddle = resultImage.convertToFloatProcessor();
                         
-                        imCentx = resultImage.getWidth()/2;
-                        imCenty = resultImage.getHeight()/2;
+                        imCentx = resultImage.getWidth()/2 + EstimateShiftAndTilt.getMaxFindByOptimization(refCCmiddle); // added zero correction 220603 JE
+                        imCenty = resultImage.getHeight()/2 + EstimateShiftAndTilt.getMaxFindByOptimization(refCCmiddle); // added zero correction 220603 JE
                     }
                     
                     float[] rawCenter = new float[3];
@@ -255,21 +255,27 @@ public class DriftCorrection extends Observable implements Runnable {
                     yErr = (double) rawCenter[1]  - imCenty;
                     
                     double x = 0;
+                    double xProp = 0;
                     double y = 0;
+                    double yProp = 0;
                     if(driftData.getLenTimeStamps()>Delay+1){
                         LongTimeDelay = driftData.getLatestTimeStamp()-driftData.getDelayedTimeStamp(Delay);
                         ShortTimeDelay = driftData.getLatestTimeStamp()-driftData.getDelayedTimeStamp(Delay/10);
                     }
                     if (correctionMode == XY || correctionMode == XYZ){
                         if(driftData.getLenTimeStamps()<=Delay+1){
-                            x  = Klp*(xErr); // updated with gain parameter 220118 JE
-                            y  = Klp*(yErr); // updated with gain parameter 220118 JE
+                            x  = Klp*xErr; // updated with gain parameter 220118 JE
+                            y  = Klp*yErr; // updated with gain parameter 220118 JE
+                            xProp = x
+                            yProp = y
                         }
                         else{
                             double LatestXDrift = driftData.getLatestXDrift();
                             double LatestYDrift = driftData.getLatestYDrift();
-                            x = Klp * (xErr + Klt*dt*((0.7*((LatestXDrift-driftData.getDelayedXDrift(Delay))/LongTimeDelay))+(0.3*((LatestXDrift-driftData.getDelayedXDrift(Delay/10))/ShortTimeDelay)))); // updated with predictive term 220122 JE
-                            y = Klp * (yErr + Klt*dt*((0.7*((LatestYDrift-driftData.getDelayedYDrift(Delay))/LongTimeDelay))+(0.3*((LatestYDrift-driftData.getDelayedYDrift(Delay/10))/ShortTimeDelay)))); // updated with predictive term 220122 JE
+                            xProp = Klp*xErr
+                            x = xProp + Klt*dt*((0.7*((LatestXDrift-driftData.getDelayedXDrift(Delay))/LongTimeDelay))+(0.3*((LatestXDrift-driftData.getDelayedXDrift(Delay/10))/ShortTimeDelay)))); // updated with predictive term 220122 JE
+                            yProp = Klp*yErr
+                            y = yProp + Klt*dt*((0.7*((LatestYDrift-driftData.getDelayedYDrift(Delay))/LongTimeDelay))+(0.3*((LatestYDrift-driftData.getDelayedYDrift(Delay/10))/ShortTimeDelay)))); // updated with predictive term 220122 JE
                         }
                     }
                     
@@ -295,6 +301,7 @@ public class DriftCorrection extends Observable implements Runnable {
                     }
 
                     double zDrift = 0;
+                    double zProp = 0;
 
                     /* deprecated 190401
                     // Move Z stage to winning position. We get zDrift in microns instead of steps to save later to Data
@@ -312,13 +319,14 @@ public class DriftCorrection extends Observable implements Runnable {
                         z_err = SP - PV; // Z-correction error 220110
                         
                         if(driftData.getLenTimeStamps()<=Delay+1){
-                            zDrift = (Kzp * z_err);
+                            zDrift = Kzp * z_err;
                         }
                         else{
                             //lin_zDrift = Kt*dt*((driftData.getLatestZDrift()-driftData.getDelayedZDrift(Delay))/TimeDelay);
                             //zDrift = (Kzp * (z_err)) + lin_zDrift;
                             double LatestZDrift = driftData.getLatestZDrift();
-                            zDrift = Kzp*(z_err + Kzt*dt*((0.5*((LatestZDrift-driftData.getDelayedZDrift(Delay))/LongTimeDelay))+(0.5*((LatestZDrift-driftData.getDelayedZDrift(Delay/10))/ShortTimeDelay)))); // updated with predictive term 220117 JE //new predictiver term 220203
+                            zProp = Kzp*z_err
+                            zDrift = + Kzt*dt*((0.5*((LatestZDrift-driftData.getDelayedZDrift(Delay))/LongTimeDelay))+(0.5*((LatestZDrift-driftData.getDelayedZDrift(Delay/10))/ShortTimeDelay)))); // updated with predictive term 220117 JE //new predictiver term 220203
                         }
                         hardwareManager.moveFocusStage(zDrift);
                     }
@@ -334,13 +342,16 @@ public class DriftCorrection extends Observable implements Runnable {
                     // Add data //changed to switch statement from ifs 220128 JE
                     switch(correctionMode){
                         case Z:
-                             driftData.addZShift(zDrift, z_err, getTimeElapsed());
-                             break;
+                            //driftData.addZShift(zDrift, z_err, getTimeElapsed());
+                            driftData.addZShift(zProp, z_err, getTimeElapsed());
+                            break;
                         case XY:
-                            driftData.addXYshift((xyDrift.x), (xyDrift.y), getTimeElapsed());
+                            //driftData.addXYshift((xyDrift.x), (xyDrift.y), getTimeElapsed());
+                            driftData.addXYshift(xProp, yProp, getTimeElapsed());
                             break;
                         case XYZ:
-                            driftData.addXYZshift((xyDrift.x), (xyDrift.y), zDrift, getTimeElapsed());
+                            //driftData.addXYZshift((xyDrift.x), (xyDrift.y), zDrift, getTimeElapsed());
+                            driftData.addXYZshift(xProp, yProp, zProp, getTimeElapsed());
                             break;
                     }
 //                    if (isRunning()) {
