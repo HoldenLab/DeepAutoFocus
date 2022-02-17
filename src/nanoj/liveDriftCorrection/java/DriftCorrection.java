@@ -169,8 +169,8 @@ public class DriftCorrection extends Observable implements Runnable {
                             // overriding this alpha for now, just using user input value.
                             //alpha = (2*refCCmidMidMax - refCCtopMidMax - refCCbottomMidMax) * hardwareManager.getStepSize() / 2; // eq 6 in McGorty et al. 2013. corrected so that stepsize is in numerator!
                             
-                            Top = (refCCtopMidMax/refCCTopTopMax)+0.6; // 220131 JE
-                            Bottom = (refCCbottomMidMax/refCCBottomBottomMax)+0.6; // 220131 JE
+                            Top = (refCCtopMidMax/refCCTopTopMax); // 220131 JE
+                            Bottom = (refCCbottomMidMax/refCCBottomBottomMax); // 220131 JE
                             Middle = (refCCmidMidMax/refCCmidMidMax)+0.6; // 220131 JE
                             SP = (Top - Bottom) / Middle; // Z-correction setpoint // 220131 JE
 
@@ -196,8 +196,8 @@ public class DriftCorrection extends Observable implements Runnable {
                         double ccSliceTopMax = processor.CenterHeightFind(ccSliceTop); // 220131 JE
                         double ccSliceMiddleMax = processor.CenterHeightFind(ccSliceMiddle); // 220131 JE
 
-                        Top = (ccSliceTopMax/refCCTopTopMax)+0.6; // 220131 JE
-                        Bottom = (ccSliceBottomMax/refCCBottomBottomMax)+0.6; // 220131 JE
+                        Top = (ccSliceTopMax/refCCTopTopMax); // 220131 JE
+                        Bottom = (ccSliceBottomMax/refCCBottomBottomMax); // 220131 JE
                         Middle = (ccSliceMiddleMax/refCCmidMidMax)+0.6; // 220131 JE
                         
                         PV = (Top - Bottom) / Middle; // eq 5 in McGorty et al. 2013 // 220131 JE
@@ -320,13 +320,14 @@ public class DriftCorrection extends Observable implements Runnable {
                         
                         if(driftData.getLenTimeStamps()<=Delay+1){
                             zDrift = Kzp * z_err;
+                            zProp = zDrift;
                         }
                         else{
                             //lin_zDrift = Kt*dt*((driftData.getLatestZDrift()-driftData.getDelayedZDrift(Delay))/TimeDelay);
                             //zDrift = (Kzp * (z_err)) + lin_zDrift;
                             double LatestZDrift = driftData.getLatestZDrift();
                             zProp = Kzp*z_err;
-                            zDrift = + Kzt*dt*((0.5*((LatestZDrift-driftData.getDelayedZDrift(Delay))/LongTimeDelay))+(0.5*((LatestZDrift-driftData.getDelayedZDrift(Delay/10))/ShortTimeDelay))); // updated with predictive term 220117 JE //new predictiver term 220203
+                            zDrift = + Kzt*dt*((0.7*((LatestZDrift-driftData.getDelayedZDrift(Delay))/LongTimeDelay))+(0.3*((LatestZDrift-driftData.getDelayedZDrift(Delay/10))/ShortTimeDelay))); // updated with predictive term 220117 JE //new predictive term 220203
                         }
                         hardwareManager.moveFocusStage(zDrift);
                     }
