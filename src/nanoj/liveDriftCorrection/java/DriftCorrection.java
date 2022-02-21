@@ -256,9 +256,11 @@ public class DriftCorrection extends Observable implements Runnable {
                     
                     double x = 0;
                     double y = 0;
+                    
                     if(driftData.getLenTimeStamps()>Delay+1){ // 220218 JE
                         LongTimeDelay = driftData.getLatestTimeStamp()-driftData.getDelayedTimeStamp(Delay);
                         ShortTimeDelay = driftData.getLatestTimeStamp()-driftData.getDelayedTimeStamp(Delay/10);
+                    }
                     else if(driftData.getLenTimeStamps()>(Delay/10)+1){
                         LongTimeDelay = driftData.getLatestTimeStamp()-driftData.getDelayedTimeStamp(0);
                         ShortTimeDelay = driftData.getLatestTimeStamp()-driftData.getDelayedTimeStamp(Delay/10);
@@ -266,7 +268,6 @@ public class DriftCorrection extends Observable implements Runnable {
                     else{
                         LongTimeDelay = driftData.getLatestTimeStamp()-driftData.getDelayedTimeStamp(0);
                         ShortTimeDelay = driftData.getLatestTimeStamp()-driftData.getDelayedTimeStamp(0);
-                    }
                     }
                     if (correctionMode == XY || correctionMode == XYZ){
                         if(driftData.getLenTimeStamps()<=Delay+1){
