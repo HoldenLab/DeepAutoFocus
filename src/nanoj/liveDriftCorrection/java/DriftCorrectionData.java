@@ -491,7 +491,7 @@ public class DriftCorrectionData {
         this.dataType = dataType;
     }
 
-    synchronized void clearData() {
+    synchronized void clearData() { //220218 JE
         setXShiftData(xDrift = new ArrayList<Double>());
         setYShiftData(yDrift = new ArrayList<Double>());
         setZShiftData(zDrift = new ArrayList<Double>());
