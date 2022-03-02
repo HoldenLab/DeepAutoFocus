@@ -293,8 +293,8 @@ public class DriftCorrection extends Observable implements Runnable {
                             double LatestXDrift = driftData.getLatestXDrift();
                             double LatestYDrift = driftData.getLatestYDrift();
 
-                            x = Klp*xErr + Klt*dt*((0.7*((LatestXDrift-driftData.getDelayedXDrift(Delay))/LongTimeDelay))+(0.3*((LatestXDrift-driftData.getDelayedXDrift(Math.floorDiv(Delay,10)))/ShortTimeDelay))); // updated with predictive term 220122 JE
-                            y = Klp*yErr + Klt*dt*((0.7*((LatestYDrift-driftData.getDelayedYDrift(Delay))/LongTimeDelay))+(0.3*((LatestYDrift-driftData.getDelayedYDrift(Math.floorDiv(Delay,10)))/ShortTimeDelay))); // updated with predictive term 220122 JE
+                            x = Klp*xErr - Klt*dt*((0.7*((LatestXDrift-driftData.getDelayedXDrift(Delay))/LongTimeDelay))+(0.3*((LatestXDrift-driftData.getDelayedXDrift(Math.floorDiv(Delay,10)))/ShortTimeDelay))); // updated with predictive term 220122 JE
+                            y = Klp*yErr - Klt*dt*((0.7*((LatestYDrift-driftData.getDelayedYDrift(Delay))/LongTimeDelay))+(0.3*((LatestYDrift-driftData.getDelayedYDrift(Math.floorDiv(Delay,10)))/ShortTimeDelay))); // updated with predictive term 220122 JE
                             //ReportingUtils.showMessage("here3");
                         }
                     }
@@ -344,17 +344,17 @@ public class DriftCorrection extends Observable implements Runnable {
                         }
                         else if(Len<=(Delay/10)+1){
                             double LatestZDrift = driftData.getLatestZDrift();
-                            zDrift = zProp + Kzt*dt*((0.7*(LatestZDrift/LongTimeDelay))+(0.3*(LatestZDrift/ShortTimeDelay)))/((Delay+2)-Len); // updated with predictive term 220117 JE //new predictive term 220203
+                            zDrift = zProp - Kzt*dt*((0.7*(LatestZDrift/LongTimeDelay))+(0.3*(LatestZDrift/ShortTimeDelay)))/((Delay+2)-Len); // updated with predictive term 220117 JE //new predictive term 220203
                             //ReportingUtils.showMessage("here5");
                         }
                         else if(Len<=Delay+1){
                             double LatestZDrift = driftData.getLatestZDrift();
-                            zDrift = zProp + Kzt*dt*((0.7*((LatestZDrift)/LongTimeDelay))+(0.3*((LatestZDrift-driftData.getDelayedZDrift(Math.floorDiv(Delay,10)))/ShortTimeDelay)))/((Delay+2)-Len); // updated with predictive term 220117 JE //new predictive term 220203
+                            zDrift = zProp - Kzt*dt*((0.7*((LatestZDrift)/LongTimeDelay))+(0.3*((LatestZDrift-driftData.getDelayedZDrift(Math.floorDiv(Delay,10)))/ShortTimeDelay)))/((Delay+2)-Len); // updated with predictive term 220117 JE //new predictive term 220203
                             //ReportingUtils.showMessage("here5");
                         }
                         else{
                             double LatestZDrift = driftData.getLatestZDrift();                  
-                            zDrift = zProp + Kzt*dt*((0.7*((LatestZDrift-driftData.getDelayedZDrift(Delay))/LongTimeDelay))+(0.3*((LatestZDrift-driftData.getDelayedZDrift(Math.floorDiv(Delay,10)))/ShortTimeDelay))); // updated with predictive term 220117 JE //new predictive term 220203
+                            zDrift = zProp - Kzt*dt*((0.7*((LatestZDrift-driftData.getDelayedZDrift(Delay))/LongTimeDelay))+(0.3*((LatestZDrift-driftData.getDelayedZDrift(Math.floorDiv(Delay,10)))/ShortTimeDelay))); // updated with predictive term 220117 JE //new predictive term 220203
                             //ReportingUtils.showMessage("here5");
                         }
                         hardwareManager.moveFocusStage(zDrift);
@@ -476,7 +476,7 @@ public class DriftCorrection extends Observable implements Runnable {
     
     // added 220118 JE
     public void setKlt(double Klt){
-        this.Klt = Klt/100;
+        this.Klt = Klt;
     }
     
     // added 220117 JE
