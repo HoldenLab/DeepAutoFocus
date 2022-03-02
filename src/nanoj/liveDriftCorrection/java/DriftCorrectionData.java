@@ -491,7 +491,7 @@ public class DriftCorrectionData {
         this.dataType = dataType;
     }
 
-    synchronized void clearData() {
+    synchronized void clearData() { //220218 JE
         setXShiftData(xDrift = new ArrayList<Double>());
         setYShiftData(yDrift = new ArrayList<Double>());
         setZShiftData(zDrift = new ArrayList<Double>());
@@ -499,7 +499,7 @@ public class DriftCorrectionData {
         setTimeStamps(timeStamps = new ArrayList<Double>());
     }
 
-    public double PointMean(ArrayList<Double> DataList, int index, int range) {
+    public double PointMean(ArrayList<Double> DataList, int index, int range) { // 220218 JE
         double[] Data = ArrayCasting.toArray(DataList, 1d);
         double sum = 0;
         for (int i = index-1; i < index+(range-1); i++) {
