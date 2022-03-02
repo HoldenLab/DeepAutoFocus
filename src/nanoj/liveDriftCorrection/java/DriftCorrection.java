@@ -466,7 +466,7 @@ public class DriftCorrection extends Observable implements Runnable {
     
     // added 220110 kw
     public void setKzt(double Kzt){
-        this.Kzt = Kzt/100;
+        this.Kzt = Kzt;
     }
     
     // added 220118 JE
