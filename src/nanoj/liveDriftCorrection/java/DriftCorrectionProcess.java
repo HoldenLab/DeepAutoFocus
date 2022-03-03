@@ -113,13 +113,17 @@ public class DriftCorrectionProcess implements Measurements {
         return PeakPix;
     }
 
-    public double CenterHeightFind2(FloatProcessor image){ // 220131 JE updated
+    public double CenterHeightFind2(FloatProcessor image){ // 220131 JE updated 220303
         int x = image.getWidth()/2 - 1;
         int y = image.getHeight()/2 - 1;
         image.setRoi(x,y, 7, 7);
         FloatProcessor region = image.crop().convertToFloatProcessor();
-
-        double mean = CalculateImageStatistics.getMean(region);
+        float[] pixels = (float[]) region.getPixels();
+        double sum = 0;
+        for (int n=0; n<pixels.length; n++) {
+            sum += pixels[n];
+        }
+        double mean = sum/pixels.length;
         return mean;
     }
 
