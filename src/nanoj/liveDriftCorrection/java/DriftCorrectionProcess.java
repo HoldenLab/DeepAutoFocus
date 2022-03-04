@@ -98,6 +98,7 @@ public class DriftCorrectionProcess implements Measurements {
     }
     
     public double CenterHeightFind(FloatProcessor image){ // 220131 JE
+        ReportingUtils.showMessage("Bit Depth",image.getBitDepth());
         int x = image.getWidth()/2 - 1;
         int y = image.getHeight()/2 - 1;
         image.setRoi(x,y, 3, 3);
