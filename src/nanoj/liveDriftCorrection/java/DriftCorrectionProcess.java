@@ -7,7 +7,7 @@ import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import nanoj.core.java.image.calculator.FloatProcessorCalculator;
 import nanoj.core.java.image.analysis.CalculateImageStatistics;
-
+import org.micromanager.internal.utils.ReportingUtils;
 import java.awt.*;
 
 /**
@@ -97,8 +97,7 @@ public class DriftCorrectionProcess implements Measurements {
         return image.crop().convertToFloatProcessor();
     }
     
-    public double CenterHeightFind(FloatProcessor image){ // 220131 JE
-        ReportingUtils.showMessage("Bit Depth",image.getBitDepth());
+    public double CenterHeightFindOld(FloatProcessor image){ // 220131 JE
         int x = image.getWidth()/2 - 1;
         int y = image.getHeight()/2 - 1;
         image.setRoi(x,y, 3, 3);
@@ -114,9 +113,9 @@ public class DriftCorrectionProcess implements Measurements {
         return PeakPix;
     }
 
-    public double CenterHeightFind2(FloatProcessor image){ // 220131 JE updated 220303
-        int x = image.getWidth()/2 - 1;
-        int y = image.getHeight()/2 - 1;
+    public double CenterHeightFind(FloatProcessor image){ // 220131 JE updated 220303
+        int x = image.getWidth()/2 - 3;
+        int y = image.getHeight()/2 - 3;
         image.setRoi(x,y, 7, 7);
         FloatProcessor region = image.crop().convertToFloatProcessor();
         float[] pixels = (float[]) region.getPixels();
@@ -126,6 +125,45 @@ public class DriftCorrectionProcess implements Measurements {
         }
         double mean = sum/pixels.length;
         return mean;
+    }
+    
+    public FloatProcessor abs(FloatProcessor image){ // 220304 JE
+        float[] pixels = (float[]) image.getPixels();
+        ReportingUtils.showMessage(Double.toString(image.getMin()));
+        for (int n=0; n<pixels.length; n++) {
+            pixels[n] = Math.abs(pixels[n]);
+        }
+        ReportingUtils.showMessage(Double.toString(image.getMin()));
+        return image;
+    }
+    
+    public float[] CenterHWHMFind(FloatProcessor image){
+        double Max = image.getMax();
+        image.add(-(Max/2));
+        image = abs(image);
+        float[] min = getMin(image);
+        float xMin = min[0];
+        float yMin = min[1];
+        return new float[] {xMin,yMin};
+    }
+    
+    static public float[] getMin(ImageProcessor ip) { // Modified from getMax in nanoj.core.java.image.analysis.CalculateImageStatistics 220304 JE
+        float vMin = -Float.MIN_VALUE;
+        int pMin = 0;
+
+        for (int p=0; p<ip.getPixelCount(); p++) {
+            float v = ip.getf(p);
+            if (v < vMin) {
+                vMin = v;
+                pMin = p;
+            }
+        }
+
+        int w = ip.getWidth();
+        int xMin = pMin % w;
+        int yMin = pMin / w;
+
+        return new float[] {xMin, yMin, vMin};
     }
 
     public FloatProcessor backgroundCorrect(FloatProcessor image) throws Exception {
