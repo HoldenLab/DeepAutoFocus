@@ -128,7 +128,9 @@ public class DriftCorrectionProcess implements Measurements {
     }
 
     public double CenterHeightFind2(FloatProcessor image, FloatProcessor mask){ // 220131 JE updated 220303
-        image.setMask(mask);
+        //image.setMask(mask);
+        image.setValue(0);
+        image.fill(mask);
         float[] pixels = (float[]) image.getPixels();
         double sum = 0;
         for (int n=0; n<pixels.length; n++) {
@@ -138,7 +140,7 @@ public class DriftCorrectionProcess implements Measurements {
         return mean;
     }
     
-    public FloatProcessor DefineCenter(FloatProcessor CCmap){ // 220305 JE
+    public FloatProcessor DefineCenter(FloatProcessor CCmap){ // 220307 JE
         CCmap.threshold(Math.floorDiv((int)CCmap.getMax(),2));
         return CCmap;
     }
