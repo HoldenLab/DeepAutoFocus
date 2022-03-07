@@ -127,10 +127,9 @@ public class DriftCorrectionProcess implements Measurements {
         return mean;
     }
 
-    public double CenterHeightFind2(FloatProcessor image, ByteProcessor mask){ // 220131 JE updated 220303
-        image.setMask(mask)
-        FloatProcessor region = image.crop().convertToFloatProcessor();
-        float[] pixels = (float[]) region.getPixels();
+    public double CenterHeightFind2(FloatProcessor image, FloatProcessor mask){ // 220131 JE updated 220303
+        image.setMask(mask);
+        float[] pixels = (float[]) image.getPixels();
         double sum = 0;
         for (int n=0; n<pixels.length; n++) {
             sum += pixels[n];
@@ -139,15 +138,9 @@ public class DriftCorrectionProcess implements Measurements {
         return mean;
     }
     
-    public ByteProcessor DefineCenter(FloatProcessor image){ // 220305 JE
-        image.setThreshold((image.getmax()/2),image.getmax(),NO_LUT_UPDATE);
-        ByteProcessor mask = image.createMask();
-        return mask;
-    }
-
-    public FloatProcessor SetMask(FloatProcessor image){ // 220305 JE
-        image.setMask
-        return mask;
+    public FloatProcessor DefineCenter(FloatProcessor CCmap){ // 220305 JE
+        CCmap.threshold(Math.floorDiv((int)CCmap.getMax(),2));
+        return CCmap;
     }
 
     public FloatProcessor abs(FloatProcessor image){ // 220304 JE
