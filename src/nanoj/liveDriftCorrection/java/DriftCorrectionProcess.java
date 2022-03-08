@@ -145,11 +145,10 @@ public class DriftCorrectionProcess implements Measurements {
     }
     
     public FloatProcessor DefineCenter(FloatProcessor CCmap){ // 220307 JE
-        FloatProcessor mask = CCmap.duplicate();
-        int x = mask.getWidth()/2 - 10;
-        int y = mask.getHeight()/2 - 10;
-        mask.setRoi(x,y, 21, 21);
-        FloatProcessor mask = mask.crop().convertToFloatProcessor();
+        int x = CCmap.getWidth()/2 - 10;
+        int y = CCmap.getHeight()/2 - 10;
+        CCmap.setRoi(x,y, 21, 21);
+        FloatProcessor mask = CCmap.crop().convertToFloatProcessor();
         mask.threshold(Math.floorDiv((int)mask.getMax(),2));
         return mask;
     }
