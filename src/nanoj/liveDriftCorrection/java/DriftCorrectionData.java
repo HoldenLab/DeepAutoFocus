@@ -317,48 +317,6 @@ public class DriftCorrectionData {
     private synchronized void setZPositionData(ArrayList<Double> zPosition) {
         this.zPosition = zPosition;
     }
-    
-    public synchronized double getLatestZDrift() { //220117 JE
-        //return PointMean(zDrift, zDrift.size()-1,2);
-        return zDrift.get(zDrift.size()-1);
-    }
-    
-    public synchronized double getDelayedZDrift(int Delay) { //220117 JE
-        //return PointMean(zDrift, zDrift.size()-(Delay+1),3);
-        return zDrift.get(zDrift.size()-(Delay+1));
-    }
-    
-    public synchronized int getLenTimeStamps() { //220117 JE
-        return timeStamps.size();
-    }
-    
-    public synchronized double getLatestXDrift() { //220119 JE
-        return xDrift.get(xDrift.size()-1);
-    }
-    
-    public synchronized double getDelayedXDrift(int Delay) { //220119 JE
-        return xDrift.get(xDrift.size()-(Delay+1));
-    }
-    
-    public synchronized int getLenZDrift() { //220119 JE
-        return zDrift.size();
-    }
-    
-    public synchronized double getLatestYDrift() { //220119 JE
-        return yDrift.get(yDrift.size()-1);
-    }
-    
-    public synchronized double getDelayedYDrift(int Delay) { //220119 JE
-        return yDrift.get(yDrift.size()-(Delay+1));
-    }
-    
-    public synchronized double getLatestTimeStamp() { //220117 JE
-        return timeStamps.get(timeStamps.size()-1)/1000; //returns seconds
-    }
-    
-    public synchronized double getDelayedTimeStamp(int Delay) { //220117 JE
-        return timeStamps.get(timeStamps.size()-(Delay+1))/1000; //returns seconds
-    }
 
     synchronized void addZShift(double zShiftPoint, double z_err, double timeStamp) {
         //if (dataTypeIs() != Z) throw new TypeMismatchException(DATA_MISMATCH_ERROR + dataTypeIs());
