@@ -1,3 +1,5 @@
+package nanoj.core.java.image.transform;
+
 import ij.IJ;
 import ij.ImageStack;
 import ij.process.FloatProcessor;
@@ -12,12 +14,12 @@ import static nanoj.core.java.image.analysis.CalculateImageStatistics.calculateP
 /**
  * Adapted from nanoj.core.java.image.transform.CrossCorrelationMap.Java by josh Edwards on 220308
  */
-public class CrossCorrelationMap {
+public class CrossCorrelationMapJE {
 
     public static Log log = new Log();
     public static boolean showProgress = false;
 
-    public static ImageProcessor calculateCrossCorrelationMap(ImageProcessor ip1, ImageProcessor ip2, boolean normalized) {
+    public static ImageProcessor calculateCrossCorrelationMap(ImageProcessor ip1, ImageProcessor ip2, boolean normalized, boolean PreFHT1, boolean PreFHT2) {
         int w1 = ip1.getWidth();
         int h1 = ip1.getHeight();
         int w2 = ip2.getWidth();
@@ -34,10 +36,10 @@ public class CrossCorrelationMap {
             ip2 = ip2.crop();
         }
 
-        return _calculateCrossCorrelationMap(ip1.convertToFloatProcessor(), ip2.convertToFloatProcessor(), normalized);
+        return _calculateCrossCorrelationMap(ip1.convertToFloatProcessor(), ip2.convertToFloatProcessor(), normalized, PreFHT1, PreFHT2);
     }
 
-    public static ImageStack calculateCrossCorrelationMap(ImageProcessor ip, ImageStack ims, boolean normalized) {
+    public static ImageStack calculateCrossCorrelationMap(ImageProcessor ip, ImageStack ims, boolean normalized, boolean PreFHT1, boolean PreFHT2) {
         if (ip != null) {
             int w1 = ip.getWidth();
             int h1 = ip.getHeight();
@@ -73,7 +75,7 @@ public class CrossCorrelationMap {
             if (showProgress) log.progress(n, ims.getSize());
             if (ip == null) fp1 = ims.getProcessor(Math.max(n-1, 1)).convertToFloatProcessor();
             FloatProcessor fp2 = ims.getProcessor(n).convertToFloatProcessor();
-            NJE.execute(new ThreadedCalculateCCM(fp1, fp2, normalized, imsResults, n));
+            NJE.execute(new ThreadedCalculateCCM(fp1, fp2, normalized, imsResults, n, PreFHT1, PreFHT2));
         }
         NJE.finish();
 
@@ -150,21 +152,25 @@ public class CrossCorrelationMap {
         private final FloatProcessor ip1;
         private final FloatProcessor ip2;
         private final boolean normalized;
+        private final boolean PreFHT1;
+        private final boolean PreFHT2;
         private final ImageStack ims;
         private final int n;
         public FloatProcessor ipCCM = null;
 
-        public ThreadedCalculateCCM(FloatProcessor ip1, FloatProcessor ip2, boolean normalized, ImageStack ims, int n) {
+        public ThreadedCalculateCCM(FloatProcessor ip1, FloatProcessor ip2, boolean normalized, ImageStack ims, int n, boolean PreFHT1, boolean PreFHT2) {
             this.ip1 = (FloatProcessor) ip1.duplicate();
             this.ip2 = (FloatProcessor) ip2.duplicate();
             this.normalized = normalized;
             this.ims = ims;
             this.n = n;
+            this.PreFHT1 = PreFHT1;
+            this.PreFHT2 = PreFHT2;
         }
 
         @Override
         public void run() {
-            ipCCM = _calculateCrossCorrelationMap(ip1, ip2, normalized);
+            ipCCM = _calculateCrossCorrelationMap(ip1, ip2, normalized, PreFHT1, PreFHT2);
             ims.setProcessor(ipCCM, n);
         }
     }
