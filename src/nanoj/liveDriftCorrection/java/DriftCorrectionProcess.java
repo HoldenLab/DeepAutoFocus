@@ -158,7 +158,6 @@ public class DriftCorrectionProcess implements Measurements {
         for (int n=0; n<pixels.length; n++) {
             pixels[n] = Math.abs(pixels[n]);
         }
-        ReportingUtils.showMessage(Double.toString(image.getMin()));
         return image;
     }
     
