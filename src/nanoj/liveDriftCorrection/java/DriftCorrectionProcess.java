@@ -134,11 +134,14 @@ public class DriftCorrectionProcess implements Measurements {
         FloatProcessor region = image.crop().convertToFloatProcessor();
         region = FloatProcessorCalculator.multiply(region, mask);
         float[] pixels = (float[]) region.getPixels();
+        float[] MaskPixels = (float[]) mask.getPixels();
         double sum = 0;
+        double MaskSum = 0;
         for (int n=0; n<pixels.length; n++) {
             sum += pixels[n];
+            MaskSum += MaskPixels[n];
         }
-        double mean = sum/pixels.length;
+        double mean = sum/MaskSum;
         return mean;
     }
     
@@ -147,7 +150,7 @@ public class DriftCorrectionProcess implements Measurements {
         int y = CCmap.getHeight()/2 - 7;
         CCmap.setRoi(x,y, 15, 15);
         FloatProcessor mask = CCmap.crop().convertToFloatProcessor();
-        mask.threshold(Math.floorDiv((int)mask.getMax(),2));
+        mask.threshold(Math.floorDiv((int)mask.getMax(),5));
         mask.multiply(1/mask.getMax());
         return mask;
     }
