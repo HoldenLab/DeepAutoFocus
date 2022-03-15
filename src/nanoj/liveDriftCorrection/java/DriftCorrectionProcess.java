@@ -113,6 +113,23 @@ public class DriftCorrectionProcess implements Measurements {
         return PeakPix;
     }
 
+    public double CenterHeightFindOldUpdated(FloatProcessor image){ // 220131 JE
+        int x = image.getWidth()/2 - 4;
+        int y = image.getHeight()/2 - 4;
+        float k = 1/49;
+        float[] Kernel = new float[49];
+        Arrays.Fill(Kernel,1F);
+        image.setRoi(x,y, 9, 9);
+        FloatProcessor region = image.crop().convertToFloatProcessor();
+        region.convolve(Kernel,7,7);
+        double max = region.smooth().getmax();
+        double min = region.smooth().getmin();
+        if (max > min*-1) double PeakPix = max;
+        else double PeakPix = min;
+        
+        return PeakPix;
+    }
+
     public double CenterHeightFind(FloatProcessor image){ // 220131 JE updated 220303
         int x = image.getWidth()/2 - 3;
         int y = image.getHeight()/2 - 3;
