@@ -9,6 +9,7 @@ import nanoj.core.java.image.calculator.FloatProcessorCalculator;
 import nanoj.core.java.image.analysis.CalculateImageStatistics;
 import org.micromanager.internal.utils.ReportingUtils;
 import java.awt.*;
+import java.utils.Array
 
 /**
  *
