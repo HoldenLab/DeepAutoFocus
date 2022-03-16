@@ -1,6 +1,7 @@
 package nanoj.liveDriftCorrection.java;
 
 import ij.IJ;
+import ij.ImagePlus;
 import ij.measure.Measurements;
 import ij.process.FHT;
 import ij.process.FloatProcessor;
@@ -10,7 +11,7 @@ import nanoj.core.java.image.analysis.CalculateImageStatistics;
 import org.micromanager.internal.utils.ReportingUtils;
 import java.awt.*;
 import java.util.Arrays;
-import ij.plugin.filter.RankFilters;
+
 
 /**
  *
@@ -118,19 +119,28 @@ public class DriftCorrectionProcess implements Measurements {
     public double CenterHeightFindOldUpdated(FloatProcessor image){ // 220131 JE
         int x = image.getWidth()/2 - 4;
         int y = image.getHeight()/2 - 4;
-        float k = 1/49;
-        float[] Kernel = new float[49];
-        Arrays.fill(Kernel,k);
         image.setRoi(x,y, 9, 9);
         FloatProcessor region = image.crop().convertToFloatProcessor();
-        ImagePlus imp = new ImagePlus("region",region)
-        IJ.run(imp, "Mean...", "radius=7");
-        IJ.run(imp, "Convolve...", "text1=[1 1 1 1 1\n1 1 1 1 1\n1 1 1 1 1\n1 1 1 1 1\n1 1 1 1 1\n] normalize");
+        //float k = 1/49;
+        //float[] Kernel = new float[49];
+        //Arrays.fill(Kernel,k);
+
+        ImagePlus imp = new ImagePlus("region",region);
+        //ReportingUtils.showMessage(Double.toString(region.getMax()));
+        //IJ.run(imp, "Mean...", "radius=7");
+        //IJ.run(imp, "Convolve...", "text1=[1 1 1 1 1\n1 1 1 1 1\n1 1 1 1 1\n1 1 1 1 1\n1 1 1 1 1\n] normalize");
         IJ.run(imp, "Convolve...", "text1=[1 1 1 1 1 1 1\n1 1 1 1 1 1 1\n1 1 1 1 1 1 1\n1 1 1 1 1 1 1\n1 1 1 1 1 1 1\n1 1 1 1 1 1 1\n1 1 1 1 1 1 1] normalize");
-        region.convolve(Kernel,7,7);
+        //region.convolve(Kernel,7,7);
         ImageProcessor regionOut = imp.getProcessor();
-        double max = region.getMax();
-        double min = region.getMin();
+        
+        x = region.getWidth()/2 - 1;
+        y = region.getHeight()/2 - 1;
+        regionOut.setRoi(x,y, 3, 3);
+        regionOut = regionOut.crop().convertToFloatProcessor();
+        //ReportingUtils.showMessage(Double.toString(region.getMax()));
+        
+        double max = regionOut.getMax();
+        double min = regionOut.getMin();
         if (max > min*-1) return max;
         else return min;
     }
