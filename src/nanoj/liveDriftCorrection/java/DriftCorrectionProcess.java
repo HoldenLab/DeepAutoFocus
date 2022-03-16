@@ -120,7 +120,7 @@ public class DriftCorrectionProcess implements Measurements {
         int y = image.getHeight()/2 - 4;
         float k = 1/49;
         float[] Kernel = new float[49];
-        Arrays.fill(Kernel,1F);
+        Arrays.fill(Kernel,k);
         image.setRoi(x,y, 9, 9);
         FloatProcessor region = image.crop().convertToFloatProcessor();
         region.convolve(Kernel,7,7);
