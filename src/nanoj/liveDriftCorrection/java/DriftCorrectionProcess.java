@@ -125,6 +125,7 @@ public class DriftCorrectionProcess implements Measurements {
         FloatProcessor region = image.crop().convertToFloatProcessor();
         IJ.run(region, "Mean...", "radius=7");
         IJ.run(region, "Convolve...", "text1=[1 1 1 1 1\n1 1 1 1 1\n1 1 1 1 1\n1 1 1 1 1\n1 1 1 1 1\n] normalize");
+        IJ.run(region, "Convolve...", "text1=[1 1 1 1 1 1 1\n1 1 1 1 1 1 1\n1 1 1 1 1 1 1\n1 1 1 1 1 1 1\n1 1 1 1 1 1 1\n1 1 1 1 1 1 1\n1 1 1 1 1 1 1] normalize");
         region.convolve(Kernel,7,7);
         double max = region.getMax();
         double min = region.getMin();
