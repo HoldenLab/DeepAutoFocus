@@ -9,7 +9,7 @@ import nanoj.core.java.image.calculator.FloatProcessorCalculator;
 import nanoj.core.java.image.analysis.CalculateImageStatistics;
 import org.micromanager.internal.utils.ReportingUtils;
 import java.awt.*;
-import java.utils.Array;
+import java.util.Arrays;
 import ij.plugin.filter.RankFilters;
 
 /**
@@ -120,17 +120,14 @@ public class DriftCorrectionProcess implements Measurements {
         int y = image.getHeight()/2 - 4;
         float k = 1/49;
         float[] Kernel = new float[49];
-        Arrays.Fill(Kernel,1F);
+        Arrays.fill(Kernel,1F);
         image.setRoi(x,y, 9, 9);
         FloatProcessor region = image.crop().convertToFloatProcessor();
-        RankFilters.rank(image, 7, RankFilters.MEAN);
         region.convolve(Kernel,7,7);
-        double max = region.smooth().getmax();
-        double min = region.smooth().getmin();
-        if (max > min*-1) double PeakPix = max;
-        else double PeakPix = min;
-        
-        return PeakPix;
+        double max = region.getMax();
+        double min = region.getMin();
+        if (max > min*-1) return max;
+        else return min;
     }
 
     public double CenterHeightFind(FloatProcessor image){ // 220131 JE updated 220303
