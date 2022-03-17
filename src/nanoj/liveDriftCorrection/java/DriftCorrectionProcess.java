@@ -116,7 +116,7 @@ public class DriftCorrectionProcess implements Measurements {
         return PeakPix;
     }
 
-    public double CenterHeightFindOldUpdated(FloatProcessor image){ // 220131 JE
+    public double CenterHeightFindOldUpdated(FloatProcessor image){ // 220316 JE
         int x = image.getWidth()/2 - 4;
         int y = image.getHeight()/2 - 4;
         image.setRoi(x,y, 9, 9);
@@ -127,14 +127,15 @@ public class DriftCorrectionProcess implements Measurements {
 
         ImagePlus imp = new ImagePlus("region",region);
         //ReportingUtils.showMessage(Double.toString(region.getMax()));
-        //IJ.run(imp, "Mean...", "radius=7");
+        imp.setRoi(x,y, 3, 3);
+        IJ.run(imp, "Mean...", "radius=7");
         //IJ.run(imp, "Convolve...", "text1=[1 1 1 1 1\n1 1 1 1 1\n1 1 1 1 1\n1 1 1 1 1\n1 1 1 1 1\n] normalize");
-        IJ.run(imp, "Convolve...", "text1=[1 1 1 1 1 1 1\n1 1 1 1 1 1 1\n1 1 1 1 1 1 1\n1 1 1 1 1 1 1\n1 1 1 1 1 1 1\n1 1 1 1 1 1 1\n1 1 1 1 1 1 1] normalize");
+        //IJ.run(imp, "Convolve...", "text1=[1 1 1 1 1 1 1\n1 1 1 1 1 1 1\n1 1 1 1 1 1 1\n1 1 1 1 1 1 1\n1 1 1 1 1 1 1\n1 1 1 1 1 1 1\n1 1 1 1 1 1 1] normalize");
         //region.convolve(Kernel,7,7);
         ImageProcessor regionOut = imp.getProcessor();
         
-        x = region.getWidth()/2 - 1;
-        y = region.getHeight()/2 - 1;
+        x = regionOut.getWidth()/2 - 1;
+        y = regionOut.getHeight()/2 - 1;
         regionOut.setRoi(x,y, 3, 3);
         regionOut = regionOut.crop().convertToFloatProcessor();
         //ReportingUtils.showMessage(Double.toString(region.getMax()));

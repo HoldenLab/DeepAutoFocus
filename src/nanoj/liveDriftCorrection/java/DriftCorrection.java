@@ -134,23 +134,23 @@ public class DriftCorrection extends Observable implements Runnable {
                             FloatProcessor refTopTopProc = refTopTopCC.convertToFloatProcessor(); // 220131 JE
                             FloatProcessor refBottomBottomProc = refBottomBottomCC.convertToFloatProcessor(); // 220131 JE
                             
-                            //mask = processor.DefineCenter(refCCmiddle);
+                            mask = processor.DefineCenter(refCCmiddle);
                             
                             //double refCCbottomMidMax = refCCbottom.getMax();
                             //double refCCtopMidMax = refCCtop.getMax();
                             //double refCCmidMidMax = refCCmiddle.getMax();
                             
-                            refCCbottomMidMax = processor.CenterHeightFindOldUpdated(refCCbottom); // 220131 JE
-                            refCCtopMidMax = processor.CenterHeightFindOldUpdated(refCCtop); // 220131 JE
-                            refCCmidMidMax = processor.CenterHeightFindOldUpdated(refCCmiddle); // 220131 JE
-                            refCCTopTopMax = processor.CenterHeightFindOldUpdated(refTopTopProc); // 220131 JE
-                            refCCBottomBottomMax = processor.CenterHeightFindOldUpdated(refBottomBottomProc); // 220131 JE
+                            //refCCbottomMidMax = processor.CenterHeightFindOld(refCCbottom); // 220131 JE
+                            //refCCtopMidMax = processor.CenterHeightFindOld(refCCtop); // 220131 JE
+                            //refCCmidMidMax = processor.CenterHeightFindOld(refCCmiddle); // 220131 JE
+                            //refCCTopTopMax = processor.CenterHeightFindOld(refTopTopProc); // 220131 JE
+                            //refCCBottomBottomMax = processor.CenterHeightFindOld(refBottomBottomProc); // 220131 JE
                             
-                            //refCCbottomMidMax = processor.CenterHeightFind2(refCCbottom,mask); // 220314 JE
-                            //refCCtopMidMax = processor.CenterHeightFind2(refCCtop,mask); // 220314 JE
-                            //refCCmidMidMax = processor.CenterHeightFind2(refCCmiddle,mask); // 220314 JE
-                            //refCCTopTopMax = processor.CenterHeightFind2(refTopTopProc,mask); // 220314 JE
-                            //refCCBottomBottomMax = processor.CenterHeightFind2(refBottomBottomProc,mask); // 220314 JE
+                            refCCbottomMidMax = processor.CenterHeightFind2(refCCbottom,mask); // 220314 JE
+                            refCCtopMidMax = processor.CenterHeightFind2(refCCtop,mask); // 220314 JE
+                            refCCmidMidMax = processor.CenterHeightFind2(refCCmiddle,mask); // 220314 JE
+                            refCCTopTopMax = processor.CenterHeightFind2(refTopTopProc,mask); // 220314 JE
+                            refCCBottomBottomMax = processor.CenterHeightFind2(refBottomBottomProc,mask); // 220314 JE
                             
                             /* added 190401 kw
                             FloatProcessor refSliceBottom = refStack.getProcessor(3).convertToFloatProcessor();
@@ -196,13 +196,13 @@ public class DriftCorrection extends Observable implements Runnable {
                         //double ccSliceTopMax = ccSliceTop.getMax();
                         //double ccSliceMiddleMax = ccSliceMiddle.getMax();
 
-                        double ccSliceBottomMax = processor.CenterHeightFindOldUpdated(ccSliceBottom); // 220131 JE
-                        double ccSliceTopMax = processor.CenterHeightFindOldUpdated(ccSliceTop); // 220131 JE
-                        double ccSliceMiddleMax = processor.CenterHeightFindOldUpdated(ccSliceMiddle); // 220131 JE
+                        //double ccSliceBottomMax = processor.CenterHeightFindOld(ccSliceBottom); // 220131 JE
+                        //double ccSliceTopMax = processor.CenterHeightFindOld(ccSliceTop); // 220131 JE
+                        //double ccSliceMiddleMax = processor.CenterHeightFindOld(ccSliceMiddle); // 220131 JE
                         
-                        //double ccSliceBottomMax = processor.CenterHeightFind2(ccSliceBottom,mask); // 220314 JE
-                        //double ccSliceTopMax = processor.CenterHeightFind2(ccSliceTop,mask); // 220314 JE
-                        //double ccSliceMiddleMax = processor.CenterHeightFind2(ccSliceMiddle,mask); // 220314 JE
+                        double ccSliceBottomMax = processor.CenterHeightFind2(ccSliceBottom,mask); // 220314 JE
+                        double ccSliceTopMax = processor.CenterHeightFind2(ccSliceTop,mask); // 220314 JE
+                        double ccSliceMiddleMax = processor.CenterHeightFind2(ccSliceMiddle,mask); // 220314 JE
 
                         Top = (ccSliceTopMax/refCCTopTopMax); // 220131 JE
                         Bottom = (ccSliceBottomMax/refCCBottomBottomMax); // 220131 JE
@@ -216,6 +216,9 @@ public class DriftCorrection extends Observable implements Runnable {
                         
                         imCentx = CenterRef[0];// - resultImage.getWidth()/2; // added zero correction 220603 JE
                         imCenty = CenterRef[1];// - resultImage.getHeight()/2; // added zero correction 220603 JE
+                        //imCentx = resultImage.getWidth()/2;
+                        //imCenty = resultImage.getHeight()/2;
+                        
                     }
                     
                     // XY drift correction ONLY 201230 kw
@@ -232,6 +235,8 @@ public class DriftCorrection extends Observable implements Runnable {
                         
                         imCentx = CenterRef[0];// - resultImage.getWidth()/2; // added zero correction 220603 JE
                         imCenty = CenterRef[1];// - resultImage.getHeight()/2; // added zero correction 220603 JE
+                        //imCentx = resultImage.getWidth()/2;
+                        //imCenty = resultImage.getHeight()/2;
                     }
                     
                     float[] rawCenter = new float[3];
