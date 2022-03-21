@@ -183,7 +183,7 @@ public class DriftCorrectionProcess implements Measurements {
         int y = CCmap.getHeight()/2 - 7;
         CCmap.setRoi(x,y, 15, 15);
         FloatProcessor mask = CCmap.crop().convertToFloatProcessor();
-        mask.threshold(Math.floorDiv((int)mask.getMax(),5));
+        mask.threshold(Math.floorDiv((int)mask.getMax(),10));
         mask.multiply(1/mask.getMax());
         return mask;
     }
