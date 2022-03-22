@@ -60,12 +60,14 @@ public class DriftCorrection extends Observable implements Runnable {
     private double threshold;
     private double Kz = 0; // Proportional gain. 190401 kw
     private double Kl = 1; // Lateral gain 220118 JE
-    private double Kl = 0.2; // Lateral gain 220118 JE
+    private double Kld = 0.2; // Lateral gain 220118 JE
     private double SP = 0; // Z-correction setpoint
     private double PV = 0; // Z-correction process variable
     private double z_err = 0; // Z-correction error (for proportional gain)
     private double xErr = 0; // 220119 JE
     private double yErr = 0; // 220119 JE
+    private double oldXerr = 0; // 220322 JE
+    private double oldYerr = 0; // 220322 JE
     private double Top = 0; // 220131 JE
     private double Bottom = 0; // 220131 JE
     private double Middle = 0; // 220131 JE
@@ -282,8 +284,8 @@ public class DriftCorrection extends Observable implements Runnable {
                     }
                     
                     oldTime = getTimeElapsed(); // time of current loop (store for next loop iteration)
-                    oldXerr = xErr
-                    oldYerr = yErr
+                    oldXerr = xErr;
+                    oldYerr = yErr;
                     
                     if (driftData.getflipY()) y = -y; // 201229 kw
                     
