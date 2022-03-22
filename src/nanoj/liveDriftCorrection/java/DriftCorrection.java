@@ -60,6 +60,7 @@ public class DriftCorrection extends Observable implements Runnable {
     private double threshold;
     private double Kz = 0; // Proportional gain. 190401 kw
     private double Kl = 1; // Lateral gain 220118 JE
+    private double Kl = 0.2; // Lateral gain 220118 JE
     private double SP = 0; // Z-correction setpoint
     private double PV = 0; // Z-correction process variable
     private double z_err = 0; // Z-correction error (for proportional gain)
@@ -268,7 +269,7 @@ public class DriftCorrection extends Observable implements Runnable {
                     // A static image will have it's correlation map peak in the exact center of the image
                     // A moving image will have the peak shifted in relation to the center
                     // We subtract the rawCenter from the image center to obtain the drift
-                    dt = (getTimeElapsed() - oldTime)/1000;
+                    dt = (getTimeElapsed() - oldTime);
                     xErr = (double) rawCenter[0]  - imCentx;
                     yErr = (double) rawCenter[1]  - imCenty;
                     
@@ -276,11 +277,13 @@ public class DriftCorrection extends Observable implements Runnable {
                     double y = 0;
              
                     if (correctionMode == XY || correctionMode == XYZ){
-                            x  = Kl*xErr; // updated with gain parameter 220118 JE
-                            y  = Kl*yErr; // updated with gain parameter 220118 JE
+                            x  = Kl*xErr - Kld*(xErr-oldXerr)/dt; // updated with gain parameter 220118 JE
+                            y  = Kl*yErr - Kld*(yErr-oldYerr)/dt; // updated with gain parameter 220118 JE
                     }
                     
                     oldTime = getTimeElapsed(); // time of current loop (store for next loop iteration)
+                    oldXerr = xErr
+                    oldYerr = yErr
                     
                     if (driftData.getflipY()) y = -y; // 201229 kw
                     
