@@ -216,8 +216,8 @@ public class DriftCorrection extends Observable implements Runnable {
                         
                         imCentx = CenterRef[0];// - resultImage.getWidth()/2; // added zero correction 220603 JE
                         imCenty = CenterRef[1];// - resultImage.getHeight()/2; // added zero correction 220603 JE
-                        //imCentx = resultImage.getWidth()/2;
-                        //imCenty = resultImage.getHeight()/2;
+                        imCentx = resultStack.getProcessor(2).getWidth()/2;
+                        imCenty = resultStack.getProcessor(2).getHeight()/2;
                         
                     }
                     
@@ -426,7 +426,7 @@ public class DriftCorrection extends Observable implements Runnable {
     }
     
     // added 220118 JE
-    public void setKl(double Klp){
+    public void setKl(double Kl){
         this.Kl = Kl;
     }
 
