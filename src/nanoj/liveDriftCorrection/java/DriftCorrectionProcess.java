@@ -161,9 +161,9 @@ public class DriftCorrectionProcess implements Measurements {
     }
 
     public double CenterHeightFind2(FloatProcessor image, FloatProcessor mask){ // 220131 JE updated 220303
-        int x = image.getWidth()/2 - 7;
-        int y = image.getHeight()/2 - 7;
-        image.setRoi(x,y, 15, 15);
+        int x = image.getWidth()/2 - 5;
+        int y = image.getHeight()/2 - 5;
+        image.setRoi(x,y, 11, 11);
         FloatProcessor region = image.crop().convertToFloatProcessor();
         region = FloatProcessorCalculator.multiply(region, mask);
         float[] pixels = (float[]) region.getPixels();
@@ -179,11 +179,11 @@ public class DriftCorrectionProcess implements Measurements {
     }
     
     public FloatProcessor DefineCenter(FloatProcessor CCmap){ // 220307 JE
-        int x = CCmap.getWidth()/2 - 7;
-        int y = CCmap.getHeight()/2 - 7;
-        CCmap.setRoi(x,y, 15, 15);
+        int x = CCmap.getWidth()/2 - 5;
+        int y = CCmap.getHeight()/2 - 5;
+        CCmap.setRoi(x,y, 11, 11);
         FloatProcessor mask = CCmap.crop().convertToFloatProcessor();
-        mask.threshold(Math.floorDiv((int)mask.getMax(),10));
+        mask.threshold(Math.floorDiv((int)mask.getMax(),2));
         mask.multiply(1/mask.getMax());
         return mask;
     }
