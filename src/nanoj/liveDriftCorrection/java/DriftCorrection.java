@@ -217,10 +217,10 @@ public class DriftCorrection extends Observable implements Runnable {
                         
                         float[] CenterRef = EstimateShiftAndTilt.getMaxFindByOptimization(refCCmiddle);
                         
-                        imCentx = CenterRef[0];// - resultImage.getWidth()/2; // added zero correction 220603 JE
-                        imCenty = CenterRef[1];// - resultImage.getHeight()/2; // added zero correction 220603 JE
-                        imCentx = resultStack.getProcessor(2).getWidth()/2;
-                        imCenty = resultStack.getProcessor(2).getHeight()/2;
+                        imCentx = CenterRef[0]; // added zero correction 220603 JE
+                        imCenty = CenterRef[1]; // added zero correction 220603 JE
+                        //imCentx = resultStack.getProcessor(2).getWidth()/2;
+                        //imCenty = resultStack.getProcessor(2).getHeight()/2;
                         
                     }
                     
@@ -277,8 +277,8 @@ public class DriftCorrection extends Observable implements Runnable {
                     double y = 0;
              
                     if (correctionMode == XY || correctionMode == XYZ){
-                            x  = Kl*xErr - Kld*(xErr-oldXerr)/dt; // updated with gain parameter 220118 JE
-                            y  = Kl*yErr - Kld*(yErr-oldYerr)/dt; // updated with gain parameter 220118 JE
+                            x  = Kl*xErr;// - Kld*(xErr-oldXerr)/dt; // updated with gain parameter 220118 JE
+                            y  = Kl*yErr;// - Kld*(yErr-oldYerr)/dt; // updated with gain parameter 220118 JE
                     }
                     
                     oldTime = getTimeElapsed(); // time of current loop (store for next loop iteration)
