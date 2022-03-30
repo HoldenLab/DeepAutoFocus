@@ -439,6 +439,16 @@ public class DriftCorrection extends Observable implements Runnable {
         this.Kl = Kl;
     }
 
+    // added 220330 JE
+    public void setKzi(double Kzi){
+        this.Kzi = Kzi;
+    }
+    
+    // added 220330 JE
+    public void setKli(double Kli){
+        this.Kli = Kli;
+    }
+
     public double getThreshold() {
         return threshold;
     }
