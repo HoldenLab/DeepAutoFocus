@@ -60,14 +60,16 @@ public class DriftCorrection extends Observable implements Runnable {
     private double threshold;
     private double Kz = 0; // Proportional gain. 190401 kw
     private double Kl = 1; // Lateral gain 220118 JE
-    private double Kld = 0.2; // Lateral gain 220118 JE
+    private double Kli = 0.05; // Lateral gain 220118 JE
+    private double Kzi = 0.03; // z gain 220118 JE
     private double SP = 0; // Z-correction setpoint
     private double PV = 0; // Z-correction process variable
     private double z_err = 0; // Z-correction error (for proportional gain)
     private double xErr = 0; // 220119 JE
     private double yErr = 0; // 220119 JE
-    private double oldXerr = 0; // 220322 JE
-    private double oldYerr = 0; // 220322 JE
+    private double xErrSum = 0; // 220322 JE
+    private double yErrSum = 0; // 220322 JE
+    private double zErrSum = 0; // 220322 JE
     private double Top = 0; // 220131 JE
     private double Bottom = 0; // 220131 JE
     private double Middle = 0; // 220131 JE
@@ -107,6 +109,9 @@ public class DriftCorrection extends Observable implements Runnable {
                             SP = 0; 
                             PV = 0;
                             z_err = 0;
+                            xErrSum = 0;
+                            yErrSum = 0;
+                            zErrSum = 0;
                             
                             ImageStack refStack = new ImageStack(
                                 driftData.getReferenceImage().getWidth(),
@@ -277,13 +282,13 @@ public class DriftCorrection extends Observable implements Runnable {
                     double y = 0;
              
                     if (correctionMode == XY || correctionMode == XYZ){
-                            x  = Kl*xErr;// - Kld*(xErr-oldXerr)/dt; // updated with gain parameter 220118 JE
-                            y  = Kl*yErr;// - Kld*(yErr-oldYerr)/dt; // updated with gain parameter 220118 JE
+                            x  = Kl*xErr + Kli*xErrSum;// - Kld*(xErr-oldXerr)/dt; // updated with gain parameter 220118 JE
+                            y  = Kl*yErr + Kli*yErrSum;// - Kld*(yErr-oldYerr)/dt; // updated with gain parameter 220118 JE
                     }
                     
                     oldTime = getTimeElapsed(); // time of current loop (store for next loop iteration)
-                    oldXerr = xErr;
-                    oldYerr = yErr;
+                    xErrSum = xErrSum + (xErr/dt);
+                    yErrSum = yErrSum + (yErr/dt);
                     
                     if (driftData.getflipY()) y = -y; // 201229 kw
                     
@@ -320,7 +325,8 @@ public class DriftCorrection extends Observable implements Runnable {
                     // Now using PI controller instead of equation in McGorty 2013 paper (220110 kw)
                     if (isRunning() && (correctionMode == Z || correctionMode == XYZ) ) {
                         z_err = SP - PV; // Z-correction error 220110
-                        zDrift = Kz*z_err;
+                        zDrift = Kz*z_err + Kzi*zErrSum;
+                        zErrSum = zErrSum + (z_err/dt);
                         hardwareManager.moveFocusStage(zDrift);
                     }
 
