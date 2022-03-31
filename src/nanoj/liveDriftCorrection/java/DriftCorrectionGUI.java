@@ -113,8 +113,8 @@ public class DriftCorrectionGUI{
     private static final String STEP_SIZE_LABEL = "Step size (nm) for Z correction";
     private static final String Kz_LABEL = "Pz (Axial proportional gain)"; //190404 kw
     private static final String Kl_LABEL = "Pl (Lateral proportional gain)"; // 220118 JE
-    private static final String Kzi_LABEL = "Iz (Axial proportional gain)"; // 220330 JE
-    private static final String Kli_LABEL = "Il (Lateral proportional gain)"; // 220330 JE
+    private static final String Kzi_LABEL = "Iz (Axial Integral gain)"; // 220330 JE
+    private static final String Kli_LABEL = "Il (Lateral Integral gain)"; // 220330 JE
     private static final String PERIOD_LABEL = "Time between corrections (ms)";
     private static final String BOUNDS_LABEL = "Maximum translation (um)";
     private static final String SEPARATE_STAGES_LABEL = "Separate XY stage devices?";
