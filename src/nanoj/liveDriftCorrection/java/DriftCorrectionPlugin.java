@@ -12,8 +12,8 @@ public class DriftCorrectionPlugin implements MenuPlugin, SciJavaPlugin {
 
     public static final String menuName = "ImLock Live Drift Correction";
     public static final String tooltipDescription = "Asynchronous Image-Correlation-based 3D drift correction.";
-    public static final String version = "0.5";
-    public static final String copyright = "Copyright University College London, 2017";
+    public static final String version = "2.0";
+    public static final String copyright = "Copyright University College London, 2017 / Newcastle University 2022";
     private MMStudio app_;
 
     public void dispose() {}
