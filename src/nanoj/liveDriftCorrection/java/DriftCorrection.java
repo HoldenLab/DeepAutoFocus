@@ -221,6 +221,7 @@ public class DriftCorrection extends Observable implements Runnable {
                         //PV = (ccSliceTopMax - ccSliceBottomMax) / ccSliceMiddleMax; // eq 5 in McGorty et al. 2013
                         
                         float[] CenterRef = EstimateShiftAndTilt.getMaxFindByOptimization(refCCmiddle);
+                        oldTime = getTimeElapsed(); // time of current loop (store for next loop iteration)
                         
                         imCentx = CenterRef[0]; // added zero correction 220603 JE
                         imCenty = CenterRef[1]; // added zero correction 220603 JE
@@ -238,6 +239,7 @@ public class DriftCorrection extends Observable implements Runnable {
                         
                         
                         float[] CenterRef = EstimateShiftAndTilt.getMaxFindByOptimization(refCCmiddle);
+                        oldTime = getTimeElapsed(); // time of current loop (store for next loop iteration)
                         
                         imCentx = CenterRef[0];// - resultImage.getWidth()/2; // added zero correction 220603 JE
                         imCenty = CenterRef[1];// - resultImage.getHeight()/2; // added zero correction 220603 JE
@@ -274,9 +276,12 @@ public class DriftCorrection extends Observable implements Runnable {
                     // A static image will have it's correlation map peak in the exact center of the image
                     // A moving image will have the peak shifted in relation to the center
                     // We subtract the rawCenter from the image center to obtain the drift
-                    dt = (getTimeElapsed() - oldTime);
+                    dt = (getTimeElapsed() - oldTime)/1000;
+                    oldTime = getTimeElapsed(); // time of current loop (store for next loop iteration)
                     xErr = (double) rawCenter[0]  - imCentx;
                     yErr = (double) rawCenter[1]  - imCenty;
+                    xErrSum = xErrSum + (xErr*dt);
+                    yErrSum = yErrSum + (yErr*dt);
                     
                     double x = 0;
                     double y = 0;
@@ -285,10 +290,6 @@ public class DriftCorrection extends Observable implements Runnable {
                             x  = Kl*xErr + Kli*xErrSum;// - Kld*(xErr-oldXerr)/dt; // updated with gain parameter 220118 JE
                             y  = Kl*yErr + Kli*yErrSum;// - Kld*(yErr-oldYerr)/dt; // updated with gain parameter 220118 JE
                     }
-                    
-                    oldTime = getTimeElapsed(); // time of current loop (store for next loop iteration)
-                    xErrSum = xErrSum + (xErr/dt);
-                    yErrSum = yErrSum + (yErr/dt);
                     
                     if (driftData.getflipY()) y = -y; // 201229 kw
                     
@@ -325,8 +326,8 @@ public class DriftCorrection extends Observable implements Runnable {
                     // Now using PI controller instead of equation in McGorty 2013 paper (220110 kw)
                     if (isRunning() && (correctionMode == Z || correctionMode == XYZ) ) {
                         z_err = SP - PV; // Z-correction error 220110
+                        zErrSum = zErrSum + (z_err*dt);
                         zDrift = Kz*z_err + Kzi*zErrSum;
-                        zErrSum = zErrSum + (z_err/dt);
                         hardwareManager.moveFocusStage(zDrift);
                     }
 
