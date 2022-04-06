@@ -224,7 +224,8 @@ public class DriftCorrection extends Observable implements Runnable {
                         //PV = (ccSliceTopMax - ccSliceBottomMax) / ccSliceMiddleMax; // eq 5 in McGorty et al. 2013
                         
                         if (first) {
-                            float[] CenterRef = EstimateShiftAndTilt.getMaxFindByOptimization(refCCmiddle);
+                            //float[] CenterRef = EstimateShiftAndTilt.getMaxFindByOptimization(refCCmiddle);
+                            float[] CenterRef = processor.PeakFind(refCCmiddle);
                             oldTime = getTimeElapsed(); // time of current loop (store for next loop iteration)
                         
                             imCentx = CenterRef[0]; // added zero correction 220603 JE
@@ -243,7 +244,8 @@ public class DriftCorrection extends Observable implements Runnable {
                         ccSliceMiddle = resultImage.convertToFloatProcessor();
                         
                         if (first) {
-                            float[] CenterRef = EstimateShiftAndTilt.getMaxFindByOptimization(refCCmiddle);
+                            //float[] CenterRef = EstimateShiftAndTilt.getMaxFindByOptimization(refCCmiddle);
+                            float[] CenterRef = processor.PeakFind(refCCmiddle);
                             oldTime = getTimeElapsed(); // time of current loop (store for next loop iteration)
                         
                             imCentx = CenterRef[0];// - resultImage.getWidth()/2; // added zero correction 220603 JE
@@ -255,7 +257,8 @@ public class DriftCorrection extends Observable implements Runnable {
                     }
                     
                     float[] rawCenter = new float[3];
-                    float[] currentCenter = EstimateShiftAndTilt.getMaxFindByOptimization(ccSliceMiddle);
+                    float[] currentCenter = processor.PeakFind(ccSliceMiddle);
+                    //float[] currentCenter = EstimateShiftAndTilt.getMaxFindByOptimization(ccSliceMiddle);
                     rawCenter = currentCenter;
                         
                     /* Deprecated 190404
