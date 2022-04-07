@@ -236,7 +236,8 @@ public class DriftCorrection extends Observable implements Runnable {
                         driftData.setResultMap(resultImage);
 
                         ccSliceMiddle = resultImage.convertToFloatProcessor();
-                        
+                        xErrSum = 0;
+                        yErrSum = 0;
                         
                         float[] CenterRef = EstimateShiftAndTilt.getMaxFindByOptimization(refCCmiddle);
                         oldTime = getTimeElapsed(); // time of current loop (store for next loop iteration)

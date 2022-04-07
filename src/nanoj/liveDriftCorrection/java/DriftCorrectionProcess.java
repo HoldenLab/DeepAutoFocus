@@ -10,7 +10,6 @@ import nanoj.core.java.image.calculator.FloatProcessorCalculator;
 import nanoj.core.java.image.analysis.CalculateImageStatistics;
 import org.micromanager.internal.utils.ReportingUtils;
 import java.awt.*;
-import java.util.Arrays;
 
 
 /**
@@ -225,7 +224,7 @@ public class DriftCorrectionProcess implements Measurements {
 
         return new float[] {xMin, yMin, vMin};
     }
-
+    
     public FloatProcessor backgroundCorrect(FloatProcessor image) throws Exception {
         FloatProcessor backgroundImage = data.getBackgroundImage();
         if (backgroundImage == null)
