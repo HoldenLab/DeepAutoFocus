@@ -98,6 +98,14 @@ public class DriftCorrectionProcess implements Measurements {
         image.setRoi(edgeClip,edgeClip, width, height);
         return image.crop().convertToFloatProcessor();
     }
+
+    public float[] PeakFind(FloatProcessor CCmap) {
+        int x = CCmap.getWidth()/2 - 15;
+        int y = CCmap.getHeight()/2 - 15;
+        CCmap.setRoi(x,y, 30, 30);
+        FloatProcessor region = CCmap.crop().convertToFloatProcessor();
+        return EstimateShiftAndTilt.getMaxFindByOptimization(region);
+    }
     
     public double CenterHeightFindOld(FloatProcessor image){ // 220131 JE
         int x = image.getWidth()/2 - 1;

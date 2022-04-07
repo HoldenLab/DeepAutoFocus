@@ -57,6 +57,7 @@ public class DriftCorrection extends Observable implements Runnable {
     private long startTimeStamp;
     private double oldTime;
     private double dt;
+    private boolean first = true;
     private double threshold;
     private double Kz = 0; // Proportional gain. 190401 kw
     private double Kl = 1; // Lateral gain 220118 JE
@@ -99,19 +100,21 @@ public class DriftCorrection extends Observable implements Runnable {
                         //Initialise variables for new run 220119 JE
                         xErr = 0;
                         yErr = 0;
+                        xErrSum = 0;
+                        yErrSum = 0;
+                        first = true;
                     } 
                     
-                    // If we've just started, get the reference stack (190401 kw)
                     if (correctionMode == Z || correctionMode == XYZ) {
+                        // If we've just started, get the reference stack (190401 kw)
                         if (driftData.getReferenceStack().size() == 0){
                             
                             //Initialise variables for new run 220118 JE
                             SP = 0; 
                             PV = 0;
                             z_err = 0;
-                            xErrSum = 0;
-                            yErrSum = 0;
                             zErrSum = 0;
+                            
                             
                             ImageStack refStack = new ImageStack(
                                 driftData.getReferenceImage().getWidth(),
@@ -220,14 +223,17 @@ public class DriftCorrection extends Observable implements Runnable {
 
                         //PV = (ccSliceTopMax - ccSliceBottomMax) / ccSliceMiddleMax; // eq 5 in McGorty et al. 2013
                         
-                        float[] CenterRef = EstimateShiftAndTilt.getMaxFindByOptimization(refCCmiddle);
-                        oldTime = getTimeElapsed(); // time of current loop (store for next loop iteration)
+                        if (first) {
+                            //float[] CenterRef = EstimateShiftAndTilt.getMaxFindByOptimization(refCCmiddle);
+                            float[] CenterRef = processor.PeakFind(refCCmiddle);
+                            oldTime = getTimeElapsed(); // time of current loop (store for next loop iteration)
                         
-                        imCentx = CenterRef[0]; // added zero correction 220603 JE
-                        imCenty = CenterRef[1]; // added zero correction 220603 JE
-                        //imCentx = resultStack.getProcessor(2).getWidth()/2;
-                        //imCenty = resultStack.getProcessor(2).getHeight()/2;
-                        
+                            imCentx = CenterRef[0]; // added zero correction 220603 JE
+                            imCenty = CenterRef[1]; // added zero correction 220603 JE
+                            //imCentx = resultStack.getProcessor(2).getWidth()/2;
+                            //imCenty = resultStack.getProcessor(2).getHeight()/2;
+                            first = false;
+                        }
                     }
                     
                     // XY drift correction ONLY 201230 kw
@@ -236,20 +242,23 @@ public class DriftCorrection extends Observable implements Runnable {
                         driftData.setResultMap(resultImage);
 
                         ccSliceMiddle = resultImage.convertToFloatProcessor();
-                        xErrSum = 0;
-                        yErrSum = 0;
                         
-                        float[] CenterRef = EstimateShiftAndTilt.getMaxFindByOptimization(refCCmiddle);
-                        oldTime = getTimeElapsed(); // time of current loop (store for next loop iteration)
+                        if (first) {
+                            //float[] CenterRef = EstimateShiftAndTilt.getMaxFindByOptimization(refCCmiddle);
+                            float[] CenterRef = processor.PeakFind(refCCmiddle);
+                            oldTime = getTimeElapsed(); // time of current loop (store for next loop iteration)
                         
-                        imCentx = CenterRef[0];// - resultImage.getWidth()/2; // added zero correction 220603 JE
-                        imCenty = CenterRef[1];// - resultImage.getHeight()/2; // added zero correction 220603 JE
-                        //imCentx = resultImage.getWidth()/2;
-                        //imCenty = resultImage.getHeight()/2;
+                            imCentx = CenterRef[0];// - resultImage.getWidth()/2; // added zero correction 220603 JE
+                            imCenty = CenterRef[1];// - resultImage.getHeight()/2; // added zero correction 220603 JE
+                            //imCentx = resultImage.getWidth()/2;
+                            //imCenty = resultImage.getHeight()/2;
+                            first = false
+                        }
                     }
                     
                     float[] rawCenter = new float[3];
-                    float[] currentCenter = EstimateShiftAndTilt.getMaxFindByOptimization(ccSliceMiddle);
+                    float[] currentCenter = processor.PeakFind(ccSliceMiddle);
+                    //float[] currentCenter = EstimateShiftAndTilt.getMaxFindByOptimization(ccSliceMiddle);
                     rawCenter = currentCenter;
                         
                     /* Deprecated 190404
