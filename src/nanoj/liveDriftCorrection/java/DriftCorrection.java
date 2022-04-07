@@ -232,7 +232,9 @@ public class DriftCorrection extends Observable implements Runnable {
                             imCenty = CenterRef[1]; // added zero correction 220603 JE
                             //imCentx = resultStack.getProcessor(2).getWidth()/2;
                             //imCenty = resultStack.getProcessor(2).getHeight()/2;
-                            first = false;
+                            //imCentx = 15.5;
+                            //imCenty = 15.5;
+                            //first = false;
                         }
                     }
                     
@@ -252,7 +254,9 @@ public class DriftCorrection extends Observable implements Runnable {
                             imCenty = CenterRef[1];// - resultImage.getHeight()/2; // added zero correction 220603 JE
                             //imCentx = resultImage.getWidth()/2;
                             //imCenty = resultImage.getHeight()/2;
-                            first = false
+                            //imCentx = 15.5;
+                            //imCenty = 15.5;
+                            //first = false;
                         }
                     }
                     
@@ -290,9 +294,10 @@ public class DriftCorrection extends Observable implements Runnable {
                     oldTime = getTimeElapsed(); // time of current loop (store for next loop iteration)
                     xErr = (double) rawCenter[0]  - imCentx;
                     yErr = (double) rawCenter[1]  - imCenty;
-                    xErrSum = xErrSum + (xErr*dt);
-                    yErrSum = yErrSum + (yErr*dt);
-                    
+                    if (!first) {
+                        xErrSum = xErrSum + (xErr*dt);
+                        yErrSum = yErrSum + (yErr*dt);
+                    }
                     double x = 0;
                     double y = 0;
              
@@ -336,8 +341,9 @@ public class DriftCorrection extends Observable implements Runnable {
                     // Now using PI controller instead of equation in McGorty 2013 paper (220110 kw)
                     if (isRunning() && (correctionMode == Z || correctionMode == XYZ) ) {
                         z_err = SP - PV; // Z-correction error 220110
-                        zErrSum = zErrSum + (z_err*dt);
+                        if (!first) zErrSum = zErrSum + (z_err*dt);
                         zDrift = Kz*z_err + Kzi*zErrSum;
+                        if (first) zDrift = 1.5*Kz*z_err;
                         hardwareManager.moveFocusStage(zDrift);
                     }
 
@@ -361,6 +367,7 @@ public class DriftCorrection extends Observable implements Runnable {
                             driftData.addXYZshift((xyDrift.x), (xyDrift.y), zDrift, getTimeElapsed());
                             break;
                     }
+                    if ((getTimeElapsed()/1000)>10) first = false;
 //                    if (isRunning()) {
 //                        if (correctionMode == Z) driftData.addZShift(zDrift, z_err, getTimeElapsed());
                         //if (correctionMode == Z) driftData.addPIshift(SP, PV, zDrift, getTimeElapsed()); // for debugging/tuning PI controller parameters
