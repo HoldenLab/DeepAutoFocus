@@ -71,6 +71,7 @@ public class DriftCorrection extends Observable implements Runnable {
     private double xErrSum = 0; // 220322 JE
     private double yErrSum = 0; // 220322 JE
     private double zErrSum = 0; // 220322 JE
+    private double zErrAbsSum = 0; // 220412 JE
     private double Top = 0; // 220131 JE
     private double Bottom = 0; // 220131 JE
     private double Middle = 0; // 220131 JE
@@ -298,8 +299,8 @@ public class DriftCorrection extends Observable implements Runnable {
                     xErr = (double) rawCenter[0]  - imCentx;
                     yErr = (double) rawCenter[1]  - imCenty;
                     if (!first) {
-                        xErrSum = (xErrSum + xErr*dt)/oldTime/1000;
-                        yErrSum = (yErrSum + yErr*dt)/oldTime/1000;
+                        xErrSum = (xErrSum + xErr*dt);
+                        yErrSum = (yErrSum + yErr*dt);
                     }
                     double x = 0;
                     double y = 0;
@@ -344,8 +345,9 @@ public class DriftCorrection extends Observable implements Runnable {
                     // Now using PI controller instead of equation in McGorty 2013 paper (220110 kw)
                     if (isRunning() && (correctionMode == Z || correctionMode == XYZ) ) {
                         z_err = SP - PV; // Z-correction error 220110
-                        z_errAve = (z_errAve + Math.abs(z_err-z_errOld)*dt) / oldTime/1000;
-                        if (!first) zErrSum = (zErrSum + (z_err*dt))/oldTime/1000;
+                        if (!first) zErrSum = (zErrSum + (z_err*dt));
+                        if (!first) zErrAbsSum = (zErrAbsSum + Math.abs(z_err*dt));
+                        z_errAve = zErrAbsSum/(oldtime/1000)
                         zDrift = Kz*z_err + Kzi*zErrSum;
                         if (first) zDrift = 1.5*Kz*z_err;
                         if (Math.abs(z_err) > 3*z_errAve && Math.abs(z_err-z_errOld) > 3*z_errAve && !first) zDrift = 0;
@@ -373,7 +375,7 @@ public class DriftCorrection extends Observable implements Runnable {
                             driftData.addXYZshift((xyDrift.x), (xyDrift.y), zDrift, getTimeElapsed());
                             break;
                     }
-                    if ((getTimeElapsed()/1000)>10) first = false;
+                    if ((getTimeElapsed()/1000)>5) first = false;
 //                    if (isRunning()) {
 //                        if (correctionMode == Z) driftData.addZShift(zDrift, z_err, getTimeElapsed());
                         //if (correctionMode == Z) driftData.addPIshift(SP, PV, zDrift, getTimeElapsed()); // for debugging/tuning PI controller parameters
