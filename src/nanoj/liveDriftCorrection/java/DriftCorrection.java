@@ -80,6 +80,9 @@ public class DriftCorrection extends Observable implements Runnable {
     private double refCCmidMidMax = 0; // 220201 JE
     private double refCCTopTopMax = 0; // 220201 JE
     private double refCCBottomBottomMax = 0; // 220201 JE
+    
+    private double z_errAve = 0;  // 220412 JE
+    private double z_errOld = 0;  // 220412 JE
 
 
     public DriftCorrection(DriftCorrectionHardware manager, DriftCorrectionData data, DriftCorrectionProcess processor) {
@@ -225,15 +228,15 @@ public class DriftCorrection extends Observable implements Runnable {
                         
                         if (first) {
                             //float[] CenterRef = EstimateShiftAndTilt.getMaxFindByOptimization(refCCmiddle);
-                            float[] CenterRef = processor.PeakFind(refCCmiddle);
-                            oldTime = getTimeElapsed(); // time of current loop (store for next loop iteration)
+                            //float[] CenterRef = processor.PeakFind(refCCmiddle);
+                            //oldTime = getTimeElapsed(); // time of current loop (store for next loop iteration)
                         
-                            imCentx = CenterRef[0]; // added zero correction 220603 JE
-                            imCenty = CenterRef[1]; // added zero correction 220603 JE
+                            //imCentx = CenterRef[0]; // added zero correction 220603 JE
+                            //imCenty = CenterRef[1]; // added zero correction 220603 JE
                             //imCentx = resultStack.getProcessor(2).getWidth()/2;
                             //imCenty = resultStack.getProcessor(2).getHeight()/2;
-                            //imCentx = 15.5;
-                            //imCenty = 15.5;
+                            imCentx = 15.5;
+                            imCenty = 15.5;
                             //first = false;
                         }
                     }
@@ -247,15 +250,15 @@ public class DriftCorrection extends Observable implements Runnable {
                         
                         if (first) {
                             //float[] CenterRef = EstimateShiftAndTilt.getMaxFindByOptimization(refCCmiddle);
-                            float[] CenterRef = processor.PeakFind(refCCmiddle);
-                            oldTime = getTimeElapsed(); // time of current loop (store for next loop iteration)
+                            //float[] CenterRef = processor.PeakFind(refCCmiddle);
+                            //oldTime = getTimeElapsed(); // time of current loop (store for next loop iteration)
                         
-                            imCentx = CenterRef[0];// - resultImage.getWidth()/2; // added zero correction 220603 JE
-                            imCenty = CenterRef[1];// - resultImage.getHeight()/2; // added zero correction 220603 JE
+                            //imCentx = CenterRef[0];// - resultImage.getWidth()/2; // added zero correction 220603 JE
+                            //imCenty = CenterRef[1];// - resultImage.getHeight()/2; // added zero correction 220603 JE
                             //imCentx = resultImage.getWidth()/2;
                             //imCenty = resultImage.getHeight()/2;
-                            //imCentx = 15.5;
-                            //imCenty = 15.5;
+                            imCentx = 15.5;
+                            imCenty = 15.5;
                             //first = false;
                         }
                     }
@@ -295,8 +298,8 @@ public class DriftCorrection extends Observable implements Runnable {
                     xErr = (double) rawCenter[0]  - imCentx;
                     yErr = (double) rawCenter[1]  - imCenty;
                     if (!first) {
-                        xErrSum = xErrSum + (xErr*dt);
-                        yErrSum = yErrSum + (yErr*dt);
+                        xErrSum = (xErrSum + xErr*dt)/oldTime/1000;
+                        yErrSum = (yErrSum + yErr*dt)/oldTime/1000;
                     }
                     double x = 0;
                     double y = 0;
@@ -341,9 +344,12 @@ public class DriftCorrection extends Observable implements Runnable {
                     // Now using PI controller instead of equation in McGorty 2013 paper (220110 kw)
                     if (isRunning() && (correctionMode == Z || correctionMode == XYZ) ) {
                         z_err = SP - PV; // Z-correction error 220110
-                        if (!first) zErrSum = zErrSum + (z_err*dt);
+                        z_errAve = (z_errAve + Math.abs(z_err-z_errOld)*dt) / oldTime/1000;
+                        if (!first) zErrSum = (zErrSum + (z_err*dt))/oldTime/1000;
                         zDrift = Kz*z_err + Kzi*zErrSum;
                         if (first) zDrift = 1.5*Kz*z_err;
+                        if (Math.abs(z_err) > 3*z_errAve && Math.abs(z_err-z_errOld) > 3*z_errAve && !first) zDrift = 0;
+                        z_errOld = z_err;
                         hardwareManager.moveFocusStage(zDrift);
                     }
 
