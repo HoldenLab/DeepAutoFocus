@@ -107,6 +107,24 @@ public class DriftCorrectionProcess implements Measurements {
         FloatProcessor region = CCmap.crop().convertToFloatProcessor();
         //return EstimateShiftAndTilt.getMaxFindByOptimization(region);
         return EstimateShiftAndTilt.getCenterOfMass(region);
+/*
+        double xCM = 0;
+        double yCM = 0;
+        double v = 0;
+        double sSum = 0;
+        
+        for (int j = 0; j < region.getHeight()-1; j++) {
+            for (int i = 0; i < region.getWidth(); i++) {
+                v = region.getf(i, j);
+                //if (v < 0) continue;
+                xCM += i * v;
+                yCM += j * v;
+                sSum += v;
+            }
+        }
+        xCM /= sSum; yCM /= sSum;
+        return new float[] {xCM, yCM};
+        */
     }
 
     public float[] PeakFind2(FloatProcessor CCmap) {
