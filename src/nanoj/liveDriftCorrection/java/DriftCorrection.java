@@ -236,8 +236,8 @@ public class DriftCorrection extends Observable implements Runnable {
                             //imCenty = CenterRef[1]; // added zero correction 220603 JE
                             //imCentx = resultStack.getProcessor(2).getWidth()/2;
                             //imCenty = resultStack.getProcessor(2).getHeight()/2;
-                            imCentx = 15.5;
-                            imCenty = 15.5;
+                            imCentx = 15;
+                            imCenty = 15;
                             //first = false;
                         }
                     }
@@ -258,8 +258,8 @@ public class DriftCorrection extends Observable implements Runnable {
                             //imCenty = CenterRef[1];// - resultImage.getHeight()/2; // added zero correction 220603 JE
                             //imCentx = resultImage.getWidth()/2;
                             //imCenty = resultImage.getHeight()/2;
-                            imCentx = 15.5;
-                            imCenty = 15.5;
+                            imCentx = 15;
+                            imCenty = 15;
                             //first = false;
                         }
                     }
@@ -347,10 +347,10 @@ public class DriftCorrection extends Observable implements Runnable {
                         z_err = SP - PV; // Z-correction error 220110
                         if (!first) zErrSum = (zErrSum + (z_err*dt));
                         if (!first) zErrAbsSum = (zErrAbsSum + Math.abs(z_err*dt));
-                        z_errAve = zErrAbsSum/(oldtime/1000)
+                        z_errAve = zErrAbsSum/(oldTime/1000);
                         zDrift = Kz*z_err + Kzi*zErrSum;
                         if (first) zDrift = 1.5*Kz*z_err;
-                        if (Math.abs(z_err) > 3*z_errAve && Math.abs(z_err-z_errOld) > 3*z_errAve && !first) zDrift = 0;
+                        //if (Math.abs(z_err) > 3*z_errAve && Math.abs(z_err-z_errOld) > 3*z_errAve && !first) zDrift = 0;
                         z_errOld = z_err;
                         hardwareManager.moveFocusStage(zDrift);
                     }
