@@ -55,20 +55,19 @@ public class DriftCorrection extends Observable implements Runnable {
     private long startTimeStamp;
     private double oldTime;
     private double dt;
-    private double LongTimeDelay;
-    private double ShortTimeDelay;
     private double threshold;
-    private double Kzp = 0; // Proportional gain. 190401 kw
-    private double Kzt = 0; // Trend gain. 220118 JE
-    private double Klp = 1; // Lateral gain 220118 JE
-    private double Klt = 0; // Lateral gain 220118 JE
+    private double Zp = 1; // Proportional gain. 190401 kw
+    private double Zi = 0; // Integral gain. 220118 JE
+    private double Lp = 1; // Lateral gain 220118 JE
+    private double Li = 0; // Lateral gain 220118 JE
     private double SP = 0; // Z-correction setpoint
     private double PV = 0; // Z-correction process variable
     private double z_err = 0; // Z-correction error (for proportional gain)
-    private double lin_zDrift = 0; // Z-correction error (for proportional gain)
+    private double z_errSum = 0; // Z-correction error (for integral gain)
     private double xErr = 0; // 220119 JE
     private double yErr = 0; // 220119 JE
-    private int Delay = 100;
+    private double xErrSum = 0; // 220414 JE
+    private double yErrSum = 0; // 220414 JE
     private double Top = 0; // 220131 JE
     private double Bottom = 0; // 220131 JE
     private double Middle = 0; // 220131 JE
@@ -98,6 +97,8 @@ public class DriftCorrection extends Observable implements Runnable {
                         //Initialise variables for new run 220119 JE
                         xErr = 0;
                         yErr = 0;
+                        xErrSum = 0;
+                        yErrSum = 0;
                     } 
                     
                     // If we've just started, get the reference stack (190401 kw)
@@ -108,6 +109,7 @@ public class DriftCorrection extends Observable implements Runnable {
                             SP = 0; 
                             PV = 0;
                             z_err = 0;
+                            z_errSum = 0;
                             
                             ImageStack refStack = new ImageStack(
                                 driftData.getReferenceImage().getWidth(),
@@ -142,11 +144,11 @@ public class DriftCorrection extends Observable implements Runnable {
                             //double refCCtopMidMax = refCCtop.getMax();
                             //double refCCmidMidMax = refCCmiddle.getMax();
                             
-                            refCCbottomMidMax = processor.CenterHeightFind(refCCbottom); // 220131 JE
-                            refCCtopMidMax = processor.CenterHeightFind(refCCtop); // 220131 JE
-                            refCCmidMidMax = processor.CenterHeightFind(refCCmiddle); // 220131 JE
-                            refCCTopTopMax = processor.CenterHeightFind(refTopTopProc); // 220131 JE
-                            refCCBottomBottomMax = processor.CenterHeightFind(refBottomBottomProc); // 220131 JE
+                            refCCbottomMidMax = processor.CenterHeightFind2(refCCbottom); // 220131 JE
+                            refCCtopMidMax = processor.CenterHeightFind2(refCCtop); // 220131 JE
+                            refCCmidMidMax = processor.CenterHeightFind2(refCCmiddle); // 220131 JE
+                            refCCTopTopMax = processor.CenterHeightFind2(refTopTopProc); // 220131 JE
+                            refCCBottomBottomMax = processor.CenterHeightFind2(refBottomBottomProc); // 220131 JE
                             
                             /* added 190401 kw
                             FloatProcessor refSliceBottom = refStack.getProcessor(3).convertToFloatProcessor();
@@ -192,12 +194,12 @@ public class DriftCorrection extends Observable implements Runnable {
                         //double ccSliceTopMax = ccSliceTop.getMax();
                         //double ccSliceMiddleMax = ccSliceMiddle.getMax();
 
-                        double ccSliceBottomMax = processor.CenterHeightFind(ccSliceBottom); // 220131 JE
-                        double ccSliceTopMax = processor.CenterHeightFind(ccSliceTop); // 220131 JE
-                        double ccSliceMiddleMax = processor.CenterHeightFind(ccSliceMiddle); // 220131 JE
+                        double ccSliceBottomMax = processor.CenterHeightFind2(ccSliceBottom); // 220131 JE
+                        double ccSliceTopMax = processor.CenterHeightFind2(ccSliceTop); // 220131 JE
+                        double ccSliceMiddleMax = processor.CenterHeightFind2(ccSliceMiddle); // 220131 JE
 
-                        Top = (ccSliceTopMax/refCCTopTopMax)+0.6; // 220131 JE
-                        Bottom = (ccSliceBottomMax/refCCBottomBottomMax)+0.6; // 220131 JE
+                        Top = (ccSliceTopMax/refCCTopTopMax); // 220131 JE
+                        Bottom = (ccSliceBottomMax/refCCBottomBottomMax); // 220131 JE
                         Middle = (ccSliceMiddleMax/refCCmidMidMax)+0.6; // 220131 JE
                         
                         PV = (Top - Bottom) / Middle; // eq 5 in McGorty et al. 2013 // 220131 JE
@@ -254,23 +256,15 @@ public class DriftCorrection extends Observable implements Runnable {
                     xErr = (double) rawCenter[0]  - imCentx;
                     yErr = (double) rawCenter[1]  - imCenty;
                     
+                    xErrSum = xErrSum + xErr*dt;
+                    yErrSum = yErrSum + yErr*dt;
+                    
                     double x = 0;
                     double y = 0;
-                    if(driftData.getLenTimeStamps()>Delay+1){
-                        LongTimeDelay = driftData.getLatestTimeStamp()-driftData.getDelayedTimeStamp(Delay);
-                        ShortTimeDelay = driftData.getLatestTimeStamp()-driftData.getDelayedTimeStamp(Delay/10);
-                    }
+
                     if (correctionMode == XY || correctionMode == XYZ){
-                        if(driftData.getLenTimeStamps()<=Delay+1){
-                            x  = Klp*(xErr); // updated with gain parameter 220118 JE
-                            y  = Klp*(yErr); // updated with gain parameter 220118 JE
-                        }
-                        else{
-                            double LatestXDrift = driftData.getLatestXDrift();
-                            double LatestYDrift = driftData.getLatestYDrift();
-                            x = Klp * (xErr + Klt*dt*((0.7*((LatestXDrift-driftData.getDelayedXDrift(Delay))/LongTimeDelay))+(0.3*((LatestXDrift-driftData.getDelayedXDrift(Delay/10))/ShortTimeDelay)))); // updated with predictive term 220122 JE
-                            y = Klp * (yErr + Klt*dt*((0.7*((LatestYDrift-driftData.getDelayedYDrift(Delay))/LongTimeDelay))+(0.3*((LatestYDrift-driftData.getDelayedYDrift(Delay/10))/ShortTimeDelay)))); // updated with predictive term 220122 JE
-                        }
+                            x = Lp*xErr + Li*xErrSum;
+                            y = Lp*yErr + Li*yErrSum;
                     }
                     
                     oldTime = getTimeElapsed(); // time of current loop (store for next loop iteration)
@@ -310,16 +304,8 @@ public class DriftCorrection extends Observable implements Runnable {
                     // Now using PI controller instead of equation in McGorty 2013 paper (220110 kw)
                     if (isRunning() && (correctionMode == Z || correctionMode == XYZ) ) {
                         z_err = SP - PV; // Z-correction error 220110
-                        
-                        if(driftData.getLenTimeStamps()<=Delay+1){
-                            zDrift = (Kzp * z_err);
-                        }
-                        else{
-                            //lin_zDrift = Kt*dt*((driftData.getLatestZDrift()-driftData.getDelayedZDrift(Delay))/TimeDelay);
-                            //zDrift = (Kzp * (z_err)) + lin_zDrift;
-                            double LatestZDrift = driftData.getLatestZDrift();
-                            zDrift = Kzp*(z_err + Kzt*dt*((0.5*((LatestZDrift-driftData.getDelayedZDrift(Delay))/LongTimeDelay))+(0.5*((LatestZDrift-driftData.getDelayedZDrift(Delay/10))/ShortTimeDelay)))); // updated with predictive term 220117 JE //new predictiver term 220203
-                        }
+                        z_errSum = z_errSum + z_err*dt;
+                        zDrift = Zp*z_err + Zi*z_errSum;
                         hardwareManager.moveFocusStage(zDrift);
                     }
 
@@ -423,28 +409,23 @@ public class DriftCorrection extends Observable implements Runnable {
     }
     
     // added 190404 kw
-    public void setKzp(double Kzp){
-        this.Kzp = Kzp;
+    public void setZp(double Zp){
+        this.Zp = Zp;
     }
     
     // added 220110 kw
-    public void setKzt(double Kzt){
-        this.Kzt = Kzt;
+    public void setZi(double Zi){
+        this.Zi = Zi;
     }
     
     // added 220118 JE
-    public void setKlp(double Klp){
-        this.Klp = Klp;
+    public void setLp(double Lp){
+        this.Lp = Lp;
     }
     
     // added 220118 JE
-    public void setKlt(double Klt){
-        this.Klt = Klt;
-    }
-    
-    // added 220117 JE
-    public void setDelay(int Delay){
-        this.Delay = Delay;
+    public void setLi(double Li){
+        this.Li = Li;
     }
 
     public double getThreshold() {

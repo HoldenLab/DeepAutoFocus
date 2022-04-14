@@ -64,11 +64,10 @@ public class DriftCorrectionGUI{
     private static final String ROI_SIZE = "roiSize";
     private static final String EDGE_CLIP = "edgeClip";
     private static final String STEP_SIZE = "stepSize";
-    private static final String KZP = "Kzp"; // 190404 kw
-    private static final String KZT = "Kzt"; // 220110 kw
-    private static final String KLP = "Klp"; // 220118 JE
-    private static final String KLT = "Klt"; // 220118 JE
-    private static final String DELAY = "Delay"; // 220117 JE
+    private static final String Zp = "Zp"; // 190404 kw
+    private static final String Zi = "Zi"; // 220110 kw
+    private static final String Lp = "Lp"; // 220118 JE
+    private static final String Li = "Li"; // 220118 JE
     private static final String PERIOD = "period";
     private static final String BOUNDS = "bounds";
     private static final String CAL_STEP_SIZE = "calStepSize"; // 201223 kw
@@ -84,11 +83,10 @@ public class DriftCorrectionGUI{
     private static final String ROI_SIZE_DEFAULT = "2000";
     private static final String EDGE_CLIP_DEFAULT = "0";
     private static final String STEP_SIZE_DEFAULT = "1500"; // nanometers
-    private static final String KZP_DEFAULT = "1"; // 190404 kw
-    private static final String KZT_DEFAULT = "0.5"; // 220118 JE
-    private static final String KLP_DEFAULT = "1"; // 220118 JE
-    private static final String KLT_DEFAULT = "0.5"; // 220118 JE
-    private static final String DELAY_DEFAULT = "20"; // 220110 kw
+    private static final String Zp_DEFAULT = "0.3"; // 190404 kw
+    private static final String Zi_DEFAULT = "0"; // 220118 JE
+    private static final String Lp_DEFAULT = "0.1"; // 220118 JE
+    private static final String Li_DEFAULT = "0"; // 220118 JE
     private static final String PERIOD_DEFAULT = "500"; // milliseconds
     private static final String BOUNDS_DEFAULT = "10"; // microns
     private static final double CAL_DEFAULT = -1;
@@ -113,11 +111,10 @@ public class DriftCorrectionGUI{
     private static final String ROI_BOX_LABEL = "Maximum ROI to analyse";
     private static final String EDGE_CLIP_LABEL = "Pixels to trim from the edges";
     private static final String STEP_SIZE_LABEL = "Step size (nm) for Z correction";
-    private static final String KZP_LABEL = "Kzp (Axial proportional gain)"; //190404 kw
-    private static final String KZT_LABEL = "Kzt (Axial trend gain)"; // 220118 JE
-    private static final String KLP_LABEL = "Klp (Lateral proportional gain)"; // 220118 JE
-    private static final String KLT_LABEL = "Klt (Lateral trend gain)"; // 220118 JE
-    private static final String DELAY_LABEL = "Gap between points for predictive correction"; // 220117 JE
+    private static final String Zp_LABEL = "Zp (Axial proportional gain)"; //190404 kw
+    private static final String Zi_LABEL = "Zi (Axial integral gain)"; // 220118 JE
+    private static final String Lp_LABEL = "Lp (Lateral proportional gain)"; // 220118 JE
+    private static final String Li_LABEL = "Li (Lateral integral gain)"; // 220118 JE
     private static final String PERIOD_LABEL = "Time between corrections (ms)";
     private static final String BOUNDS_LABEL = "Maximum translation (um)";
     private static final String SEPARATE_STAGES_LABEL = "Separate XY stage devices?";
@@ -223,11 +220,10 @@ public class DriftCorrectionGUI{
     private JTextField roiBox = new DTextField(ROI_SIZE, ROI_SIZE_DEFAULT);
     private JTextField edgeClipBox = new DTextField(EDGE_CLIP, EDGE_CLIP_DEFAULT);
     private JTextField stepSizeBox = new DTextField(STEP_SIZE, STEP_SIZE_DEFAULT);
-    private JTextField KzpBox = new DTextField(KZP, KZP_DEFAULT); // 190404 kw
-    private JTextField KztBox = new DTextField(KZT, KZT_DEFAULT); // 220118 JE
-    private JTextField KlpBox = new DTextField(KLP, KLP_DEFAULT); // 220118 JE
-    private JTextField KltBox = new DTextField(KLT, KLT_DEFAULT); // 220118 JE
-    private JTextField DelayBox = new DTextField(DELAY, DELAY_DEFAULT); // 220110 kw
+    private JTextField ZpBox = new DTextField(Zp, Zp_DEFAULT); // 190404 kw
+    private JTextField ZiBox = new DTextField(Zi, Zi_DEFAULT); // 220118 JE
+    private JTextField LpBox = new DTextField(Lp, Lp_DEFAULT); // 220118 JE
+    private JTextField LiBox = new DTextField(Li, Li_DEFAULT); // 220118 JE
     private JTextField periodBox = new DTextField(PERIOD, PERIOD_DEFAULT);
     private JTextField boundsLimitBox = new DTextField(BOUNDS, BOUNDS_DEFAULT);
     private DeviceList focusDeviceList = new DeviceList(DeviceType.StageDevice, Z_STAGE);
@@ -372,16 +368,14 @@ public class DriftCorrectionGUI{
         configurationPanel.add(edgeClipBox);
         configurationPanel.add(new DLabel(STEP_SIZE_LABEL));
         configurationPanel.add(stepSizeBox);
-        configurationPanel.add(new DLabel(KZP_LABEL)); //190404 kw
-        configurationPanel.add(KzpBox);
-        configurationPanel.add(new DLabel(KZT_LABEL)); //220118 JE
-        configurationPanel.add(KztBox);
-        configurationPanel.add(new DLabel(KLP_LABEL)); //220118 JE
-        configurationPanel.add(KlpBox);
-        configurationPanel.add(new DLabel(KLT_LABEL)); //220118 JE
-        configurationPanel.add(KltBox);
-        configurationPanel.add(new DLabel(DELAY_LABEL)); //220110 kw
-        configurationPanel.add(DelayBox);
+        configurationPanel.add(new DLabel(Zp_LABEL)); //190404 kw
+        configurationPanel.add(ZpBox);
+        configurationPanel.add(new DLabel(Zi_LABEL)); //220118 JE
+        configurationPanel.add(ZiBox);
+        configurationPanel.add(new DLabel(Lp_LABEL)); //220118 JE
+        configurationPanel.add(LpBox);
+        configurationPanel.add(new DLabel(Li_LABEL)); //220118 JE
+        configurationPanel.add(LiBox);
         configurationPanel.add(new DLabel(PERIOD_LABEL));
         configurationPanel.add(periodBox);
         configurationPanel.add(new DLabel(BOUNDS_LABEL));
@@ -470,11 +464,10 @@ public class DriftCorrectionGUI{
         bgSub.setBackgroundStep(Double.parseDouble(backgroundStepSizeBox.getText()));
         calibrator.setStep(Double.parseDouble(calibrationStepSizeBox.getText()));
         
-        driftCorrection.setKzp((double) (Double.parseDouble(KzpBox.getText()))); //190404 kw
-        driftCorrection.setKzt((double) (Double.parseDouble(KztBox.getText()))); //220118 JE
-        driftCorrection.setKlp((double) (Double.parseDouble(KlpBox.getText()))); //220118 JE
-        driftCorrection.setKlt((double) (Double.parseDouble(KltBox.getText()))); //220118 JE
-        driftCorrection.setDelay((int) (Double.parseDouble(DelayBox.getText()))); //220117 JE
+        driftCorrection.setZp((double) (Double.parseDouble(ZpBox.getText()))); //190404 kw
+        driftCorrection.setZi((double) (Double.parseDouble(ZiBox.getText()))); //220118 JE
+        driftCorrection.setLp((double) (Double.parseDouble(LpBox.getText()))); //220118 JE
+        driftCorrection.setLi((double) (Double.parseDouble(LiBox.getText()))); //220118 JE
         driftCorrection.setSleep((long) (Double.parseDouble(periodBox.getText())));
         driftCorrection.setThreshold(Double.parseDouble(boundsLimitBox.getText()));
 
