@@ -171,8 +171,8 @@ public class DriftCorrection extends Observable implements Runnable {
                             // overriding this alpha for now, just using user input value.
                             //alpha = (2*refCCmidMidMax - refCCtopMidMax - refCCbottomMidMax) * hardwareManager.getStepSize() / 2; // eq 6 in McGorty et al. 2013. corrected so that stepsize is in numerator!
                             
-                            Top = (refCCtopMidMax/refCCTopTopMax)+0.6; // 220131 JE
-                            Bottom = (refCCbottomMidMax/refCCBottomBottomMax)+0.6; // 220131 JE
+                            Top = (refCCtopMidMax/refCCTopTopMax); // 220131 JE
+                            Bottom = (refCCbottomMidMax/refCCBottomBottomMax); // 220131 JE
                             Middle = (refCCmidMidMax/refCCmidMidMax)+0.6; // 220131 JE
                             SP = (Top - Bottom) / Middle; // Z-correction setpoint // 220131 JE
 

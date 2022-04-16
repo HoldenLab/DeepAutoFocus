@@ -7,6 +7,8 @@ import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import nanoj.core.java.image.calculator.FloatProcessorCalculator;
 import nanoj.core.java.image.analysis.CalculateImageStatistics;
+import ij.gui.OvalRoi;
+import ij.process.ImageStatistics;
 
 import java.awt.*;
 
@@ -128,14 +130,23 @@ public class DriftCorrectionProcess implements Measurements {
     }
 
     public double CenterHeightFind3(FloatProcessor image){ // 220131 JE
-        image.setRoi(new OvalRoi(image.getWidth()/2, image.getHeight()/2, 17, 17));
-        image.filloutside();
-        float[] pixels = (float[]) region.getPixels();
+        int x = image.getWidth()/2 - 15;
+        int y = image.getHeight()/2 - 15;
+        image.setRoi(x,y, 31, 31);
+        FloatProcessor region = image.crop().convertToFloatProcessor();
+        OvalRoi roi = new OvalRoi(region.getWidth()/2, region.getHeight()/2, 1, 1);
+        region.setColor(0);
+        region.setRoi(roi);
+        region.fillOutside(roi);
+        //double mean = ImageStatistics.getStatistics(region).mean;
+        float[] pixels = (float[]) image.getPixels();
         double sum = 0;
+        int pixnum = 0;
         for (int n=0; n<pixels.length; n++) {
             sum += pixels[n];
+            if (pixels[n] != 0) pixnum = pixnum + 1;
         }
-        double mean = sum/pixels.length;
+        double mean = sum/pixnum;
         return mean;
     }
 
