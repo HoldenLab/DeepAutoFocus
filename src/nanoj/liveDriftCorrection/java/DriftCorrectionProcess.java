@@ -127,6 +127,18 @@ public class DriftCorrectionProcess implements Measurements {
         return mean;
     }
 
+    public double CenterHeightFind3(FloatProcessor image){ // 220131 JE
+        image.setRoi(new OvalRoi(image.getWidth()/2, image.getHeight()/2, 17, 17));
+        image.filloutside();
+        float[] pixels = (float[]) region.getPixels();
+        double sum = 0;
+        for (int n=0; n<pixels.length; n++) {
+            sum += pixels[n];
+        }
+        double mean = sum/pixels.length;
+        return mean;
+    }
+
     public FloatProcessor backgroundCorrect(FloatProcessor image) throws Exception {
         FloatProcessor backgroundImage = data.getBackgroundImage();
         if (backgroundImage == null)
