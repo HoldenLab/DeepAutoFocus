@@ -29,6 +29,7 @@ public class DriftCorrection extends Observable implements Runnable {
     private ImageProcessor refBottomBottomCC = null; // 220131 JE
     private ImageProcessor resultImage = null;
     private FloatProcessor ccSliceMiddle = null;
+    private FloatProcessor mask = null;
 
     private static final int XYZ = 0;
     private static final int Z = 1;
@@ -149,6 +150,12 @@ public class DriftCorrection extends Observable implements Runnable {
                             refCCmidMidMax = processor.CenterHeightFind2(refCCmiddle); // 220131 JE
                             refCCTopTopMax = processor.CenterHeightFind2(refTopTopProc); // 220131 JE
                             refCCBottomBottomMax = processor.CenterHeightFind2(refBottomBottomProc); // 220131 JE
+
+                            //refCCbottomMidMax = processor.CenterHeightFind4(refCCbottom,mask); // 220131 JE
+                            //refCCtopMidMax = processor.CenterHeightFind4(refCCtop,mask); // 220131 JE
+                            //refCCmidMidMax = processor.CenterHeightFind4(refCCmiddle,mask); // 220131 JE
+                            //refCCTopTopMax = processor.CenterHeightFind4(refTopTopProc,mask); // 220131 JE
+                            //refCCBottomBottomMax = processor.CenterHeightFind4(refBottomBottomProc,mask); // 220131 JE
                             
                             /* added 190401 kw
                             FloatProcessor refSliceBottom = refStack.getProcessor(3).convertToFloatProcessor();
@@ -197,6 +204,10 @@ public class DriftCorrection extends Observable implements Runnable {
                         double ccSliceBottomMax = processor.CenterHeightFind2(ccSliceBottom); // 220131 JE
                         double ccSliceTopMax = processor.CenterHeightFind2(ccSliceTop); // 220131 JE
                         double ccSliceMiddleMax = processor.CenterHeightFind2(ccSliceMiddle); // 220131 JE
+                        
+                        //double ccSliceBottomMax = processor.CenterHeightFind4(ccSliceBottom,mask); // 220131 JE
+                        //double ccSliceTopMax = processor.CenterHeightFind4(ccSliceTop,mask); // 220131 JE
+                        //double ccSliceMiddleMax = processor.CenterHeightFind4(ccSliceMiddle,mask); // 220131 JE
 
                         Top = (ccSliceTopMax/refCCTopTopMax); // 220131 JE
                         Bottom = (ccSliceBottomMax/refCCBottomBottomMax); // 220131 JE
