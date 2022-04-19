@@ -181,6 +181,120 @@ public class DriftCorrectionProcess implements Measurements {
         return mean;
     }
 
+    public Molecule fit(SubImage img) {
+    //long startTime = System.nanoTime();
+        
+        //Variable initiation
+        double totResult[] = new double[6];   
+        double omega = 2.0 * Math.PI / img.size_x;
+        double axy[][] = new double[img.size_x][img.size_y];
+        double totalint = 0;
+        //Loop through all positions in array but in an X/Y manner:
+        //First calculate total intensity of matrix, then set each point, normalized by total intensity
+        for (int y = 0; y < img.size_x; y++) {
+            for (int x = 0; x < img.size_x; x++) {
+                totalint += img.values[x+y*img.size_x];
+            }
+	    }
+        for (int y = 0; y < img.size_x; y++) {
+            for (int x = 0; x < img.size_x; x++) {
+                axy[x][y] = img.values[x+y*img.size_x]/totalint;
+            }
+	    }
+        //Do the partial Fourier transformation (only acquiring first order harmonics)
+        totResult = twoDfft(axy,fitcos,fitsin);
+        //Re-assign variables to something readable
+        double FirstHarmonicXRe = totResult[0];
+        double FirstHarmonicXIm = totResult[1];
+        double AmplitudeX = totResult[2];
+        double FirstHarmonicYRe = totResult[3];
+        double FirstHarmonicYIm = totResult[4];
+        double AmplitudeY = totResult[5];
+        //Backup next line from change 19/3/2018
+        //double angY=(Math.PI-Math.atan(FirstHarmonicYIm/FirstHarmonicYRe))*-1;
+        //New line from change 19/3/2018 - atan2 resembles matlab more
+        double angY=Math.atan2(FirstHarmonicYIm,FirstHarmonicYRe);
+        //Removed strange part when 3x3 matrix is used at 19/3/2018
+        //This used to be adding 1 PI when angle was below -PI
+        if (angY>0){
+            angY=angY-2*Math.PI;
+        }
+        //Backup next line from change 19/3/2018
+        //double angX=(Math.PI-Math.atan(FirstHarmonicXIm/FirstHarmonicXRe))*-1;
+        //New line from change 19/3/2018 - atan2 resembles matlab more
+        double angX=Math.atan2(FirstHarmonicXIm,FirstHarmonicXRe);
+        //Removed strange part when 3x3 matrix is used at 19/3/2018
+        //This used to be adding 1 PI when angle was below -PI
+        if (angX>0){
+            angX=angX-2*Math.PI;
+        }
+        
+        //Calculate X and Y positions
+        double xpos = (Math.abs(angY)/omega) - (img.size_x-1)/2;// -0.125;//+0.25;
+        double ypos = (Math.abs(angX)/omega) - (img.size_y-1)/2;// +0.125*1.5;
+    }
+
+    public static double[] twoDfft(double[][] inputData, double[] cos, double[] sin) {
+        //Initialize variables
+        double height = inputData.length;
+        double width = inputData[0].length;
+        double[] totxloopRe = new double[inputData.length];
+        double[] totxloopIm = new double[inputData.length];
+        double FirstHarmonicXRe = 0;
+        double FirstHarmonicXIm = 0;
+        double[] totyloopRe = new double[inputData.length];
+        double[] totyloopIm = new double[inputData.length];
+        double FirstHarmonicYRe = 0;
+        double FirstHarmonicYIm = 0;
+        double[] totalArray = new double[6];
+        //loop over the rows of the input data, multiply by real and imag parts of omega1 column
+        for (int rowloop = 0; rowloop < height; rowloop++) 
+        {
+            for (int colloop = 0; colloop < width; colloop++) 
+            {
+                //Calculate real (cos) and imag (-sin) parts of the current row.
+                totxloopRe[colloop] += cos[colloop]*inputData[rowloop][colloop];
+                totxloopIm[colloop] -= sin[colloop]*inputData[rowloop][colloop];
+           }
+        }
+        //Sum all the rows to get the first order harmonic in X
+        for (int colloop = 0; colloop < width; colloop++) {
+            FirstHarmonicXRe += totxloopRe[colloop];
+            FirstHarmonicXIm += totxloopIm[colloop];
+        }
+        //Calculate amplitude
+        double AmplitudeX = Math.sqrt(FirstHarmonicXRe/height*FirstHarmonicXRe/height+FirstHarmonicXIm/height*FirstHarmonicXIm/height);
+        
+        //loop over the columnss of the input data, multiply by real and imag parts of omega1 row       
+        for (int colloop = 0; colloop < width; colloop++) 
+        {
+            for (int rowloop = 0; rowloop < height; rowloop++) 
+            {
+                //Calculate real (cos) and imag (-sin) parts of the current column.
+                totyloopRe[rowloop] += cos[rowloop]*inputData[rowloop][colloop];
+                totyloopIm[rowloop] -= sin[rowloop]*inputData[rowloop][colloop];
+            }
+        }
+        //Sum all the rows to get the first order harmonic in Y 
+        for (int rowloop = 0; rowloop < width; rowloop++) {
+            FirstHarmonicYRe += totyloopRe[rowloop];
+            FirstHarmonicYIm += totyloopIm[rowloop];
+        } 
+        //Calculate amplitude
+        double AmplitudeY = Math.sqrt(FirstHarmonicYRe/height*FirstHarmonicYRe/height+FirstHarmonicYIm/height*FirstHarmonicYIm/height);
+ 
+        //Placing the 6 variables in a array to be provided to the user
+        totalArray[0]=FirstHarmonicXRe;
+        totalArray[1]=FirstHarmonicXIm;
+        totalArray[2]=AmplitudeX;
+        totalArray[3]=FirstHarmonicYRe;
+        totalArray[4]=FirstHarmonicYIm;
+        totalArray[5]=AmplitudeY;
+        
+        //Return the values
+        return totalArray;
+    }
+
     public FloatProcessor backgroundCorrect(FloatProcessor image) throws Exception {
         FloatProcessor backgroundImage = data.getBackgroundImage();
         if (backgroundImage == null)
