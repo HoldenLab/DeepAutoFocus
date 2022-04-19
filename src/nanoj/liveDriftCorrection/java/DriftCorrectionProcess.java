@@ -100,8 +100,9 @@ public class DriftCorrectionProcess implements Measurements {
     }
 
         public float[] PeakFind(FloatProcessor CCmap) {
-        int peakX = CalculateImageStatistics.xMax(CCmap);
-        int peakY = CalculateImageStatistics.yMax(CCmap);
+        float[] peak = CalculateImageStatistics.getMax(CCmap);
+        int peakX = (int) peak[0];
+        int peakY = (int) peak[1];
         int x = peakX - 2;
         int y = peakY - 2;
         //int x = CCmap.getWidth()/2 - 2;
@@ -126,8 +127,20 @@ public class DriftCorrectionProcess implements Measurements {
             }
         }
         xCM /= sSum; yCM /= sSum;
-        xCM += x; yCM += y
+        xCM += x; yCM += y;
+        
         return new float[] {xCM, yCM};
+    }
+        
+    public double[] PhasorPeakFind(FloatProcessor CCmap) {
+        float[] peak = CalculateImageStatistics.getMax(CCmap);
+        int peakX = (int) peak[0];
+        int peakY = (int) peak[1];
+        int x = peakX - 2;
+        int y = peakY - 2;
+        CCmap.setRoi(x,y, 5, 5);
+        FloatProcessor region = CCmap.crop().convertToFloatProcessor();
+        return Phasorfit(region);
     }
     
     public double CenterHeightFind(FloatProcessor image){ // 220131 JE
@@ -181,28 +194,38 @@ public class DriftCorrectionProcess implements Measurements {
         return mean;
     }
 
-    public Molecule fit(SubImage img) {
+    public double[] Phasorfit(FloatProcessor img) { // adapted from https://github.com/kjamartens/thunderstorm/blob/phasor-intensity-1/src/main/java/cz/cuni/lf1/lge/ThunderSTORM/estimators/PhasorFitter.java by JE 220419
     //long startTime = System.nanoTime();
+    
+        float[] pixels = (float[]) img.getPixels();
+    
+        double[] fitomega = new double[pixels.length];
+        double[] fitcos = new double[pixels.length];
+        double[] fitsin = new double[pixels.length];
+        for (int indi = 0; indi < pixels.length; indi++){
+            fitomega[indi] = (indi/pixels.length)*2*Math.PI;
+            fitcos[indi] = Math.cos(fitomega[indi]);
+            fitsin[indi] = Math.sin(fitomega[indi]);
+        }
         
-        //Variable initiation
-        double totResult[] = new double[6];   
-        double omega = 2.0 * Math.PI / img.size_x;
-        double axy[][] = new double[img.size_x][img.size_y];
+        //Variable initiation  
+        double omega = 2.0 * Math.PI / img.getWidth();
+        double axy[][] = new double[img.getWidth()][img.getHeight()];
         double totalint = 0;
         //Loop through all positions in array but in an X/Y manner:
         //First calculate total intensity of matrix, then set each point, normalized by total intensity
-        for (int y = 0; y < img.size_x; y++) {
-            for (int x = 0; x < img.size_x; x++) {
-                totalint += img.values[x+y*img.size_x];
+        for (int y = 0; y < img.getHeight(); y++) {
+            for (int x = 0; x < img.getWidth(); x++) {
+                totalint += pixels[x+y*img.getWidth()];
             }
-	    }
-        for (int y = 0; y < img.size_x; y++) {
-            for (int x = 0; x < img.size_x; x++) {
-                axy[x][y] = img.values[x+y*img.size_x]/totalint;
+	}
+        for (int y = 0; y < img.getHeight(); y++) {
+            for (int x = 0; x < img.getWidth(); x++) {
+                axy[x][y] = pixels[x+y*img.getWidth()]/totalint;
             }
-	    }
+	}
         //Do the partial Fourier transformation (only acquiring first order harmonics)
-        totResult = twoDfft(axy,fitcos,fitsin);
+        double[] totResult = twoDfft(axy,fitcos,fitsin);
         //Re-assign variables to something readable
         double FirstHarmonicXRe = totResult[0];
         double FirstHarmonicXIm = totResult[1];
@@ -230,8 +253,12 @@ public class DriftCorrectionProcess implements Measurements {
         }
         
         //Calculate X and Y positions
-        double xpos = (Math.abs(angY)/omega) - (img.size_x-1)/2;// -0.125;//+0.25;
-        double ypos = (Math.abs(angX)/omega) - (img.size_y-1)/2;// +0.125*1.5;
+        double xpos = (Math.abs(angY)/omega) - (img.getWidth()-1)/2;// -0.125;//+0.25;
+        double ypos = (Math.abs(angX)/omega) - (img.getHeight()-1)/2;// +0.125*1.5;
+        double[] positions = new double[2];
+        positions[0] = xpos;
+        positions[1] = ypos;
+        return positions;
     }
 
     public static double[] twoDfft(double[][] inputData, double[] cos, double[] sin) {

@@ -10,9 +10,9 @@ import org.scijava.plugin.Plugin;
 public class DriftCorrectionPlugin implements MenuPlugin, SciJavaPlugin {
     static DriftCorrectionGUI driftGui = DriftCorrectionGUI.INSTANCE;
 
-    public static final String menuName = "NanoJ Online Drift Correction";
+    public static final String menuName = "ImLock";
     public static final String tooltipDescription = "Asynchronous Image-Correlation-based 3D drift correction.";
-    public static final String version = "0.5";
+    public static final String version = "1.2";
     public static final String copyright = "Copyright University College London, 2017";
     private MMStudio app_;
 

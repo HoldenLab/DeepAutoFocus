@@ -234,8 +234,10 @@ public class DriftCorrection extends Observable implements Runnable {
                         imCenty = resultImage.getHeight()/2;
                     }
                     
-                    float[] rawCenter = new float[3];
-                    float[] currentCenter = EstimateShiftAndTilt.getMaxFindByOptimization(ccSliceMiddle);
+                    //float[] rawCenter = new float[3];
+                    //float[] currentCenter = EstimateShiftAndTilt.getMaxFindByOptimization(ccSliceMiddle);
+                    double[] rawCenter = new double[3];
+                    double[] currentCenter = processor.PhasorPeakFind(ccSliceMiddle);
                     rawCenter = currentCenter;
                         
                     /* Deprecated 190404
