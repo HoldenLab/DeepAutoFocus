@@ -140,7 +140,10 @@ public class DriftCorrectionProcess implements Measurements {
         int y = peakY - 2;
         CCmap.setRoi(x,y, 5, 5);
         FloatProcessor region = CCmap.crop().convertToFloatProcessor();
-        return Phasorfit(region);
+        double[] fit = Phasorfit(region);
+        fit[0] = fit[0] - peakX
+        fit[1] = fit[1] - peakY
+        return fit
     }
     
     public double CenterHeightFind(FloatProcessor image){ // 220131 JE
