@@ -141,8 +141,8 @@ public class DriftCorrectionProcess implements Measurements {
         CCmap.setRoi(x,y, 5, 5);
         FloatProcessor region = CCmap.crop().convertToFloatProcessor();
         double[] fit = Phasorfit(region);
-        fit[0] = fit[0] - peakX
-        fit[1] = fit[1] - peakY
+        fit[0] = fit[0] + peakX
+        fit[1] = fit[1] + peakY
         return fit
     }
     
