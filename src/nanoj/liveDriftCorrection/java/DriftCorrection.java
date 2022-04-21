@@ -236,9 +236,8 @@ public class DriftCorrection extends Observable implements Runnable {
                     
                     //float[] rawCenter = new float[3];
                     //float[] currentCenter = EstimateShiftAndTilt.getMaxFindByOptimization(ccSliceMiddle);
-                    double[] rawCenter = new double[3];
                     double[] currentCenter = processor.PhasorPeakFind(ccSliceMiddle);
-                    rawCenter = currentCenter;
+                    //ReportingUtils.showMessage("here 2");
                         
                     /* Deprecated 190404
                     double max = 0;
@@ -260,15 +259,18 @@ public class DriftCorrection extends Observable implements Runnable {
                     */
                     
                     // The getMaxFindByOptimization can generate NaN's so we protect against that
-                    if ( Double.isNaN(rawCenter[0]) || Double.isNaN(rawCenter[1]) || Double.isNaN(rawCenter[2]) ) continue;
+                    //if ( Double.isNaN(currentCenter[0]) || Double.isNaN(currentCenter[1]) || Double.isNaN(currentCenter[2]) ) continue;
+                    if ( Double.isNaN(currentCenter[0]) || Double.isNaN(currentCenter[1]) ) continue;
 
                     // A static image will have it's correlation map peak in the exact center of the image
                     // A moving image will have the peak shifted in relation to the center
                     // We subtract the rawCenter from the image center to obtain the drift
-                    dt = (getTimeElapsed() - oldTime)/1000;
-                    xErr = (double) rawCenter[0]  - imCentx;
-                    yErr = (double) rawCenter[1]  - imCenty;
-                    
+                    //dt = (getTimeElapsed() - oldTime)/1000;
+                    //ReportingUtils.showMessage("here 3");
+                    xErr = currentCenter[0]  - imCentx;
+                    //ReportingUtils.showMessage("here 4");
+                    yErr = currentCenter[1]  - imCenty;
+                    //ReportingUtils.showMessage("here 5");
                     xErrSum = xErrSum + xErr*dt;
                     yErrSum = yErrSum + yErr*dt;
                     

@@ -1,14 +1,17 @@
 package nanoj.liveDriftCorrection.java;
 
 import ij.IJ;
+import ij.ImageStack;
 import ij.measure.Measurements;
 import ij.process.FHT;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
+import ij.plugin.FFT;
 import nanoj.core.java.image.calculator.FloatProcessorCalculator;
 import nanoj.core.java.image.analysis.CalculateImageStatistics;
 import ij.gui.OvalRoi;
 import ij.process.ImageStatistics;
+import org.micromanager.internal.utils.ReportingUtils;
 
 import java.awt.*;
 
@@ -136,14 +139,15 @@ public class DriftCorrectionProcess implements Measurements {
         float[] peak = CalculateImageStatistics.getMax(CCmap);
         int peakX = (int) peak[0];
         int peakY = (int) peak[1];
-        int x = peakX - 2;
-        int y = peakY - 2;
-        CCmap.setRoi(x,y, 5, 5);
+        int x = peakX - 4;
+        int y = peakY - 4;
+        CCmap.setRoi(x,y, 8, 8);
         FloatProcessor region = CCmap.crop().convertToFloatProcessor();
-        double[] fit = Phasorfit(region);
-        fit[0] = fit[0] + peakX
-        fit[1] = fit[1] + peakY
-        return fit
+        //double[] fit = Phasorfit(region);
+        double[] fit = Phasor2d(region);
+        fit[0] = fit[0] + peakX;
+        fit[1] = fit[1] + peakY;
+        return fit;
     }
     
     public double CenterHeightFind(FloatProcessor image){ // 220131 JE
@@ -202,11 +206,11 @@ public class DriftCorrectionProcess implements Measurements {
     
         float[] pixels = (float[]) img.getPixels();
     
-        double[] fitomega = new double[pixels.length];
-        double[] fitcos = new double[pixels.length];
-        double[] fitsin = new double[pixels.length];
-        for (int indi = 0; indi < pixels.length; indi++){
-            fitomega[indi] = (indi/pixels.length)*2*Math.PI;
+        double[] fitomega = new double[img.getHeight()];
+        double[] fitcos = new double[img.getHeight()];
+        double[] fitsin = new double[img.getHeight()];
+        for (int indi = 0; indi < img.getHeight(); indi++){
+            fitomega[indi] = (indi/img.getHeight())*2*Math.PI;
             fitcos[indi] = Math.cos(fitomega[indi]);
             fitsin[indi] = Math.sin(fitomega[indi]);
         }
@@ -236,6 +240,8 @@ public class DriftCorrectionProcess implements Measurements {
         double FirstHarmonicYRe = totResult[3];
         double FirstHarmonicYIm = totResult[4];
         double AmplitudeY = totResult[5];
+        //ReportingUtils.showMessage(Double.toString(FirstHarmonicXRe));
+        //ReportingUtils.showMessage(Double.toString(FirstHarmonicXIm));
         //Backup next line from change 19/3/2018
         //double angY=(Math.PI-Math.atan(FirstHarmonicYIm/FirstHarmonicYRe))*-1;
         //New line from change 19/3/2018 - atan2 resembles matlab more
@@ -258,6 +264,42 @@ public class DriftCorrectionProcess implements Measurements {
         //Calculate X and Y positions
         double xpos = (Math.abs(angY)/omega) - (img.getWidth()-1)/2;// -0.125;//+0.25;
         double ypos = (Math.abs(angX)/omega) - (img.getHeight()-1)/2;// +0.125*1.5;
+        double[] positions = new double[2];
+        positions[0] = xpos;
+        positions[1] = ypos;
+        return positions;
+    }
+    
+    public double[] Phasor2d(FloatProcessor image){
+        FHT fht = new FHT(image);
+        fht.transform();
+        ImageStack fftStack = fht.getComplexTransform();
+        
+        ImageProcessor Real = fftStack.getProcessor(1);
+        ImageProcessor Imaginary = fftStack.getProcessor(2);
+        
+        double FirstHarmonicXRe = Real.getPixel(1, 0);
+        double FirstHarmonicXIm = Imaginary.getPixel(1, 0);
+        double FirstHarmonicYRe = Real.getPixel(0, 1);
+        double FirstHarmonicYIm = Imaginary.getPixel(0, 1);
+        
+        double angY=Math.atan2(FirstHarmonicYIm,FirstHarmonicYRe);
+        //Removed strange part when 3x3 matrix is used at 19/3/2018
+        //This used to be adding 1 PI when angle was below -PI
+        if (angY>0){
+            angY=angY-2*Math.PI;
+        }
+        
+        double angX=Math.atan2(FirstHarmonicXIm,FirstHarmonicXRe);
+        //Removed strange part when 3x3 matrix is used at 19/3/2018
+        //This used to be adding 1 PI when angle was below -PI
+        if (angX>0){
+            angX=angX-2*Math.PI;
+        }
+        double omega = 2.0 * Math.PI / image.getWidth();
+         //Calculate X and Y positions
+        double xpos = (Math.abs(angY)/omega) - (image.getWidth()-1)/2;// -0.125;//+0.25;
+        double ypos = (Math.abs(angX)/omega) - (image.getHeight()-1)/2;// +0.125*1.5;
         double[] positions = new double[2];
         positions[0] = xpos;
         positions[1] = ypos;
