@@ -139,14 +139,18 @@ public class DriftCorrectionProcess implements Measurements {
         float[] peak = CalculateImageStatistics.getMax(CCmap);
         int peakX = (int) peak[0];
         int peakY = (int) peak[1];
-        int x = peakX - 4;
-        int y = peakY - 4;
+        int x = CCmap.getWidth()/2 - 4;
+        int y = CCmap.getHeight()/2 - 4;
+        //int x = peakX - 4;
+        //int y = peakY - 4;
         CCmap.setRoi(x,y, 8, 8);
         FloatProcessor region = CCmap.crop().convertToFloatProcessor();
         //double[] fit = Phasorfit(region);
         double[] fit = Phasor2d(region);
-        fit[0] = fit[0] + peakX;
-        fit[1] = fit[1] + peakY;
+        fit[0] = fit[0]+ x +4;// + peakX;
+        fit[1] = fit[1]+ y +4;// + peakY;
+        //fit[0] = x +1 ;// + peakX;
+        //fit[1] = y +1 ;// + peakY;
         return fit;
     }
     
@@ -296,10 +300,13 @@ public class DriftCorrectionProcess implements Measurements {
         if (angX>0){
             angX=angX-2*Math.PI;
         }
+        
+        ReportingUtils.showMessage(Double.toString(angX));
+        
         double omega = 2.0 * Math.PI / image.getWidth();
-         //Calculate X and Y positions
-        double xpos = (Math.abs(angY)/omega) - (image.getWidth()-1)/2;// -0.125;//+0.25;
-        double ypos = (Math.abs(angX)/omega) - (image.getHeight()-1)/2;// +0.125*1.5;
+        //Calculate X and Y positions
+        double xpos = (Math.abs(angY)/omega) - image.getWidth()/2;// -0.125;//+0.25;
+        double ypos = (Math.abs(angX)/omega) - image.getHeight()/2;// +0.125*1.5;
         double[] positions = new double[2];
         positions[0] = xpos;
         positions[1] = ypos;
