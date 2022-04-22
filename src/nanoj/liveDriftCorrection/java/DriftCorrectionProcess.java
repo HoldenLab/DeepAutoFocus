@@ -275,6 +275,7 @@ public class DriftCorrectionProcess implements Measurements {
     }
     
     public double[] Phasor2d(FloatProcessor image){
+        image =  FloatProcessorCalculator.divide(image ,CalculateImageStatistics.sum(image));
         FHT fht = new FHT(image);
         fht.transform();
         ImageStack fftStack = fht.getComplexTransform();
