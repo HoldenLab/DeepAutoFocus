@@ -223,9 +223,7 @@ public class DriftCorrection extends Observable implements Runnable {
                     
                     // XY drift correction ONLY 201230 kw
                     else {
-                        resultImage =
-                            CrossCorrelationMap.calculateCrossCorrelationMap(
-                                    snapAndProcess(), driftData.getReferenceImage(), true);
+                        resultImage =  CrossCorrelationMap.calculateCrossCorrelationMap(snapAndProcess(), driftData.getReferenceImage(), true);
                         driftData.setResultMap(resultImage);
 
                         ccSliceMiddle = resultImage.convertToFloatProcessor();
@@ -236,7 +234,7 @@ public class DriftCorrection extends Observable implements Runnable {
                     
                     //float[] rawCenter = new float[3];
                     //float[] currentCenter = EstimateShiftAndTilt.getMaxFindByOptimization(ccSliceMiddle);
-                    double[] currentCenter = processor.PhasorPeakFind(ccSliceMiddle);
+                    double[] currentCenter = processor.PeakFind(ccSliceMiddle);
                     //ReportingUtils.showMessage("here 2");
                         
                     /* Deprecated 190404

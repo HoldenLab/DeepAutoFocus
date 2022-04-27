@@ -102,7 +102,7 @@ public class DriftCorrectionProcess implements Measurements {
         return image.crop().convertToFloatProcessor();
     }
 
-        public float[] PeakFind(FloatProcessor CCmap) {
+        public double[] PeakFind(FloatProcessor CCmap) {
         float[] peak = CalculateImageStatistics.getMax(CCmap);
         int peakX = (int) peak[0];
         int peakY = (int) peak[1];
@@ -115,8 +115,8 @@ public class DriftCorrectionProcess implements Measurements {
         //return EstimateShiftAndTilt.getMaxFindByOptimization(region);
         //return EstimateShiftAndTilt.getCenterOfMass(region);
 
-        float xCM = 0;
-        float yCM = 0;
+        double xCM = 0;
+        double yCM = 0;
         double v = 0;
         double sSum = 0;
         
@@ -132,7 +132,7 @@ public class DriftCorrectionProcess implements Measurements {
         xCM /= sSum; yCM /= sSum;
         xCM += x; yCM += y;
         
-        return new float[] {xCM, yCM};
+        return new double[] {xCM, yCM};
     }
         
     public double[] PhasorPeakFind(FloatProcessor CCmap) {
@@ -279,10 +279,9 @@ public class DriftCorrectionProcess implements Measurements {
         double sum = 0;
         for (int n=0; n<pixels.length; n++) {
             sum += pixels[n];
-            if (pixels[n] != 0) pixnum = pixnum + 1;
         }
         
-        image =  FloatProcessorCalculator.divide(image ,sum);
+        image.multiply(1/sum);
         FHT fht = new FHT(image);
         fht.transform();
         ImageStack fftStack = fht.getComplexTransform();
@@ -309,7 +308,7 @@ public class DriftCorrectionProcess implements Measurements {
             angX=angX-2*Math.PI;
         }
         
-        ReportingUtils.showMessage(Double.toString(angX));
+        //ReportingUtils.showMessage(Double.toString(angX));
         
         double omega = 2.0 * Math.PI / image.getWidth();
         //Calculate X and Y positions
