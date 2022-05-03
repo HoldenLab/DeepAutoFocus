@@ -228,6 +228,10 @@ public class DriftCorrection extends Observable implements Runnable {
 
                         ccSliceMiddle = resultImage.convertToFloatProcessor();
                         
+                        //double[] currentCenter = processor.PeakFind(ccSliceMiddle);
+                        //imCentx = currentCenter[0];
+                        //imCenty = currentCenter[1];
+                        
                         imCentx = resultImage.getWidth()/2;
                         imCenty = resultImage.getHeight()/2;
                     }
@@ -263,7 +267,7 @@ public class DriftCorrection extends Observable implements Runnable {
                     // A static image will have it's correlation map peak in the exact center of the image
                     // A moving image will have the peak shifted in relation to the center
                     // We subtract the rawCenter from the image center to obtain the drift
-                    //dt = (getTimeElapsed() - oldTime)/1000;
+                    dt = (getTimeElapsed() - oldTime)/1000;
                     //ReportingUtils.showMessage("here 3");
                     xErr = currentCenter[0]  - imCentx;
                     //ReportingUtils.showMessage("here 4");

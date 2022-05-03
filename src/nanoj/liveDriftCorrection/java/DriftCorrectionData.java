@@ -26,6 +26,7 @@ public class DriftCorrectionData {
     private boolean savePlots = false;
     private boolean showLatest = false;
     private boolean flipY = false;
+    private boolean Tune = false;
     private File dataFile;
     private ImagePlus resultMap = new ImagePlus();
     private ImagePlus plotsImage = new ImagePlus();
@@ -131,6 +132,8 @@ public class DriftCorrectionData {
             double[] zShift = ArrayCasting.toArray(this.zDrift, 1d);
             double[] zPos = ArrayCasting.toArray(this.zPosition, 1d);
             double[] timeStamps = ArrayCasting.toArray(this.timeStamps, 1d);
+            
+            
 
             switch (dataTypeIs()) {
                 case Z:
@@ -246,6 +249,10 @@ public class DriftCorrectionData {
     synchronized void setShowLatest(boolean showLatest) {
         this.showLatest = showLatest;
     }
+    
+    synchronized void setTuneMode(boolean Tune) {
+        this.Tune = Tune;
+    }
 
     private synchronized File getDataFile() { return dataFile; }
 
@@ -328,7 +335,8 @@ public class DriftCorrectionData {
             zPosition.add(z_err);
         }
         else {
-            zDrift.add(zShiftPoint + zDrift.get(zDrift.size()-1));
+            if (this.Tune) zDrift.add(z_err);
+            else zDrift.add(zShiftPoint + zDrift.get(zDrift.size()-1));
             zPosition.add(z_err);
         }
         if (!zDrift.isEmpty()) {
@@ -413,8 +421,14 @@ public class DriftCorrectionData {
             yDrift.add(y);
         }
         else {
+            if (this.Tune) {
+            xDrift.add(x);
+            yDrift.add(y);
+            }
+            else{
             xDrift.add(x + xDrift.get(xDrift.size()-1));
             yDrift.add(y + yDrift.get(yDrift.size()-1));
+            }
         }
     }
     
