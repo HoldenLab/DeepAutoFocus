@@ -335,8 +335,7 @@ public class DriftCorrectionData {
             zPosition.add(z_err);
         }
         else {
-            if (this.Tune) zDrift.add(z_err);
-            else zDrift.add(zShiftPoint + zDrift.get(zDrift.size()-1));
+            zDrift.add(zShiftPoint + zDrift.get(zDrift.size()-1));
             zPosition.add(z_err);
         }
         if (!zDrift.isEmpty()) {
@@ -364,16 +363,19 @@ public class DriftCorrectionData {
         }
     }
 
-    synchronized void addXYZshift(double xShiftPoint, double yShiftPoint, double zShiftPoint, double timeStamp) {
+    synchronized void addXYZshift(double xShiftPoint, double yShiftPoint, double zShiftPoint, double z_err, double timeStamp) {
         //if (dataTypeIs() != XYZ) throw new TypeMismatchException(DATA_MISMATCH_ERROR + dataTypeIs());
         if ( Double.isNaN(xShiftPoint) || Double.isNaN(yShiftPoint) || Double.isNaN(zShiftPoint) ) return;
         timeStamps.add(timeStamp);
 
         addXYPoint(xShiftPoint, yShiftPoint);
-
-        if (zDrift.size() == 0) zDrift.add(zShiftPoint);
-        else zDrift.add(zShiftPoint + zDrift.get(zDrift.size()-1));
-
+        
+        if (Tune) zDrift.add(z_err);
+        
+        else{
+            if (zDrift.size() == 0) zDrift.add(zShiftPoint);
+            else zDrift.add(zShiftPoint + zDrift.get(zDrift.size()-1));
+        }
         if (!xDrift.isEmpty()) {
             if (isShowPlotTrue()) showPlots();
             if (isSavePlotsTrue()) {

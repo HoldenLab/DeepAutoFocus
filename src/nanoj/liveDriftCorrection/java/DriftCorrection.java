@@ -117,7 +117,7 @@ public class DriftCorrection extends Observable implements Runnable {
                                 driftData.getReferenceImage().getHeight()
                             );
                             // Take picture at current position, filter, clip and add to image stack
-                            refStack.addSlice(MIDDLE, snapAndProcess());
+                            //refStack.addSlice(MIDDLE, snapAndProcess());
                         
                             // Move one stepSize above focus, snap and add to image stack
                             hardwareManager.moveFocusStageInSteps(1);
@@ -129,6 +129,9 @@ public class DriftCorrection extends Observable implements Runnable {
 
                             // Move back to original position
                             hardwareManager.moveFocusStageInSteps(1);
+                            
+                            // Take picture at current position, filter, clip and add to image stack
+                            refStack.addSlice(MIDDLE, snapAndProcess(), 1);
 
                             //refStackCC = CrossCorrelationMap.calculateCrossCorrelationMap(snapAndProcess(), refStack, true);
                             refStackCC = CrossCorrelationMap.calculateCrossCorrelationMap(refStack.getProcessor(2), refStack, true); // 220131 JE
@@ -228,12 +231,12 @@ public class DriftCorrection extends Observable implements Runnable {
 
                         ccSliceMiddle = resultImage.convertToFloatProcessor();
                         
-                        //double[] currentCenter = processor.PeakFind(ccSliceMiddle);
-                        //imCentx = currentCenter[0];
-                        //imCenty = currentCenter[1];
+                        double[] currentCenter = processor.PeakFind(ccSliceMiddle);
+                        imCentx = currentCenter[0];
+                        imCenty = currentCenter[1];
                         
-                        imCentx = resultImage.getWidth()/2;
-                        imCenty = resultImage.getHeight()/2;
+                        //imCentx = resultImage.getWidth()/2;
+                        //imCenty = resultImage.getHeight()/2;
                     }
                     
                     //float[] rawCenter = new float[3];
@@ -343,7 +346,7 @@ public class DriftCorrection extends Observable implements Runnable {
                             driftData.addXYshift((xyDrift.x), (xyDrift.y), getTimeElapsed());
                             break;
                         case XYZ:
-                            driftData.addXYZshift((xyDrift.x), (xyDrift.y), zDrift, getTimeElapsed());
+                            driftData.addXYZshift((xyDrift.x), (xyDrift.y), zDrift, z_err, getTimeElapsed());
                             break;
                     }
 //                    if (isRunning()) {
