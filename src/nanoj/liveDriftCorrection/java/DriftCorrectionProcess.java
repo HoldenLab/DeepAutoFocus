@@ -9,6 +9,7 @@ import ij.process.ImageProcessor;
 import ij.plugin.FFT;
 import nanoj.core.java.image.calculator.FloatProcessorCalculator;
 import nanoj.core.java.image.analysis.CalculateImageStatistics;
+import nanoj.core.java.image.drift.EstimateShiftAndTilt;
 import ij.gui.OvalRoi;
 import ij.process.ImageStatistics;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -102,19 +103,18 @@ public class DriftCorrectionProcess implements Measurements {
         return image.crop().convertToFloatProcessor();
     }
 
-        public double[] PeakFind(FloatProcessor CCmap) {
-        float[] peak = CalculateImageStatistics.getMax(CCmap);
-        int peakX = (int) peak[0];
-        int peakY = (int) peak[1];
-        int x = peakX - 2;
-        int y = peakY - 2;
+        public float[] PeakFind(FloatProcessor CCmap) {
+        //float[] peak = CalculateImageStatistics.getMax(CCmap);
+        //int peakX = (int) peak[0];
+        //int peakY = (int) peak[1];
+        //int x = peakX - 2;
+        //int y = peakY - 2;
         //int x = CCmap.getWidth()/2 - 2;
         //int y = CCmap.getHeight()/2 - 2;
-        CCmap.setRoi(x,y, 5, 5);
-        FloatProcessor region = CCmap.crop().convertToFloatProcessor();
-        //return EstimateShiftAndTilt.getMaxFindByOptimization(region);
-        //return EstimateShiftAndTilt.getCenterOfMass(region);
-
+        //CCmap.setRoi(x,y, 5, 5);
+        //FloatProcessor region = CCmap.crop().convertToFloatProcessor();
+        return EstimateShiftAndTilt.getMaxFindByOptimization(CCmap);
+        /*
         double xCM = 0;
         double yCM = 0;
         double v = 0;
@@ -133,6 +133,7 @@ public class DriftCorrectionProcess implements Measurements {
         xCM += x; yCM += y;
         
         return new double[] {xCM, yCM};
+        */
     }
         
     public double[] PhasorPeakFind(FloatProcessor CCmap) {
