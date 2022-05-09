@@ -26,7 +26,7 @@ public class DriftCorrectionData {
     private boolean savePlots = false;
     private boolean showLatest = false;
     private boolean flipY = false;
-    private boolean Tune = false;
+    boolean Tune = false;
     private File dataFile;
     private ImagePlus resultMap = new ImagePlus();
     private ImagePlus plotsImage = new ImagePlus();
