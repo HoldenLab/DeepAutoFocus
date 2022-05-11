@@ -326,7 +326,7 @@ public class DriftCorrection extends Observable implements Runnable {
                         z_err = SP - PV; // Z-correction error 220110
                         z_errSum = z_errSum + z_err*dt;
                         zDrift = Zp*z_err + Zi*z_errSum;
-                        hardwareManager.moveFocusStage(zDrift);
+                        if(zDrift!=0) hardwareManager.moveFocusStage(zDrift);
                     }
 
                     // Move XY stage
@@ -334,7 +334,7 @@ public class DriftCorrection extends Observable implements Runnable {
                         Point2D.Double xyDriftCorr = new Point2D.Double(x,-y);
                         xyDriftCorr = hardwareManager.convertPixelsToMicrons(xyDriftCorr);
                         
-                        hardwareManager.moveXYStage(xyDriftCorr);
+                        if(x!=0 | y!=0) hardwareManager.moveXYStage(xyDriftCorr);
                     }
 
                     // Add data //changed to switch statement from ifs 220128 JE
