@@ -103,18 +103,17 @@ public class DriftCorrectionProcess implements Measurements {
         return image.crop().convertToFloatProcessor();
     }
 
-        public float[] PeakFind(FloatProcessor CCmap) {
+        public double[] PeakFind(FloatProcessor CCmap) {
         //float[] peak = CalculateImageStatistics.getMax(CCmap);
         //int peakX = (int) peak[0];
         //int peakY = (int) peak[1];
-        //int x = peakX - 2;
-        //int y = peakY - 2;
-        //int x = CCmap.getWidth()/2 - 2;
-        //int y = CCmap.getHeight()/2 - 2;
-        //CCmap.setRoi(x,y, 5, 5);
-        //FloatProcessor region = CCmap.crop().convertToFloatProcessor();
-        return EstimateShiftAndTilt.getMaxFindByOptimization(CCmap);
-        /*
+        //int x = peakX - 3;
+        //int y = peakY - 3;
+        int x = CCmap.getWidth()/2 - 3;
+        int y = CCmap.getHeight()/2 - 3;
+        CCmap.setRoi(x,y, 7, 7);
+        FloatProcessor region = CCmap.crop().convertToFloatProcessor();
+        
         double xCM = 0;
         double yCM = 0;
         double v = 0;
@@ -133,7 +132,7 @@ public class DriftCorrectionProcess implements Measurements {
         xCM += x; yCM += y;
         
         return new double[] {xCM, yCM};
-        */
+        
     }
         
     public double[] PhasorPeakFind(FloatProcessor CCmap) {

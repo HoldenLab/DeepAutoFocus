@@ -24,11 +24,13 @@ public class DriftCorrection extends Observable implements Runnable {
     
     // added 201230 kw
     private ImageStack resultStack = null;
+    private ImageStack resultStack2 = null;
     private ImageStack refStackCC = null; //from Kevin's version 220119 JE
     private ImageProcessor refTopTopCC = null; // 220131 JE
     private ImageProcessor refBottomBottomCC = null; // 220131 JE
     private ImageProcessor resultImage = null;
     private FloatProcessor ccSliceMiddle = null;
+    private FloatProcessor ccSliceMiddle2 = null;
     private FloatProcessor mask = null;
 
     private static final int XYZ = 0;
@@ -63,6 +65,7 @@ public class DriftCorrection extends Observable implements Runnable {
     private double Li = 0; // Lateral gain 220118 JE
     private double SP = 0; // Z-correction setpoint
     private double PV = 0; // Z-correction process variable
+    private double PV2 = 0;
     private double z_err = 0; // Z-correction error (for proportional gain)
     private double z_errSum = 0; // Z-correction error (for integral gain)
     private double xErr = 0; // 220119 JE
@@ -72,6 +75,9 @@ public class DriftCorrection extends Observable implements Runnable {
     private double Top = 0; // 220131 JE
     private double Bottom = 0; // 220131 JE
     private double Middle = 0; // 220131 JE
+    private double Top2 = 0; // 220131 JE
+    private double Bottom2 = 0; // 220131 JE
+    private double Middle2 = 0; // 220131 JE
     
     private double refCCbottomMidMax = 0; // 220201 JE
     private double refCCtopMidMax = 0; // 220201 JE
@@ -109,6 +115,7 @@ public class DriftCorrection extends Observable implements Runnable {
                             //Initialise variables for new run 220118 JE
                             SP = 0; 
                             PV = 0;
+                            PV2 = 0;
                             z_err = 0;
                             z_errSum = 0;
                             
@@ -193,11 +200,17 @@ public class DriftCorrection extends Observable implements Runnable {
 
                         resultStack = CrossCorrelationMap.calculateCrossCorrelationMap(snapAndProcess(), driftData.getReferenceStack(), true);
                         driftData.setResultMap(resultStack);
+                        resultStack2 = CrossCorrelationMap.calculateCrossCorrelationMap(snapAndProcess(), driftData.getReferenceStack(), true);
+                        //driftData.setResultMap(resultStack2);
 
                         // Measure XYZ drift
                         FloatProcessor ccSliceBottom = resultStack.getProcessor(3).convertToFloatProcessor();
                         ccSliceMiddle = resultStack.getProcessor(2).convertToFloatProcessor();
                         FloatProcessor ccSliceTop = resultStack.getProcessor(1).convertToFloatProcessor();
+                        
+                        FloatProcessor ccSliceBottom2 = resultStack2.getProcessor(3).convertToFloatProcessor();
+                        ccSliceMiddle2 = resultStack2.getProcessor(2).convertToFloatProcessor();
+                        FloatProcessor ccSliceTop2 = resultStack2.getProcessor(1).convertToFloatProcessor();
                         
                         // offset maxima because minima not at zero
                         //double ccSliceBottomMax = ccSliceBottom.getMax();
@@ -208,6 +221,10 @@ public class DriftCorrection extends Observable implements Runnable {
                         double ccSliceTopMax = processor.CenterHeightFind2(ccSliceTop); // 220131 JE
                         double ccSliceMiddleMax = processor.CenterHeightFind2(ccSliceMiddle); // 220131 JE
                         
+                        double ccSliceBottomMax2 = processor.CenterHeightFind2(ccSliceBottom2); // 220131 JE
+                        double ccSliceTopMax2 = processor.CenterHeightFind2(ccSliceTop2); // 220131 JE
+                        double ccSliceMiddleMax2 = processor.CenterHeightFind2(ccSliceMiddle2); // 220131 JE
+                        
                         //double ccSliceBottomMax = processor.CenterHeightFind4(ccSliceBottom,mask); // 220131 JE
                         //double ccSliceTopMax = processor.CenterHeightFind4(ccSliceTop,mask); // 220131 JE
                         //double ccSliceMiddleMax = processor.CenterHeightFind4(ccSliceMiddle,mask); // 220131 JE
@@ -216,7 +233,13 @@ public class DriftCorrection extends Observable implements Runnable {
                         Bottom = (ccSliceBottomMax/refCCBottomBottomMax); // 220131 JE
                         Middle = (ccSliceMiddleMax/refCCmidMidMax)+0.6; // 220131 JE
                         
+                        Top2 = (ccSliceTopMax2/refCCTopTopMax); // 220131 JE
+                        Bottom2 = (ccSliceBottomMax2/refCCBottomBottomMax); // 220131 JE
+                        Middle2 = (ccSliceMiddleMax2/refCCmidMidMax)+0.6; // 220131 JE
+                        
                         PV = (Top - Bottom) / Middle; // eq 5 in McGorty et al. 2013 // 220131 JE
+                        PV2 = (Top2 - Bottom2) / Middle2;
+                        PV = 0.5*PV +0.5*PV2;
 
                         //PV = (ccSliceTopMax - ccSliceBottomMax) / ccSliceMiddleMax; // eq 5 in McGorty et al. 2013
                         
@@ -241,7 +264,11 @@ public class DriftCorrection extends Observable implements Runnable {
                     
                     //float[] rawCenter = new float[3];
                     //float[] currentCenter = EstimateShiftAndTilt.getMaxFindByOptimization(ccSliceMiddle);
-                    float[] currentCenter = processor.PeakFind(ccSliceMiddle);
+                    double[] currentCenter = processor.PeakFind(ccSliceMiddle);
+                    double[] currentCenter2 = processor.PeakFind(ccSliceMiddle2);
+                    currentCenter[0] = 0.5*currentCenter[0] +0.5*currentCenter2[0];
+                    currentCenter[1] = 0.5*currentCenter[1] +0.5*currentCenter2[1];
+                    //float[] currentCenter = EstimateShiftAndTilt.getMaxFindByOptimization(CCmap);
                     //ReportingUtils.showMessage("here 2");
                         
                     /* Deprecated 190404
@@ -270,12 +297,11 @@ public class DriftCorrection extends Observable implements Runnable {
                     // A static image will have it's correlation map peak in the exact center of the image
                     // A moving image will have the peak shifted in relation to the center
                     // We subtract the rawCenter from the image center to obtain the drift
-                    dt = (getTimeElapsed() - oldTime)/1000;
-                    //ReportingUtils.showMessage("here 3");
+                    
+
                     xErr = currentCenter[0]  - imCentx;
-                    //ReportingUtils.showMessage("here 4");
                     yErr = currentCenter[1]  - imCenty;
-                    //ReportingUtils.showMessage("here 5");
+                    dt = (getTimeElapsed() - oldTime)/1000;
                     xErrSum = xErrSum + xErr*dt;
                     yErrSum = yErrSum + yErr*dt;
                     
@@ -283,8 +309,8 @@ public class DriftCorrection extends Observable implements Runnable {
                     double y = 0;
 
                     if (correctionMode == XY || correctionMode == XYZ){
-                            x = Lp*xErr + Li*xErrSum;
-                            y = Lp*yErr + Li*yErrSum;
+                        x = Lp*xErr + Li*xErrSum;
+                        y = Lp*yErr + Li*yErrSum;
                     }
                     
                     oldTime = getTimeElapsed(); // time of current loop (store for next loop iteration)
@@ -295,10 +321,9 @@ public class DriftCorrection extends Observable implements Runnable {
 
                     // Convert from pixel units to microns
                     xyDrift = hardwareManager.convertPixelsToMicrons(xyDrift);
-
+                    
                     // Check if detected movement is within bounds
-                    if ((correctionMode == XY || correctionMode == XYZ) &&
-                            (Math.abs(xyDrift.x) > threshold || Math.abs(xyDrift.y) > threshold)) {
+                    if ((correctionMode == XY || correctionMode == XYZ) && (Math.abs(xyDrift.x) > threshold || Math.abs(xyDrift.y) > threshold)) {
                         runAcquisition(false);
                         setChanged();
                         notifyObservers(OUT_OF_BOUNDS_ERROR);
@@ -307,7 +332,7 @@ public class DriftCorrection extends Observable implements Runnable {
                         driftData.clearResultMap(); // 190412 kw
                         break;
                     }
-
+                    
                     double zDrift = 0;
 
                     /* deprecated 190401
@@ -326,7 +351,7 @@ public class DriftCorrection extends Observable implements Runnable {
                         z_err = SP - PV; // Z-correction error 220110
                         z_errSum = z_errSum + z_err*dt;
                         zDrift = Zp*z_err + Zi*z_errSum;
-                        if(zDrift!=0) hardwareManager.moveFocusStage(zDrift);
+                        if(Zp!=0 | Zi!=0) hardwareManager.moveFocusStage(zDrift);
                     }
 
                     // Move XY stage
@@ -334,7 +359,7 @@ public class DriftCorrection extends Observable implements Runnable {
                         Point2D.Double xyDriftCorr = new Point2D.Double(x,-y);
                         xyDriftCorr = hardwareManager.convertPixelsToMicrons(xyDriftCorr);
                         
-                        if(x!=0 | y!=0) hardwareManager.moveXYStage(xyDriftCorr);
+                        if(Lp!=0 | Li!=0) hardwareManager.moveXYStage(xyDriftCorr);
                     }
 
                     // Add data //changed to switch statement from ifs 220128 JE
