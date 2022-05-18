@@ -699,6 +699,7 @@ public class DriftCorrectionGUI{
         @Override
         public void actionPerformed(ActionEvent e) {
             if (startButton.isSelected()) {
+                hardwareManager.setStreamImages(false); // Stop live streaming if starting to correct 220518JE
                 // Check the hardware has been loaded
                 if (!hardwareManager.isLoaded()) {
                     ReportingUtils.showError(HARDWARE_NOT_LOADED);
@@ -735,7 +736,7 @@ public class DriftCorrectionGUI{
             else {
                 // Stop acquisition and change text on the button
                 driftCorrection.runAcquisition(false);
-                startButton.setText(START);
+                startButton.setText(START); 
             }
         }
 
@@ -746,6 +747,7 @@ public class DriftCorrectionGUI{
                 ReportingUtils.showMessage("" + arg);
                 startButton.setSelected(false);
                 startButton.setText(START);
+                hardwareManager.setStreamImages(streamImagesButton.isSelected()); // return streaming to control of its button 220518JE
             }
         }
     }
@@ -788,7 +790,7 @@ public class DriftCorrectionGUI{
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            if (streamImagesButton.isSelected()) {
+            if (streamImagesButton.isSelected() & !startButton.isSelected()) {
                 try {
                     giveHardwareSettings();
                 } catch (Exception e1) {
@@ -801,7 +803,7 @@ public class DriftCorrectionGUI{
                 driftData.setShowLatest(showLatestButton.isSelected());
                 streamImagesButton.setText(STREAM_IMAGES_BUTTON_LABEL);
             }
-            hardwareManager.setStreamImages(streamImagesButton.isSelected());
+            if (!startButton.isSelected()) hardwareManager.setStreamImages(streamImagesButton.isSelected());
         }
     }
     
@@ -925,7 +927,7 @@ public class DriftCorrectionGUI{
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            
+            hardwareManager.setStreamImages(false); // Stop live streaming if starting to get background 220518JE
             if (bgImageButton.isSelected()) {
                 
                 // Give the hardware manager the current settings
@@ -951,6 +953,7 @@ public class DriftCorrectionGUI{
                     );
                     driftData.setLatestImage(driftData.getBackgroundImage());
                     ReportingUtils.showMessage(procedure_succeeded);*/
+                    
                 } catch (Exception e1) {
                     ReportingUtils.showError(e1, HARDWARE_CONNECTION_ERROR);
                 }
@@ -965,6 +968,7 @@ public class DriftCorrectionGUI{
             if (!bgSub.isRunning()) {
                 ReportingUtils.showMessage("" + arg);
                 bgImageButton.setSelected(false);
+                hardwareManager.setStreamImages(streamImagesButton.isSelected()); // return streaming to control of its button 220518JE
             }
         }
     }
@@ -981,7 +985,7 @@ public class DriftCorrectionGUI{
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            
+            hardwareManager.setStreamImages(false); // Stop camera streaming if starting calibration 220518JE
             if (calButton.isSelected()) {
                 calibrator.setStep(Double.parseDouble(calibrationStepSizeBox.getText()));
                 
@@ -991,13 +995,14 @@ public class DriftCorrectionGUI{
                     giveHardwareSettings();
                     
                     calibrator.runAcquisition(true);
-
+                    
                 } catch (Exception e1) {
                     ReportingUtils.showError(e1, CALIBRATION_ERROR);
                 }
             }
             else {
                 calibrator.runAcquisition(false);
+                hardwareManager.setStreamImages(streamImagesButton.isSelected()); // return streaming to control of its button 220518JE
             }
         }
         @Override
@@ -1006,6 +1011,7 @@ public class DriftCorrectionGUI{
             if (!calibrator.isRunning()) {
                 ReportingUtils.showMessage("" + arg);
                 calButton.setSelected(false);
+                hardwareManager.setStreamImages(streamImagesButton.isSelected()); // return streaming to control of its button 220518JE
             }
             // end of cal routine - import values to GUI 201231 kw
             else {
@@ -1023,6 +1029,7 @@ public class DriftCorrectionGUI{
                 calibrationFlipLabel.setText(flipping);
                 ReportingUtils.showMessage( procedure_succeeded
                         + "\n" + scaling + " nm/pixel\n" + angling + "\n" + flipping);
+                hardwareManager.setStreamImages(streamImagesButton.isSelected()); // return streaming to control of its button 220518JE
             }
         }
     }
