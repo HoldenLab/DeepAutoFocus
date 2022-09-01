@@ -324,6 +324,34 @@ public class DriftCorrectionData {
     private synchronized void setZPositionData(ArrayList<Double> zPosition) {
         this.zPosition = zPosition;
     }
+    
+    synchronized double getLatestXDrift() { //220119 JE
+        return xDrift.get(xDrift.size()-1);
+    }
+    
+    synchronized double getDelayedXDrift(int Delay) { //220119 JE
+        return xDrift.get(xDrift.size()-(Delay-1));
+    }
+    
+    synchronized int getLenLDrift() { //220119 JE
+        return xDrift.size();
+    }
+    
+    synchronized double getLatestYDrift() { //220119 JE
+        return yDrift.get(yDrift.size()-1);
+    }
+    
+    synchronized double getDelayedYDrift(int Delay) { //220119 JE
+        return yDrift.get(yDrift.size()-(Delay-1));
+    }
+    
+    synchronized double getLatestTimeStamp() { //220117 JE
+        return timeStamps.get(timeStamps.size()-1)*60000;
+    }
+    
+    synchronized double getDelayedTimeStamp(int Delay) { //220117 JE
+        return timeStamps.get(timeStamps.size()-(Delay-1))*60000;
+    }
 
     synchronized void addZShift(double zShiftPoint, double z_err, double timeStamp) {
         //if (dataTypeIs() != Z) throw new TypeMismatchException(DATA_MISMATCH_ERROR + dataTypeIs());
