@@ -317,7 +317,7 @@ public class DriftCorrection extends Observable implements Runnable {
                     xErrSum = xErrSum + xErr*dt;
                     yErrSum = yErrSum + yErr*dt;
                     
-                    LatMag = Math.sqrt(Math.pow(xErr,2) + Math.pow(yErr,2));
+                    
                     
                     double x = 0;
                     double y = 0;
@@ -338,6 +338,8 @@ public class DriftCorrection extends Observable implements Runnable {
 
                     // Convert from pixel units to microns
                     xyDrift = hardwareManager.convertPixelsToMicrons(xyDrift);
+                    
+                    LatMag = Math.sqrt(Math.pow(xErr,2) + Math.pow(yErr,2));
                     
                     // Check if detected movement is within bounds
                     if ((correctionMode == XY || correctionMode == XYZ) && (Math.abs(xyDrift.x) > threshold || Math.abs(xyDrift.y) > threshold)) {
@@ -365,7 +367,7 @@ public class DriftCorrection extends Observable implements Runnable {
                     // Move Z stage to more appropriate position. We get zDrift in microns instead of steps to save later to Data. (added 190403 kw)
                     // Now using PI controller instead of equation in McGorty 2013 paper (220110 kw)
                     if (isRunning() && (correctionMode == Z || correctionMode == XYZ) ) {
-                        if (LatMag < 1.07){
+                        if (LatMag < 1.00){ // think the latmag value is in pixels 220901 JE
                             z_err = SP - PV; // Z-correction error 220110
                             z_errSum = z_errSum + z_err*dt;
                             zDrift = Zp*z_err + Zi*z_errSum;

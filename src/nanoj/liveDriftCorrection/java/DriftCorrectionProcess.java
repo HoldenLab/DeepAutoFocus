@@ -109,9 +109,9 @@ public class DriftCorrectionProcess implements Measurements {
         //int peakY = (int) peak[1];
         //int x = peakX - 3;
         //int y = peakY - 3;
-        int x = CCmap.getWidth()/2 - 3;
-        int y = CCmap.getHeight()/2 - 3;
-        CCmap.setRoi(x,y, 7, 7);
+        int x = CCmap.getWidth()/2 - 5;
+        int y = CCmap.getHeight()/2 - 5;
+        CCmap.setRoi(x,y, 11, 11);
         FloatProcessor region = CCmap.crop().convertToFloatProcessor();
         
         double xCM = 0;
