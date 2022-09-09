@@ -105,7 +105,7 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
 
     // Move XY stage in microns without having to know if the XY stage is a single or two devices
     public void moveXYStage(double xTarget, double yTarget) throws Exception {
-        if (xTarget == 0 && yTarget == 0) return;
+        //if (xTarget == 0 && yTarget == 0) return;
 
         CMMCore core;
         CMMCore Xcore;

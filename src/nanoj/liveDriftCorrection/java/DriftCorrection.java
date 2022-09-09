@@ -71,12 +71,18 @@ public class DriftCorrection extends Observable implements Runnable {
     private double z_errSum = 0; // Z-correction error (for integral gain)
     double zDrift = 0;
     double LatMag = 0;
+    double x = 0;
+    double y = 0;
+    double missX = 0;
+    double missY = 0;
+    double missZ = 0;
     private double xErr = 0; // 220119 JE
     private double yErr = 0; // 220119 JE
     private double xErrSum = 0; // 220414 JE
     private double yErrSum = 0; // 220414 JE
     private double oldyErr = 0; // 220829 JE
     private double oldxErr = 0; // 220829 JE
+    private double oldzErr = 0; // 220906 JE
     private double Top = 0; // 220131 JE
     private double Bottom = 0; // 220131 JE
     private double Middle = 0; // 220131 JE
@@ -125,12 +131,14 @@ public class DriftCorrection extends Observable implements Runnable {
                             PV2 = 0;
                             z_err = 0;
                             z_errSum = 0;
+                            oldzErr = 0;
                             
                             ImageStack refStack = new ImageStack(
                                 driftData.getReferenceImage().getWidth(),
                                 driftData.getReferenceImage().getHeight()
                             );
                             // Take picture at current position, filter, clip and add to image stack
+                            hardwareManager.moveXYStage(new Point2D.Double(0,0)); // give xy stage oppertunity to reset 220908 JE
                             refStack.addSlice(MIDDLE, snapAndProcess());
                         
                             // Move one stepSize above focus, snap and add to image stack
@@ -143,6 +151,7 @@ public class DriftCorrection extends Observable implements Runnable {
 
                             // Move back to original position
                             hardwareManager.moveFocusStageInSteps(1);
+                            hardwareManager.moveXYStage(new Point2D.Double(0,0)); // give xy stage oppertunity to reset 220908 JE
                             
                             // Take picture at current position, filter, clip and add to image stack
                             //refStack.addSlice(MIDDLE, snapAndProcess(), 1);
@@ -314,17 +323,21 @@ public class DriftCorrection extends Observable implements Runnable {
                     xErr = currentCenter[0]  - imCentx;
                     yErr = currentCenter[1]  - imCenty;
                     dt = (getTimeElapsed() - oldTime)/1000;
-                    xErrSum = xErrSum + xErr*dt;
-                    yErrSum = yErrSum + yErr*dt;
+                    missX = x+(oldxErr-xErr);
+                    missY = y+(oldyErr-yErr);
+                    if ((dt*1000)<10*sleep){
+                        //xErrSum = xErrSum + missX*dt;//xErr*dt;
+                        //yErrSum = yErrSum + missY*dt;//yErr*dt;
+                        xErrSum = xErrSum + xErr*dt;
+                        yErrSum = yErrSum + yErr*dt;
+                    }
                     
-                    
-                    
-                    double x = 0;
-                    double y = 0;
+                    x = 0;
+                    y = 0;
 
                     if (correctionMode == XY || correctionMode == XYZ){
-                        x = Lp*xErr + Li*xErrSum + Ld*(xErr-oldxErr)/dt;
-                        y = Lp*yErr + Li*yErrSum + Ld*(yErr-oldyErr)/dt;
+                        x = Lp*xErr + Li*xErrSum*dt + Ld*(xErr-oldxErr)/dt;
+                        y = Lp*yErr + Li*yErrSum*dt + Ld*(yErr-oldyErr)/dt;
                     }
                     
                     oldTime = getTimeElapsed(); // time of current loop (store for next loop iteration)
@@ -363,15 +376,16 @@ public class DriftCorrection extends Observable implements Runnable {
                         hardwareManager.moveFocusStage(zDrift);
                     }
                     */
-                    
+                    missZ = zDrift+(oldzErr-z_err);
                     // Move Z stage to more appropriate position. We get zDrift in microns instead of steps to save later to Data. (added 190403 kw)
                     // Now using PI controller instead of equation in McGorty 2013 paper (220110 kw)
                     if (isRunning() && (correctionMode == Z || correctionMode == XYZ) ) {
                         if (LatMag < 1.00){ // think the latmag value is in pixels 220901 JE
                             z_err = SP - PV; // Z-correction error 220110
-                            z_errSum = z_errSum + z_err*dt;
+                            z_errSum = z_errSum + missZ*dt;//z_err*dt;
                             zDrift = Zp*z_err + Zi*z_errSum;
                             if(Zp!=0 | Zi!=0) hardwareManager.moveFocusStage(zDrift);
+                            oldzErr = z_err;
                         }
                         else{
                             zDrift = 0;
@@ -401,7 +415,7 @@ public class DriftCorrection extends Observable implements Runnable {
                         case XYZ:
                             if (driftData.Tune){
                                 //driftData.addXYZshift(xErr, yErr, zDrift, z_err, getTimeElapsed());
-                                driftData.addXYZshift(LatMag, yErr, zDrift, z_err, getTimeElapsed());
+                                driftData.addXYZshift(xErr, xErrSum, zDrift, z_err, getTimeElapsed());
                             }
                             else driftData.addXYZshift((xyDrift.x), (xyDrift.y), zDrift, z_err, getTimeElapsed());
                             break;
