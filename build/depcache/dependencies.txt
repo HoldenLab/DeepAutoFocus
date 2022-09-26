@@ -18,12 +18,10 @@ org.micromanager.internal.utils.ReportingUtils
 nanoj.liveDriftCorrection.java.DriftCorrectionData
 nanoj.liveDriftCorrection.java.DriftCorrectionProcess
 java.awt.geom.Point2D
-nanoj.core.java.image.drift.EstimateShiftAndTilt
 java.lang.Double
 java.lang.System
 ij.process.ImageProcessor
 [D
-[F
 java.lang.Runnable
 java.lang.Exception
 java.awt.geom.Point2D$Double
@@ -175,6 +173,7 @@ nanoj.liveDriftCorrection.java.DriftCorrectionGUI
 nanoj.liveDriftCorrection.java.DriftCorrectionGUI$DToggleButton
 ||:nanoj.liveDriftCorrection.java.DriftCorrectionProcess
 java.awt.Rectangle
+java.lang.Float
 ij.process.FHT
 nanoj.liveDriftCorrection.java.DriftCorrectionProcess
 nanoj.liveDriftCorrection.java.DriftCorrectionData
