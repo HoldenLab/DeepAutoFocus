@@ -212,9 +212,9 @@ public class DriftCorrection extends Observable implements Runnable {
                         //double ccSliceBottomMax = processor.CenterHeightFind2(ccSliceBottom); // 220131 JE
                         //double ccSliceTopMax = processor.CenterHeightFind2(ccSliceTop); // 220131 JE
                         //double ccSliceMiddleMax = processor.CenterHeightFind2(ccSliceMiddle); // 220131 JE
-                        
+
                         Peak = processor.PickPlane(resultStack);
-                        
+
                         double ccSliceBottomMax = processor.CenterHeightFind3(ccSliceBottom, Peak); // 220926 JE
                         double ccSliceTopMax = processor.CenterHeightFind3(ccSliceTop, Peak); // 220926 JE
                         double ccSliceMiddleMax = processor.CenterHeightFind3(ccSliceMiddle, Peak); // 220926 JE

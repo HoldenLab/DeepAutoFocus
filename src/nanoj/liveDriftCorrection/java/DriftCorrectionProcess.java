@@ -276,17 +276,18 @@ public class DriftCorrectionProcess implements Measurements {
     }
     
     public float[] PickPlane(ImageStack ccMapStack){ // choses which plane of the ccMap stack has the highest peak to center algorithm on 220926 JE
-        float[] Peaks = null;
+        float[] Peaks = new float[3];
         float vMax = -Float.MAX_VALUE;
         int pMax = 0;
-        
-        float[] TopPeak = CalculateImageStatistics.getMax(ccMapStack.getProcessor(0));
-        float[] MiddlePeak = CalculateImageStatistics.getMax(ccMapStack.getProcessor(1));
-        float[] BottomPeak = CalculateImageStatistics.getMax(ccMapStack.getProcessor(2));
+
+        float[] TopPeak = CalculateImageStatistics.getMax(ccMapStack.getProcessor(1));
+        float[] MiddlePeak = CalculateImageStatistics.getMax(ccMapStack.getProcessor(2));
+        float[] BottomPeak = CalculateImageStatistics.getMax(ccMapStack.getProcessor(3));
+
         Peaks[0] = TopPeak[2];
         Peaks[1] = MiddlePeak[2];
         Peaks[2] = BottomPeak[2];
-        
+
         for (int p=0; p<ccMapStack.size(); p++) {
             float v = Peaks[p];
             if (v > vMax) {
@@ -294,7 +295,7 @@ public class DriftCorrectionProcess implements Measurements {
                 pMax = p;
             }
         }
-        
+
         switch(pMax){
             case 0:
                 return TopPeak;
