@@ -5,7 +5,8 @@ import ij.ImageStack;
 //import ij.measure.Measurements;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
-//import ij.process.FloatStatistics;
+import ij.process.FloatStatistics;
+import ij.process.ImageStatistics;
 import nanoj.core.java.image.drift.EstimateShiftAndTilt;
 import nanoj.core.java.image.transform.CrossCorrelationMap;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -95,6 +96,8 @@ public class DriftCorrection extends Observable implements Runnable {
     private double refCCmidMidMax = 0; // 220201 JE
     private double refCCTopTopMax = 0; // 220201 JE
     private double refCCBottomBottomMax = 0; // 220201 JE
+    private double refmiddleMedian = 0; // 220916 JE
+    float[] Peak = null; //220926 JE
 
 
     public DriftCorrection(DriftCorrectionHardware manager, DriftCorrectionData data, DriftCorrectionProcess processor) {
@@ -167,15 +170,17 @@ public class DriftCorrection extends Observable implements Runnable {
                             FloatProcessor refTopTopProc = refTopTopCC.convertToFloatProcessor(); // 220131 JE
                             FloatProcessor refBottomBottomProc = refBottomBottomCC.convertToFloatProcessor(); // 220131 JE
                             
-                            //double refCCbottomMidMax = refCCbottom.getMax();
-                            //double refCCtopMidMax = refCCtop.getMax();
-                            //double refCCmidMidMax = refCCmiddle.getMax();
+                            refmiddleMedian = ImageStatistics.getStatistics(refStack.getProcessor(2)).median;
                             
-                            refCCbottomMidMax = processor.CenterHeightFind2(refCCbottom); // 220131 JE
-                            refCCtopMidMax = processor.CenterHeightFind2(refCCtop); // 220131 JE
-                            refCCmidMidMax = processor.CenterHeightFind2(refCCmiddle); // 220131 JE
-                            refCCTopTopMax = processor.CenterHeightFind2(refTopTopProc); // 220131 JE
-                            refCCBottomBottomMax = processor.CenterHeightFind2(refBottomBottomProc); // 220131 JE
+                            refCCbottomMidMax = refCCbottom.getMax();
+                            refCCtopMidMax = refCCtop.getMax();
+                            refCCmidMidMax = refCCmiddle.getMax();
+                            
+                            //refCCbottomMidMax = processor.CenterHeightFind2(refCCbottom); // 220131 JE
+                            //refCCtopMidMax = processor.CenterHeightFind2(refCCtop); // 220131 JE
+                            //refCCmidMidMax = processor.CenterHeightFind2(refCCmiddle); // 220131 JE
+                            //refCCTopTopMax = processor.CenterHeightFind2(refTopTopProc); // 220131 JE
+                            //refCCBottomBottomMax = processor.CenterHeightFind2(refBottomBottomProc); // 220131 JE
 
                             //refCCbottomMidMax = processor.CenterHeightFind4(refCCbottom,mask); // 220131 JE
                             //refCCtopMidMax = processor.CenterHeightFind4(refCCtop,mask); // 220131 JE
@@ -195,29 +200,35 @@ public class DriftCorrection extends Observable implements Runnable {
                             FloatProcessor refCCbottomMiddle = refBottomMiddle.getProcessor(2).convertToFloatProcessor();
                             FloatProcessor refCCtopMiddle = refTopMiddle.getProcessor(2).convertToFloatProcessor();
                             FloatProcessor refCCmidMid = refMidMid.getProcessor(2).convertToFloatProcessor();
+                            
                         
                             // offset maxima because minima usually not at zero
-                            double refCCbottomMidMax = refCCbottomMiddle.getMax();
-                            double refCCtopMidMax = refCCtopMiddle.getMax();
-                            double refCCmidMidMax = refCCmidMid.getMax();*/
+                            refCCbottomMidMax = refCCbottomMiddle.getMax();
+                            refCCtopMidMax = refCCtopMiddle.getMax();
+                            refCCmidMidMax = refCCmidMid.getMax();*/
                     
                             // overriding this alpha for now, just using user input value.
                             //alpha = (2*refCCmidMidMax - refCCtopMidMax - refCCbottomMidMax) * hardwareManager.getStepSize() / 2; // eq 6 in McGorty et al. 2013. corrected so that stepsize is in numerator!
                             
+                            /*
                             Top = (refCCtopMidMax/refCCTopTopMax); // 220131 JE
                             Bottom = (refCCbottomMidMax/refCCBottomBottomMax); // 220131 JE
                             Middle = (refCCmidMidMax/refCCmidMidMax)+0.6; // 220131 JE
+                            
+                            
                             SP = (Top - Bottom);// / Middle; // Z-correction setpoint // 220131 JE
-
-                            //SP = (refCCtopMidMax - refCCbottomMidMax) / refCCmidMidMax; // Z-correction setpoint
+                            */
+                            
+                            SP = (refCCtopMidMax - refCCbottomMidMax) / refCCmidMidMax; // Z-correction setpoint
                         
                             driftData.setReferenceStack(refStack);
-                            double[] currentCenter = processor.PeakFind(refCCmiddle);
-                            imCentx = currentCenter[0];
-                            imCenty = currentCenter[1];
+                            //double[] currentCenter = processor.PeakFind(refCCmiddle);
+                            //imCentx = currentCenter[0];
+                            //imCenty = currentCenter[1];
                         }
-
-                        resultStack = CrossCorrelationMap.calculateCrossCorrelationMap(snapAndProcess(), driftData.getReferenceStack(), true);
+                        
+                        ImageProcessor ImageT = snapAndProcess();
+                        resultStack = CrossCorrelationMap.calculateCrossCorrelationMap(ImageT, driftData.getReferenceStack(), true);
                         driftData.setResultMap(resultStack);
                         //resultStack2 = CrossCorrelationMap.calculateCrossCorrelationMap(snapAndProcess(), driftData.getReferenceStack(), true);
                         //driftData.setResultMap(resultStack2);
@@ -226,6 +237,8 @@ public class DriftCorrection extends Observable implements Runnable {
                         FloatProcessor ccSliceBottom = resultStack.getProcessor(3).convertToFloatProcessor();
                         ccSliceMiddle = resultStack.getProcessor(2).convertToFloatProcessor();
                         FloatProcessor ccSliceTop = resultStack.getProcessor(1).convertToFloatProcessor();
+                        
+                        double MedianT = ImageStatistics.getStatistics(ImageT).median;
                         
                         //FloatProcessor ccSliceBottom2 = resultStack2.getProcessor(3).convertToFloatProcessor();
                         //ccSliceMiddle2 = resultStack2.getProcessor(2).convertToFloatProcessor();
@@ -236,9 +249,15 @@ public class DriftCorrection extends Observable implements Runnable {
                         //double ccSliceTopMax = ccSliceTop.getMax();
                         //double ccSliceMiddleMax = ccSliceMiddle.getMax();
 
-                        double ccSliceBottomMax = processor.CenterHeightFind2(ccSliceBottom); // 220131 JE
-                        double ccSliceTopMax = processor.CenterHeightFind2(ccSliceTop); // 220131 JE
-                        double ccSliceMiddleMax = processor.CenterHeightFind2(ccSliceMiddle); // 220131 JE
+                        //double ccSliceBottomMax = processor.CenterHeightFind2(ccSliceBottom); // 220131 JE
+                        //double ccSliceTopMax = processor.CenterHeightFind2(ccSliceTop); // 220131 JE
+                        //double ccSliceMiddleMax = processor.CenterHeightFind2(ccSliceMiddle); // 220131 JE
+                        
+                        Peak = processor.PickPlane(resultStack);
+                        
+                        double ccSliceBottomMax = processor.CenterHeightFind3(ccSliceBottom, Peak); // 220926 JE
+                        double ccSliceTopMax = processor.CenterHeightFind3(ccSliceTop, Peak); // 220926 JE
+                        double ccSliceMiddleMax = processor.CenterHeightFind3(ccSliceMiddle, Peak); // 220926 JE
                         
                         //double ccSliceBottomMax2 = processor.CenterHeightFind2(ccSliceBottom2); // 220131 JE
                         //double ccSliceTopMax2 = processor.CenterHeightFind2(ccSliceTop2); // 220131 JE
@@ -256,7 +275,7 @@ public class DriftCorrection extends Observable implements Runnable {
                         //Bottom2 = (ccSliceBottomMax2/refCCBottomBottomMax); // 220131 JE
                         //Middle2 = (ccSliceMiddleMax2/refCCmidMidMax)+0.6; // 220131 JE
                         
-                        PV = (Top - Bottom);// / Middle; // eq 5 in McGorty et al. 2013 // 220131 JE
+                        PV = (Top - Bottom);///(MedianT/refmiddleMedian);// / Middle; // eq 5 in McGorty et al. 2013 // 220131 JE
                         //PV2 = (Top2 - Bottom2) / Middle2;
                         //PV = 0.5*PV +0.5*PV2;
 
@@ -284,7 +303,7 @@ public class DriftCorrection extends Observable implements Runnable {
                     
                     //float[] rawCenter = new float[3];
                     float[] currentCenterAlt = EstimateShiftAndTilt.getMaxFindByOptimization(ccSliceMiddle);
-                    double[] currentCenter = processor.PeakFind(ccSliceMiddle);
+                    double[] currentCenter = processor.PeakFind2(ccSliceMiddle, Peak);
                     //double[] currentCenter2 = processor.PeakFind(ccSliceMiddle2);
                     //currentCenter[0] = 0.5*currentCenter[0] +0.5*currentCenter2[0];
                     //currentCenter[1] = 0.5*currentCenter[1] +0.5*currentCenter2[1];
@@ -326,8 +345,8 @@ public class DriftCorrection extends Observable implements Runnable {
                     missX = x+(oldxErr-xErr);
                     missY = y+(oldyErr-yErr);
                     if ((dt*1000)<10*sleep){
-                        //xErrSum = xErrSum + missX*dt;//xErr*dt;
-                        //yErrSum = yErrSum + missY*dt;//yErr*dt;
+                        //xErrSum = xErrSum + missX*dt;
+                        //yErrSum = yErrSum + missY*dt;
                         xErrSum = xErrSum + xErr*dt;
                         yErrSum = yErrSum + yErr*dt;
                     }
@@ -336,8 +355,8 @@ public class DriftCorrection extends Observable implements Runnable {
                     y = 0;
 
                     if (correctionMode == XY || correctionMode == XYZ){
-                        x = Lp*xErr + Li*xErrSum*dt + Ld*(xErr-oldxErr)/dt;
-                        y = Lp*yErr + Li*yErrSum*dt + Ld*(yErr-oldyErr)/dt;
+                        x = Lp*xErr + Li*xErrSum + Ld*(xErr-oldxErr)/dt;
+                        y = Lp*yErr + Li*yErrSum + Ld*(yErr-oldyErr)/dt;
                     }
                     
                     oldTime = getTimeElapsed(); // time of current loop (store for next loop iteration)
@@ -380,25 +399,27 @@ public class DriftCorrection extends Observable implements Runnable {
                     // Move Z stage to more appropriate position. We get zDrift in microns instead of steps to save later to Data. (added 190403 kw)
                     // Now using PI controller instead of equation in McGorty 2013 paper (220110 kw)
                     if (isRunning() && (correctionMode == Z || correctionMode == XYZ) ) {
-                        if (LatMag < 1.00){ // think the latmag value is in pixels 220901 JE
+                        if (LatMag < 300.00){ // think the latmag value is in pixels 220901 JE
                             z_err = SP - PV; // Z-correction error 220110
                             z_errSum = z_errSum + missZ*dt;//z_err*dt;
                             zDrift = Zp*z_err + Zi*z_errSum;
                             if(Zp!=0 | Zi!=0) hardwareManager.moveFocusStage(zDrift);
                             oldzErr = z_err;
                         }
-                        else{
-                            zDrift = 0;
-                            if(Zp!=0 | Zi!=0) hardwareManager.moveFocusStage(zDrift);
-                        }
                     }
 
                     // Move XY stage
                     if (isRunning() && (correctionMode == XY || correctionMode == XYZ) ){
+                        /*
                         Point2D.Double xyDriftCorr = new Point2D.Double(x,-y);
                         xyDriftCorr = hardwareManager.convertPixelsToMicrons(xyDriftCorr);
-                        
+                        if (Math.abs(xyDriftCorr.x) < 5.023) xyDriftCorr.x=0;
+                        if (Math.abs(xyDriftCorr.y) < 5.023) xyDriftCorr.y=0;
                         if(Lp!=0 | Li!=0) hardwareManager.moveXYStage(xyDriftCorr);
+                        */
+                        //if (Math.abs(xyDrift.x) < 0.023) xyDrift.x=0;
+                        //if (Math.abs(xyDrift.y) < 0.023) xyDrift.y=0;
+                        if(Lp!=0 | Li!=0) hardwareManager.moveXYStage(xyDrift);
                     }
 
                     // Add data //changed to switch statement from ifs 220128 JE
@@ -414,8 +435,8 @@ public class DriftCorrection extends Observable implements Runnable {
                             break;
                         case XYZ:
                             if (driftData.Tune){
-                                //driftData.addXYZshift(xErr, yErr, zDrift, z_err, getTimeElapsed());
-                                driftData.addXYZshift(xErr, xErrSum, zDrift, z_err, getTimeElapsed());
+                                driftData.addXYZshift(xErr, yErr, zDrift, z_err, getTimeElapsed());
+                                //driftData.addXYZshift(xErr, xErrSum, zDrift, z_err, getTimeElapsed());
                             }
                             else driftData.addXYZshift((xyDrift.x), (xyDrift.y), zDrift, z_err, getTimeElapsed());
                             break;

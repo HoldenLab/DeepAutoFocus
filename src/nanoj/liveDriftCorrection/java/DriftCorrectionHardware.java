@@ -7,6 +7,7 @@ import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ShortProcessor;
 import mmcorej.CMMCore;
+import mmcorej.StrVector;
 import mmcorej.DeviceType;
 import org.apache.commons.lang.ArrayUtils;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -119,6 +120,9 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
                 core.waitForDevice(stageXY);
                 core.setRelativeXYPosition(stageXY, xTarget, yTarget);
                 core.waitForDevice(getXYStage());
+                core.setRelativeXYPosition(stageXY, 0, 0);
+                core.stop(stageXY); //Designed to make ASI stages use actual position rather than intended position of last move 220922 JE
+                core.waitForDevice(getXYStage());
             }
         else {
             if (getSeparateXYStages()[0] == null) throw new NullPointerException(X_STAGE_NOT_SET);
@@ -177,9 +181,32 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
         else if (getDriftCore() == null) throw new NullPointerException(CORE_DEVICE_NOT_SET);
         else {
             try {
+                /*
+                StrVector paths = driftCore.getDeviceAdapterSearchPaths();
+                for (int j=0; j<paths.size(); j++){
+                    ReportingUtils.showMessage(paths.get(j));
+                    ReportingUtils.showMessage("here");
+                }
+                */
                 driftCore.unloadAllDevices();
+                //driftCore.reset();
+                
+                //java.lang.Thread.sleep(1000);
+                ReportingUtils.showMessage(getConfigFileLocation()); 
                 driftCore.loadSystemConfiguration(getConfigFileLocation());
+
+                //java.lang.Thread.sleep(1000);
+                //ReportingUtils.showMessage("here 2");
+                //if (driftCore.deviceBusy("Camera-1")){ReportingUtils.showMessage("Busy");}
+                //else {ReportingUtils.showMessage("Not Busy");}
+                //ReportingUtils.showMessage(driftCore.getProperty("CellCam", "Camera ID"));
+                
+                //driftCore.waitForSystem();
+                //driftCore.reset();
+                //driftCore.loadSystemConfiguration(getConfigFileLocation());
+                //ReportingUtils.showMessage("here 3");
                 driftCore.initializeAllDevices();
+                //ReportingUtils.showMessage("here 4");
             } catch (Exception e) {
                 ReportingUtils.showError(e, ERROR_LOADING_DEVICES);
             }

@@ -103,15 +103,33 @@ public class DriftCorrectionProcess implements Measurements {
         return image.crop().convertToFloatProcessor();
     }
 
-        public double[] PeakFind(FloatProcessor CCmap) {
-        //float[] peak = CalculateImageStatistics.getMax(CCmap);
-        //int peakX = (int) peak[0];
-        //int peakY = (int) peak[1];
-        //int x = peakX - 3;
-        //int y = peakY - 3;
-        int x = CCmap.getWidth()/2 - 5;
-        int y = CCmap.getHeight()/2 - 5;
-        CCmap.setRoi(x,y, 11, 11);
+    public double[] PeakFind(FloatProcessor CCmap) {
+        //CCmap.setRoi(0,0, CCmap.getWidth()-1, CCmap.getHeight()-1);
+        //CCmap.crop();
+        int x;
+        int y;
+        float[] peak = CalculateImageStatistics.getMax(CCmap);
+        int peakX = (int) peak[0];
+        int peakY = (int) peak[1];
+        int xcenter = CCmap.getWidth()/2;
+        int ycenter = CCmap.getHeight()/2;
+        int offset = 5;
+        int size = 10;
+        //if (CCmap.getWidth()%2 == 0); offset = 5;
+        if (CCmap.getWidth()%2 == 0); size = size + 1;
+        if (Math.abs(peakX-xcenter)>3 || Math.abs(peakY-ycenter)>3){
+            //x = peakX - offset;
+            //y = peakY - offset;
+            x = xcenter - offset;
+            y = ycenter - offset;
+        }
+        else{
+            x = xcenter - offset;
+            y = ycenter - offset;
+        }
+        
+        
+        CCmap.setRoi(x,y, size,size);
         FloatProcessor region = CCmap.crop().convertToFloatProcessor();
         
         double xCM = 0;
@@ -131,8 +149,59 @@ public class DriftCorrectionProcess implements Measurements {
         xCM /= sSum; yCM /= sSum;
         xCM += x; yCM += y;
         
-        return new double[] {xCM, yCM};
+        return new double[] {xCM, yCM};       
+    }
+    
+    public double[] PeakFind2(FloatProcessor CCmap, float[] Peak) {
+        if (Peak == null) {
+            Peak[0] =  CCmap.getWidth()/2;
+            Peak[1] =  CCmap.getHeight()/2;
+        }
+        int x;
+        int y;
+        int PeakX = (int) Peak[0];
+        int PeakY = (int) Peak[1];
+        int xcenter = CCmap.getWidth()/2;
+        int ycenter = CCmap.getHeight()/2;
+        int offset = 5;
+        int size = 11;
+        /*
+        if (Math.abs(PeakX-xcenter)>3 || Math.abs(PeakY-ycenter)>3){
+            x = PeakX - offset;
+            y = PeakY - offset;
+            //x = xcenter - offset;
+            //y = ycenter - offset;
+        }
+        else{
+            x = xcenter - offset;
+            y = ycenter - offset;
+        }
+        */
         
+        x = PeakX - offset;
+        y = PeakY - offset;
+        
+        CCmap.setRoi(x,y, size,size);
+        FloatProcessor region = CCmap.crop().convertToFloatProcessor();
+        
+        double xCM = 0;
+        double yCM = 0;
+        double v = 0;
+        double sSum = 0;
+        
+        for (int j = 0; j < region.getHeight(); j++) {
+            for (int i = 0; i < region.getWidth(); i++) {
+                v = region.getf(i, j);
+                //if (v < 0) continue;
+                xCM += i * v;
+                yCM += j * v;
+                sSum += v;
+            }
+        }
+        xCM /= sSum; yCM /= sSum;
+        xCM += x; yCM += y;
+        
+        return new double[] {xCM, yCM};       
     }
         
     public double[] PhasorPeakFind(FloatProcessor CCmap) {
@@ -171,9 +240,13 @@ public class DriftCorrectionProcess implements Measurements {
     }
 
     public double CenterHeightFind2(FloatProcessor image){ // 220131 JE
-        int x = image.getWidth()/2 - 1;
-        int y = image.getHeight()/2 - 1;
-        image.setRoi(x,y, 3, 3);
+        int offset = 2;
+        int size = 4;
+        if (image.getWidth()%2 == 0); offset = 1;
+        if (image.getWidth()%2 == 0); size = 3;
+        int x = image.getWidth()/2 - offset;
+        int y = image.getHeight()/2 - offset;
+        image.setRoi(x,y, size, size);
         FloatProcessor region = image.crop().convertToFloatProcessor();
         float[] pixels = (float[]) region.getPixels();
         double sum = 0;
@@ -183,8 +256,57 @@ public class DriftCorrectionProcess implements Measurements {
         double mean = sum/pixels.length;
         return mean;
     }
+    
+    public double CenterHeightFind3(FloatProcessor image, float[] Center){ // 220131 JE
+        int CenterX = (int) Center[0];
+        int CenterY = (int) Center[1];
+        int offset = 1;
+        int size = 3;
+        int x = CenterX - offset;
+        int y = CenterY - offset;
+        image.setRoi(x,y, size, size);
+        FloatProcessor region = image.crop().convertToFloatProcessor();
+        float[] pixels = (float[]) region.getPixels();
+        double sum = 0;
+        for (int n=0; n<pixels.length; n++) {
+            sum += pixels[n];
+        }
+        double mean = sum/pixels.length;
+        return mean;
+    }
+    
+    public float[] PickPlane(ImageStack ccMapStack){ // choses which plane of the ccMap stack has the highest peak to center algorithm on 220926 JE
+        float[] Peaks = null;
+        float vMax = -Float.MAX_VALUE;
+        int pMax = 0;
+        
+        float[] TopPeak = CalculateImageStatistics.getMax(ccMapStack.getProcessor(0));
+        float[] MiddlePeak = CalculateImageStatistics.getMax(ccMapStack.getProcessor(1));
+        float[] BottomPeak = CalculateImageStatistics.getMax(ccMapStack.getProcessor(2));
+        Peaks[0] = TopPeak[2];
+        Peaks[1] = MiddlePeak[2];
+        Peaks[2] = BottomPeak[2];
+        
+        for (int p=0; p<ccMapStack.size(); p++) {
+            float v = Peaks[p];
+            if (v > vMax) {
+                vMax = v;
+                pMax = p;
+            }
+        }
+        
+        switch(pMax){
+            case 0:
+                return TopPeak;
+            case 1:
+                return MiddlePeak;
+            case 2:
+                return BottomPeak;
+        }
+        return null;
+    }
 
-    public double CenterHeightFind3(FloatProcessor image){ // 220131 JE
+    public double CenterHeightFind4(FloatProcessor image){ // 220131 JE
         int x = image.getWidth()/2 - 12;
         int y = image.getHeight()/2 - 12;
         image.setRoi(x,y, 25, 25);
