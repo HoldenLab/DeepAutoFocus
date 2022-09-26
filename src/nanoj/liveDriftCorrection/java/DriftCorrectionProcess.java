@@ -298,10 +298,13 @@ public class DriftCorrectionProcess implements Measurements {
 
         switch(pMax){
             case 0:
+                TopPeak[2] = 1f;
                 return TopPeak;
             case 1:
+                MiddlePeak[2] = 2f;
                 return MiddlePeak;
             case 2:
+                BottomPeak[2] = 3f;
                 return BottomPeak;
         }
         return null;

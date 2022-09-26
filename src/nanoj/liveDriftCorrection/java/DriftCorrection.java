@@ -247,9 +247,9 @@ public class DriftCorrection extends Observable implements Runnable {
                         imCenty = resultImage.getHeight()/2;
                     }
                     
+                    int Plane = (int) Peak[2];
+                    double[] currentCenter = processor.PeakFind2(resultStack.getProcessor(Plane).convertToFloatProcessor(), Peak);
                     //float[] currentCenter= EstimateShiftAndTilt.getMaxFindByOptimization(ccSliceMiddle);
-                    double[] currentCenter = processor.PeakFind2(ccSliceMiddle, Peak);
-
                     
                     // The getMaxFindByOptimization can generate NaN's so we protect against that
                     //if ( Double.isNaN(currentCenter[0]) || Double.isNaN(currentCenter[1]) || Double.isNaN(currentCenter[2]) ) continue;
