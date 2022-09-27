@@ -415,6 +415,7 @@ public class DriftCorrectionGUI{
         driftData.setShowMap(preferences.getBoolean(SHOW_MAP, false));
         driftData.setShowPlot(preferences.getBoolean(SHOW_PLOT, false));
         driftData.setSavePlots(preferences.getBoolean(SAVE_PLOTS, false));
+        driftData.setTuneMode(preferences.getBoolean(TUNING_MODE, false));
         driftData.setDataFile(new File(preferences.get(DRIFT_FILE_LOCATION, defaultDriftFileLocation)));
         driftData.setflipY(preferences.getBoolean(FLIP_Y, false));
 
