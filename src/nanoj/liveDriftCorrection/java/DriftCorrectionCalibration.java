@@ -15,6 +15,7 @@ import java.util.ArrayList;
 //import java.util.Collections;
 import java.util.Observable;
 import java.text.DecimalFormat;
+import nanoj.core.java.image.analysis.CalculateImageStatistics;
 
 public class DriftCorrectionCalibration extends Observable implements Runnable {
     private DriftCorrectionHardware hardwareManager;
@@ -219,7 +220,7 @@ public class DriftCorrectionCalibration extends Observable implements Runnable {
         return snap;
     }
 
-    public static double median(float[] m) {
+    public static double median(double[] m) {
         int middle = m.length/2;
         if (m.length%2 == 1) {
             return m[middle];
@@ -249,8 +250,8 @@ public class DriftCorrectionCalibration extends Observable implements Runnable {
     }
 
     private void calculateMovement(ArrayList<FloatProcessor> images) {
-        ArrayList<Float> xShift = new ArrayList<Float>();
-        ArrayList<Float> yShift = new ArrayList<Float>();
+        ArrayList<Double> xShift = new ArrayList<Double>();
+        ArrayList<Double> yShift = new ArrayList<Double>();
 
         // Calculate XY pixel displacement for each translation
         for (int i = 0; i < images.size()-1; i++) {
@@ -273,8 +274,9 @@ public class DriftCorrectionCalibration extends Observable implements Runnable {
             
             driftStack.addSlice(map);
 
-            float[] shift = EstimateShiftAndTilt.getMaxFindByOptimization(map);
-            shift = new float[] {
+            float[] peak = CalculateImageStatistics.getMax(map);
+            double[] shift =  processor.PeakFind2(map, peak);
+            shift = new double[] {
                     (shift[0] - map.getWidth()/2),
                     (shift[1] - map.getHeight()/2)
             };
@@ -287,9 +289,9 @@ public class DriftCorrectionCalibration extends Observable implements Runnable {
 
         // Get Median values to minimize stage error
         //Collections.sort(xShift);
-        double x = median(ArrayCasting.toArray(xShift, 0f));
+        double x = median(ArrayCasting.toArray(xShift, 0d));
         //Collections.sort(yShift);
-        double y = median(ArrayCasting.toArray(yShift, 0f));
+        double y = median(ArrayCasting.toArray(yShift, 0d));
 
         xMovement = x;
         yMovement = y;
