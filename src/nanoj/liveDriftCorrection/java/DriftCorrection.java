@@ -73,6 +73,7 @@ public class DriftCorrection extends Observable implements Runnable {
     double LatMag = 0;
     double x = 0;
     double y = 0;
+    double t = 0;
     double missX = 0;
     double missY = 0;
     double missZ = 0;
@@ -118,6 +119,7 @@ public class DriftCorrection extends Observable implements Runnable {
                         yErrSum = 0;
                         oldyErr = 0;
                         oldxErr = 0;
+                        t=0;
                     } 
                     
                     // If we've just started, get the reference stack (190401 kw)
@@ -191,6 +193,8 @@ public class DriftCorrection extends Observable implements Runnable {
                             //double[] currentCenter = processor.PeakFind(refCCmiddle);
                             //imCentx = currentCenter[0];
                             //imCenty = currentCenter[1];
+                            
+                            t = 0;
                         }
                         
                         ImageProcessor ImageT = snapAndProcess();
@@ -245,6 +249,7 @@ public class DriftCorrection extends Observable implements Runnable {
                         
                         imCentx = resultImage.getWidth()/2;
                         imCenty = resultImage.getHeight()/2;
+                       
                     }
                     
                     int Plane = (int) Peak[2];
@@ -263,21 +268,22 @@ public class DriftCorrection extends Observable implements Runnable {
                     xErr = currentCenter[0]  - imCentx;
                     yErr = currentCenter[1]  - imCenty;
                     dt = (getTimeElapsed() - oldTime)/1000;
+                    t = t + dt;
                     missX = x+(oldxErr-xErr);
                     missY = y+(oldyErr-yErr);
-                    if ((dt*1000)<10*sleep){
-                        //xErrSum = xErrSum + missX*dt;
-                        //yErrSum = yErrSum + missY*dt;
-                        xErrSum = xErrSum + xErr*dt;
-                        yErrSum = yErrSum + yErr*dt;
+                    if (((dt*1000)<10*sleep) && (dt*1000 > 1000)){
+                        xErrSum = xErrSum + missX*dt;
+                        yErrSum = yErrSum + missY*dt;
+                        //xErrSum = xErrSum + xErr*dt;
+                        //yErrSum = yErrSum + yErr*dt;
                     }
                     
                     x = 0;
                     y = 0;
 
                     if (correctionMode == XY || correctionMode == XYZ){
-                        x = Lp*xErr + Li*xErrSum + Ld*(xErr-oldxErr)/dt;
-                        y = Lp*yErr + Li*yErrSum + Ld*(yErr-oldyErr)/dt;
+                        x = Lp*xErr + Li*(xErrSum/t) + Ld*(xErr-oldxErr)/dt;
+                        y = Lp*yErr + Li*(yErrSum/t) + Ld*(yErr-oldyErr)/dt;
                     }
                     
                     oldTime = getTimeElapsed(); // time of current loop (store for next loop iteration)
@@ -287,12 +293,12 @@ public class DriftCorrection extends Observable implements Runnable {
                     
                     if (driftData.getflipY()) y = -y; // 201229 kw
                     
-                    Point2D.Double xyDrift = new Point2D.Double(x,y);
+                    Point2D.Double xyDrift = new Point2D.Double(y,-x); //Not sure why the switch of x and y is needed but it seems to work for now 290922 JE @ CAIRN
 
                     // Convert from pixel units to microns
                     xyDrift = hardwareManager.convertPixelsToMicrons(xyDrift);
                     
-                    LatMag = Math.sqrt(Math.pow(xErr,2) + Math.pow(yErr,2));
+                    //LatMag = Math.sqrt(Math.pow(xErr,2) + Math.pow(yErr,2));
                     
                     // Check if detected movement is within bounds
                     if ((correctionMode == XY || correctionMode == XYZ) && (Math.abs(xyDrift.x) > threshold || Math.abs(xyDrift.y) > threshold)) {
@@ -309,13 +315,12 @@ public class DriftCorrection extends Observable implements Runnable {
                     // Move Z stage to more appropriate position. We get zDrift in microns instead of steps to save later to Data. (added 190403 kw)
                     // Now using PI controller instead of equation in McGorty 2013 paper (220110 kw)
                     if (isRunning() && (correctionMode == Z || correctionMode == XYZ) ) {
-                        if (LatMag < 300.00){ // think the latmag value is in pixels 220901 JE
-                            z_err = SP - PV; // Z-correction error 220110
-                            z_errSum = z_errSum + missZ*dt;//z_err*dt;
-                            zDrift = Zp*z_err + Zi*z_errSum;
-                            if(Zp!=0 | Zi!=0) hardwareManager.moveFocusStage(zDrift);
-                            oldzErr = z_err;
-                        }
+                        z_err = SP - PV; // Z-correction error 220110
+                        z_errSum = z_errSum + missZ*dt;//z_err*dt;
+                        zDrift = Zp*z_err + Zi*z_errSum;
+                        if(Zp!=0 || Zi!=0) hardwareManager.moveFocusStage(zDrift);
+                        oldzErr = z_err;
+                        
                     }
 
                     // Move XY stage
@@ -329,7 +334,7 @@ public class DriftCorrection extends Observable implements Runnable {
                         */
                         //if (Math.abs(xyDrift.x) < 0.023) xyDrift.x=0;
                         //if (Math.abs(xyDrift.y) < 0.023) xyDrift.y=0;
-                        if(Lp!=0 | Li!=0) hardwareManager.moveXYStage(xyDrift);
+                        if(Lp!=0 || Li!=0) hardwareManager.moveXYStage(xyDrift);
                     }
 
                     // Add data //changed to switch statement from ifs 220128 JE
@@ -345,8 +350,8 @@ public class DriftCorrection extends Observable implements Runnable {
                             break;
                         case XYZ:
                             if (driftData.Tune){
-                                driftData.addXYZshift(xErr, yErr, zDrift, z_err, getTimeElapsed());
-                                //driftData.addXYZshift(xErr, xErrSum, zDrift, z_err, getTimeElapsed());
+                                //driftData.addXYZshift(xErr, yErr, zDrift, z_err, getTimeElapsed());
+                                driftData.addXYZshift(xErr, yErr, zDrift, (xyDrift.x), getTimeElapsed());
                             }
                             else driftData.addXYZshift((xyDrift.x), (xyDrift.y), zDrift, z_err, getTimeElapsed());
                             break;
