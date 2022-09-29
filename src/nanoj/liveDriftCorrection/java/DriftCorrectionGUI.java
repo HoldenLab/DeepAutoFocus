@@ -1033,10 +1033,10 @@ public class DriftCorrectionGUI{
                 String angling = ANGLE + df.format(angle);
                 String flipping = FLIP + flip;
                 calibrationScalingLabel.setText(scaling + " nm/pixel");
-                calibrationAngleLabel.setText(angling);
+                calibrationAngleLabel.setText(angling + " radians");
                 calibrationFlipLabel.setText(flipping);
                 ReportingUtils.showMessage( procedure_succeeded
-                        + "\n" + scaling + " nm/pixel\n" + angling + "\n" + flipping);
+                        + "\n" + scaling + " nm/pixel\n" + angling + " radians" + "\n" + flipping);
                 hardwareManager.setStreamImages(streamImagesButton.isSelected()); // return streaming to control of its button 220518JE
             }
         }
