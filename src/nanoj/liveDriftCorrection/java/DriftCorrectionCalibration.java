@@ -27,13 +27,20 @@ public class DriftCorrectionCalibration extends Observable implements Runnable {
     private double step = 10;
     //private double backgroundStep = 50;
     private int totalSteps = 20;
-    private double xMovement;
-    private double yMovement;
+    private double xMovementXY;
+    private double yMovementXY;
+    private double xMovementX;
+    private double yMovementX;
+    private double xMovementY;
+    private double yMovementY;
     private double scale;
     private double angle; 
-    private boolean flipX;
+    //private boolean flipX = false;
+    //private boolean flipY = false;
     
-    private ImageStack driftStack;
+    
+    private ImageStack driftStackX;
+    private ImageStack driftStackXY;
     private ImagePlus driftPlus = new ImagePlus();
     private ImageStack plainStack;
     private ImagePlus plainPlus = new ImagePlus();
@@ -62,13 +69,15 @@ public class DriftCorrectionCalibration extends Observable implements Runnable {
             while(itIsAlive()) {
                 while(isRunning()) {
                     ArrayList<FloatProcessor> images = new ArrayList<FloatProcessor>();
-
+                    
                     double travel = totalSteps * step;
                     // Move along X and Y in steps until reaching totalSteps range
                     // i = 0 ensures we have a picture at the starting position
                     // i <= travel ensures we reach the total travel range
                     for (double i = 0; i<= travel; i += step) {
-                        hardwareManager.moveXYStage(step, step);
+                        hardwareManager.moveXYStage(step, 0);
+                        images.add(snapAndProcess());
+                        hardwareManager.moveXYStage(0, step);
                         images.add(snapAndProcess());
                     }
                     
@@ -79,32 +88,51 @@ public class DriftCorrectionCalibration extends Observable implements Runnable {
                     calculateMovement(images);
 
                     // Make sure we detected something
-                    if (xMovement == 0 && yMovement == 0) {
+                    if (xMovementXY == 0 && yMovementXY == 0) {
                         ReportingUtils.showError(NO_MOVEMENT_ERROR);
                         runAcquisition(false);
                     }
-                    else if (xMovement == 0) {
+                    else if (xMovementXY == 0) {
                         ReportingUtils.showError(NO_X_MOVEMENT_ERROR);
                         runAcquisition(false);
                     }
-                    else if (yMovement == 0) {
+                    else if (yMovementXY == 0) {
                         ReportingUtils.showError(NO_Y_MOVEMENT_ERROR);
                         runAcquisition(false);
                     }
+                    else if (Math.abs(xMovementX)<Math.abs(yMovementX) && Math.abs(yMovementY)<Math.abs(xMovementY)){
+                        driftData.setSwitchXY(true);
+                        double temp = xMovementXY;
+                        xMovementXY = yMovementXY;
+                        yMovementXY = temp;
+                        ReportingUtils.showMessage("here1");
+                    }                    
+                    else if (xMovementX < 0){
+                        driftData.setflipX(true);
+                        xMovementXY = -xMovementXY;
+                        ReportingUtils.showMessage("here2");
+                    }
+                    else if (yMovementY < 0){
+                        driftData.setflipY(true);
+                        yMovementXY = -yMovementXY;
+                        ReportingUtils.showMessage("here3");
+                    }
+                    ReportingUtils.showMessage(Double.toString(xMovementX) + " " + Double.toString(yMovementX) + "\n" + Double.toString(xMovementY) + " " + Double.toString(yMovementY) + "\n" + Double.toString(xMovementXY) + " " + Double.toString(yMovementXY));
                 
                     // We now calculate the angle of the observed movement versus the original movement we told it to perform.
                     // Subtract from the expected angle (45° degrees or pi/4 radians) the observed angle
-                    angle = (Math.PI/4) - Math.atan(yMovement/xMovement);
+                    angle = (Math.PI/4) - Math.atan(yMovementXY/xMovementXY);
 
                     // We calculate the vector magnitudes and deduce the scale from that
                     scale = Math.sqrt((Math.pow(step, 2))+(Math.pow(step, 2)))/
-                            Math.sqrt(Math.pow(xMovement, 2) + Math.pow(yMovement, 2));
+                            Math.sqrt(Math.pow(xMovementXY, 2) + Math.pow(yMovementXY, 2));
 
                     // If we are working with negative xMovement values, then the coordinates need to be flipped 180 degrees
-                    flipX = xMovement < 0;
+                    //flipX = xMovement < 0;
+                    //flipX = false;
 
                     // Create affine transform
-                    calibration = createCalibration(scale , angle, flipX);
+                    calibration = createCalibration(scale , angle, driftData.getflipX());
                     
                     hardwareManager.setCalibration(calibration);
                     
@@ -230,8 +258,12 @@ public class DriftCorrectionCalibration extends Observable implements Runnable {
     }
 
     public void clear() {
-        xMovement = 0;
-        yMovement = 0;
+        xMovementXY = 0;
+        yMovementXY = 0;
+        xMovementX = 0;
+        yMovementX = 0;
+        xMovementY = 0;
+        yMovementY = 0;
         calibration = new AffineTransform();
     }
 
@@ -250,51 +282,81 @@ public class DriftCorrectionCalibration extends Observable implements Runnable {
     }
 
     private void calculateMovement(ArrayList<FloatProcessor> images) {
-        ArrayList<Double> xShift = new ArrayList<Double>();
-        ArrayList<Double> yShift = new ArrayList<Double>();
+        ArrayList<Double> xShiftX = new ArrayList<>();
+        ArrayList<Double> yShiftX = new ArrayList<>();
+        ArrayList<Double> xShiftXY = new ArrayList<>();
+        ArrayList<Double> yShiftXY = new ArrayList<>();
+        ArrayList<Double> xShiftY = new ArrayList<>();
+        ArrayList<Double> yShiftY = new ArrayList<>();
 
         // Calculate XY pixel displacement for each translation
-        for (int i = 0; i < images.size()-1; i++) {
-            FloatProcessor map =
+        for (int i = 0; i < images.size()-2; i=i+2) {
+            FloatProcessor mapX =
                     CrossCorrelationMap.calculateCrossCorrelationMap(
+                            images.get(i+1),
                             images.get(i),
+                            true)
+                            .convertToFloatProcessor();
+            FloatProcessor mapY =
+                    CrossCorrelationMap.calculateCrossCorrelationMap(
+                            images.get(i+2),
                             images.get(i+1),
                             true)
                             .convertToFloatProcessor();
 
-            if (map == null) {
+            if (mapX == null) {
                 continue;
             }
             
             if (i==0){
-                ImageStack dStack = new ImageStack(map.getWidth(),map.getHeight());
-                dStack.addSlice(map);
-                driftStack = dStack;
+                ImageStack dStackX = new ImageStack(mapX.getWidth(),mapX.getHeight());
+                dStackX.addSlice(mapX);
+                driftStackX = dStackX;
+                ImageStack dStackXY = new ImageStack(mapY.getWidth(),mapY.getHeight());
+                dStackXY.addSlice(mapY);
+                driftStackXY = dStackXY;
             }
             
-            driftStack.addSlice(map);
+            driftStackX.addSlice(mapX);
+            driftStackXY.addSlice(mapY);
 
-            float[] peak = CalculateImageStatistics.getMax(map);
-            double[] shift =  processor.PeakFind2(map, peak);
-            shift = new double[] {
-                    (shift[0] - map.getWidth()/2),
-                    (shift[1] - map.getHeight()/2)
+            float[] peakX = CalculateImageStatistics.getMax(mapX);
+            double[] shiftX =  processor.PeakFind2(mapX, peakX);
+            float[] peakY = CalculateImageStatistics.getMax(mapY);
+            double[] shiftY =  processor.PeakFind2(mapY, peakY);
+            
+            shiftX[0] = shiftX[0] - mapX.getWidth()/2;
+            shiftX[1] = shiftX[1] - mapX.getHeight()/2;
+            shiftY[0] = shiftY[0] - mapX.getWidth()/2;
+            shiftY[1] = shiftY[1] - mapX.getHeight()/2;
+            
+            double[] shiftXY = new double[] {
+                (shiftY[0] + shiftX[0]),
+                (shiftY[1] + shiftX[1])
             };
-            xShift.add(shift[0]);
-            yShift.add(shift[1]);
+            
+            xShiftX.add(shiftX[0]);
+            yShiftX.add(shiftX[1]);
+            xShiftXY.add(shiftXY[0]);
+            yShiftXY.add(shiftXY[1]);
+            xShiftY.add(shiftY[0]);
+            yShiftY.add(shiftY[1]);
         }
         
-        driftPlus.setStack(driftStack);
+        driftPlus.setStack(driftStackXY);
         driftPlus.show();
 
         // Get Median values to minimize stage error
         //Collections.sort(xShift);
-        double x = median(ArrayCasting.toArray(xShift, 0d));
+        xMovementXY = median(ArrayCasting.toArray(xShiftXY, 0d));
         //Collections.sort(yShift);
-        double y = median(ArrayCasting.toArray(yShift, 0d));
+        yMovementXY = median(ArrayCasting.toArray(yShiftXY, 0d));
+        
+        xMovementX = median(ArrayCasting.toArray(xShiftX, 0d));
+        yMovementX = median(ArrayCasting.toArray(yShiftX, 0d));
+        xMovementY = median(ArrayCasting.toArray(xShiftY, 0d));
+        yMovementY = median(ArrayCasting.toArray(yShiftY, 0d));
 
-        xMovement = x;
-        yMovement = y;
     }
 
     //////////////////////////// Getters/Setters
@@ -351,9 +413,5 @@ public class DriftCorrectionCalibration extends Observable implements Runnable {
 
     public double getAngle() {
         return angle;
-    }
-
-    public boolean getFlipX() {
-        return flipX;
     }
 }

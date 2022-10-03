@@ -291,9 +291,16 @@ public class DriftCorrection extends Observable implements Runnable {
                     oldyErr = yErr;
                     
                     
-                    if (driftData.getflipY()) y = -y; // 201229 kw
+                    if (driftData.getflipY()) y = -y;
+                    if (!driftData.getflipX()) x = -x;
+                    Point2D.Double xyDrift = new Point2D.Double(x,y);
+                    //if (driftData.getflipY()) y = -y; // 201229 kw
+                    if (driftData.getSwitchXY()){
+                        xyDrift.x = y;
+                        xyDrift.y = x;
+                    }
                     
-                    Point2D.Double xyDrift = new Point2D.Double(y,-x); //Not sure why the switch of x and y is needed but it seems to work for now 290922 JE @ CAIRN
+                    //Point2D.Double xyDrift = new Point2D.Double(y,-x); //Not sure why the switch of x and y is needed but it seems to work for now 290922 JE @ CAIRN
 
                     // Convert from pixel units to microns
                     xyDrift = hardwareManager.convertPixelsToMicrons(xyDrift);

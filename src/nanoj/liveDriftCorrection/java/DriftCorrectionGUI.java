@@ -46,7 +46,6 @@ public class DriftCorrectionGUI{
     // Preference keys
     private static final String X_POSITION = "xPos";
     private static final String Y_POSITION = "yPos";
-    private static final String FLIP_Y = "flipY";
     private static final String SHOW_LATEST = "showLive";
     private static final String SHOW_MAP = "showMap";
     private static final String SHOW_PLOT = "showPlot";
@@ -75,7 +74,9 @@ public class DriftCorrectionGUI{
     private static final String CAL_STEP_SIZE = "calStepSize"; // 201223 kw
     private static final String CAL_SCALING = "calScaling";
     private static final String CAL_ANGLE = "calAngle";
-    private static final String CAL_FLIPPING = "calFlipping";
+    private static final String CAL_FLIPPING_X = "calFlipping X";
+    private static final String CAL_FLIPPING_Y = "calFlipping Y";
+    private static final String CAL_SWITCHING_XY = "calSwitching XY";
     private static final String BACK_STEP_SIZE = "backStepSize"; // 201223 kw
 
     // Preference defaults
@@ -98,7 +99,6 @@ public class DriftCorrectionGUI{
     // Labels
     private static final String SNAP_IMAGE_LABEL = "Snap";
     private static final String STREAM_IMAGES_BUTTON_LABEL = "Live";
-    private static final String FLIP_Y_LABEL = "Flip Y axis";
     private static final String SHOW_LATEST_BUTTON_LABEL = "Show latest image";
     private static final String SHOW_MAP_BUTTON_LABEL = "Show cross correlation map";
     private static final String SHOW_DRIFT_PLOT_LABEL = "Show drift plots";
@@ -134,7 +134,9 @@ public class DriftCorrectionGUI{
     private static final String SCALING = "Scale: ";
     private static final String SCALE_UNITS = " nm/pixel";
     private static final String ANGLE = "Angle: ";
-    private static final String FLIP = "Flip X: ";
+    private static final String FLIP_X = "Flip X axis: ";
+    private static final String FLIP_Y = "Flip Y axis: ";
+    private static final String SWITCH_XY = "Switch X and Y axes: ";
     private static final String [] correctionModesLabels = new String[]{
         "XYZ Drift Correction",
                 "Z Drift Correction",
@@ -204,7 +206,6 @@ public class DriftCorrectionGUI{
     private JToggleButton calButton = new DToggleButton(CALIBRATE_LABEL, calListener);
     private JToggleButton saveLocationButton = new DToggleButton(SAVE_DRIFT_LOCATION_LABEL, new SaveLocationListener());
     private JComboBox correctionModes = new DComboBox(new CorrectionModeListener(), CORRECTION_MODE);
-    private JCheckBox flipYButton = new DCheckBox(FLIP_Y_LABEL, new FlipYListener(), FLIP_Y);
     private JCheckBox showLatestButton = new DCheckBox(SHOW_LATEST_BUTTON_LABEL, new ShowLatestListener(), SHOW_LATEST);
     private JCheckBox showMapButton = new DCheckBox(SHOW_MAP_BUTTON_LABEL, new ShowMapButtonListener(), SHOW_MAP);
     private JCheckBox showDriftPlotButton = new DCheckBox(SHOW_DRIFT_PLOT_LABEL, new ShowDriftPlotListener(), SHOW_PLOT);
@@ -219,7 +220,9 @@ public class DriftCorrectionGUI{
     private JTextField calibrationStepSizeBox = new DTextField(CAL_STEP_SIZE, CAL_STEP_SIZE_DEFAULT);
     private JLabel calibrationScalingLabel = new DLabel(SCALING + df.format(preferences.getDouble(CAL_SCALING, CAL_DEFAULT)*1000) + SCALE_UNITS);
     private JLabel calibrationAngleLabel = new DLabel(ANGLE + df.format(preferences.getDouble(CAL_ANGLE, CAL_DEFAULT)));
-    private JLabel calibrationFlipLabel = new DLabel(FLIP + preferences.getBoolean(CAL_FLIPPING, false));
+    private JLabel calibrationFlip_XLabel = new DLabel(FLIP_X + preferences.getBoolean(CAL_FLIPPING_X, false));
+    private JLabel calibrationFlip_YLabel = new DLabel(FLIP_Y + preferences.getBoolean(CAL_FLIPPING_Y, false));
+    private JLabel calibrationSwitch_XYLabel = new DLabel(SWITCH_XY + preferences.getBoolean(CAL_SWITCHING_XY, false));
     private DeviceList cameraList = new DeviceList(DeviceType.CameraDevice, CAMERA);
     private JCheckBox separateXYStages = new DCheckBox(SEPARATE_STAGES_LABEL, separateXYStagesListener, SEPARATE);
     private JTextField exposureTimeBox = new DTextField(EXPOSURE_TIME, EXPOSURE_TIME_DEFAULT, exposureTimeListener);
@@ -255,7 +258,7 @@ public class DriftCorrectionGUI{
         hardwareManager.setCalibration(DriftCorrectionCalibration.createCalibration(
                 preferences.getDouble(CAL_SCALING, CAL_DEFAULT),
                 preferences.getDouble(CAL_ANGLE, CAL_DEFAULT),
-                preferences.getBoolean(CAL_FLIPPING, false)
+                preferences.getBoolean(CAL_FLIPPING_X, false)
         ));
         
         // Add Listeners
@@ -353,7 +356,6 @@ public class DriftCorrectionGUI{
         configurationPanel.add(focusDeviceList);
         configurationPanel.add(Box.createRigidArea(new Dimension(1,10)));
         configurationPanel.add(separateXYStages);
-        configurationPanel.add(flipYButton);
         configurationPanel.add(Box.createRigidArea(new Dimension(1,5)));
         configurationPanel.add(xyStageListLabel);
         configurationPanel.add(xyStageList);
@@ -368,7 +370,9 @@ public class DriftCorrectionGUI{
         configurationPanel.add(calibrationStepSizeBox);
         configurationPanel.add(calibrationScalingLabel);
         configurationPanel.add(calibrationAngleLabel);
-        configurationPanel.add(calibrationFlipLabel);
+        configurationPanel.add(calibrationFlip_XLabel);
+        configurationPanel.add(calibrationFlip_YLabel);
+        configurationPanel.add(calibrationSwitch_XYLabel);
         configurationPanel.add(new DLabel(EXPOSURE_TIME_LABEL));
         configurationPanel.add(exposureTimeBox);
         configurationPanel.add(new DLabel(ROI_BOX_LABEL));
@@ -417,7 +421,6 @@ public class DriftCorrectionGUI{
         driftData.setSavePlots(preferences.getBoolean(SAVE_PLOTS, false));
         driftData.setTuneMode(preferences.getBoolean(TUNING_MODE, false));
         driftData.setDataFile(new File(preferences.get(DRIFT_FILE_LOCATION, defaultDriftFileLocation)));
-        driftData.setflipY(preferences.getBoolean(FLIP_Y, false));
 
         // Create the drift correction object
         driftCorrection = new DriftCorrection(hardwareManager, driftData, processor);
@@ -814,14 +817,6 @@ public class DriftCorrectionGUI{
             if (!startButton.isSelected()) hardwareManager.setStreamImages(streamImagesButton.isSelected());
         }
     }
-    
-    class FlipYListener implements ActionListener {
-        
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            driftData.setflipY(flipYButton.isSelected());
-        }
-    }
 
     class ShowLatestListener implements ActionListener {
 
@@ -1025,18 +1020,22 @@ public class DriftCorrectionGUI{
             else {
                 double scale = calibrator.getScale();
                 double angle = calibrator.getAngle();
-                boolean flip = calibrator.getFlipX();
+                boolean flip_X = driftData.getflipX();
+                boolean flip_Y = driftData.getflipY();
+                boolean switch_XY = driftData.getSwitchXY();
                 preferences.putDouble(CAL_SCALING, scale);
                 preferences.putDouble(CAL_ANGLE, angle);
-                preferences.putBoolean(CAL_FLIPPING, flip);
+                preferences.putBoolean(CAL_FLIPPING_X, flip_X);
                 String scaling = SCALING + df.format(scale*1000);
                 String angling = ANGLE + df.format(angle);
-                String flipping = FLIP + flip;
+                String flipping_X = FLIP_X + flip_X;
+                String flipping_Y = FLIP_Y + flip_Y;
+                String switching_XY = SWITCH_XY + switch_XY;
                 calibrationScalingLabel.setText(scaling + " nm/pixel");
                 calibrationAngleLabel.setText(angling + " radians");
-                calibrationFlipLabel.setText(flipping);
+                calibrationFlip_XLabel.setText(flipping_X);
                 ReportingUtils.showMessage( procedure_succeeded
-                        + "\n" + scaling + " nm/pixel\n" + angling + " radians" + "\n" + flipping);
+                        + "\n" + scaling + " nm/pixel\n" + angling + " radians" + "\n" + flipping_X + "\n" + flipping_Y + "\n" + switching_XY);
                 hardwareManager.setStreamImages(streamImagesButton.isSelected()); // return streaming to control of its button 220518JE
             }
         }

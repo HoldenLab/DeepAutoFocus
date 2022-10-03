@@ -26,6 +26,8 @@ public class DriftCorrectionData {
     private boolean savePlots = false;
     private boolean showLatest = false;
     private boolean flipY = false;
+    private boolean flipX = false;
+    private boolean SwitchXY;
     boolean Tune = false;
     private File dataFile;
     private ImagePlus resultMap = new ImagePlus();
@@ -245,6 +247,14 @@ public class DriftCorrectionData {
     synchronized boolean getflipY() { // 201229 kw
         return flipY;
     }
+    
+    synchronized void setflipX(boolean flipX) { // 220930 JE
+        this.flipY = flipX;
+    }
+    
+    synchronized boolean getflipX() { // 220930 JE
+        return flipX;
+    }
 
     synchronized void setShowLatest(boolean showLatest) {
         this.showLatest = showLatest;
@@ -323,34 +333,6 @@ public class DriftCorrectionData {
     
     private synchronized void setZPositionData(ArrayList<Double> zPosition) {
         this.zPosition = zPosition;
-    }
-    
-    synchronized double getLatestXDrift() { //220119 JE
-        return xDrift.get(xDrift.size()-1);
-    }
-    
-    synchronized double getDelayedXDrift(int Delay) { //220119 JE
-        return xDrift.get(xDrift.size()-(Delay-1));
-    }
-    
-    synchronized int getLenLDrift() { //220119 JE
-        return xDrift.size();
-    }
-    
-    synchronized double getLatestYDrift() { //220119 JE
-        return yDrift.get(yDrift.size()-1);
-    }
-    
-    synchronized double getDelayedYDrift(int Delay) { //220119 JE
-        return yDrift.get(yDrift.size()-(Delay-1));
-    }
-    
-    synchronized double getLatestTimeStamp() { //220117 JE
-        return timeStamps.get(timeStamps.size()-1)*60000;
-    }
-    
-    synchronized double getDelayedTimeStamp(int Delay) { //220117 JE
-        return timeStamps.get(timeStamps.size()-(Delay-1))*60000;
     }
 
     synchronized void addZShift(double zShiftPoint, double z_err, double timeStamp) {
@@ -491,6 +473,14 @@ public class DriftCorrectionData {
     synchronized void setDataType(int dataType) {
         clearData();
         this.dataType = dataType;
+    }
+    
+    public boolean getSwitchXY() {
+        return SwitchXY;
+    }
+
+    public void setSwitchXY(boolean SwitchXY) {
+        this.SwitchXY = SwitchXY;
     }
 
     synchronized void clearData() {
