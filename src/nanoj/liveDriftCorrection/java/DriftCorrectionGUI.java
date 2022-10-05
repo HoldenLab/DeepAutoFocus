@@ -68,7 +68,6 @@ public class DriftCorrectionGUI{
     private static final String Zi = "Zi"; // 220110 kw
     private static final String Lp = "Lp"; // 220118 JE
     private static final String Li = "Li"; // 220118 JE
-    private static final String Ld = "Ld"; // 220829 JE
     private static final String PERIOD = "period";
     private static final String BOUNDS = "bounds";
     private static final String CAL_STEP_SIZE = "calStepSize"; // 201223 kw
@@ -90,7 +89,6 @@ public class DriftCorrectionGUI{
     private static final String Zi_DEFAULT = "0"; // 220118 JE
     private static final String Lp_DEFAULT = "0.1"; // 220118 JE
     private static final String Li_DEFAULT = "0"; // 220118 JE
-    private static final String Ld_DEFAULT = "0"; // 220829 JE
     private static final String PERIOD_DEFAULT = "500"; // milliseconds
     private static final String BOUNDS_DEFAULT = "10"; // microns
     private static final double CAL_DEFAULT = -1;
@@ -119,7 +117,6 @@ public class DriftCorrectionGUI{
     private static final String Zi_LABEL = "Zi (Axial integral gain)"; // 220118 JE
     private static final String Lp_LABEL = "Lp (Lateral proportional gain)"; // 220118 JE
     private static final String Li_LABEL = "Li (Lateral integral gain)"; // 220118 JE
-    private static final String Ld_LABEL = "Ld (Lateral derivative gain)"; // 220118 JE
     private static final String PERIOD_LABEL = "Time between corrections (ms)";
     private static final String BOUNDS_LABEL = "Maximum translation (um)";
     private static final String SEPARATE_STAGES_LABEL = "Separate XY stage devices?";
@@ -233,7 +230,6 @@ public class DriftCorrectionGUI{
     private JTextField ZiBox = new DTextField(Zi, Zi_DEFAULT); // 220118 JE
     private JTextField LpBox = new DTextField(Lp, Lp_DEFAULT); // 220118 JE
     private JTextField LiBox = new DTextField(Li, Li_DEFAULT); // 220118 JE
-    private JTextField LdBox = new DTextField(Ld, Ld_DEFAULT); // 220829 JE
     private JTextField periodBox = new DTextField(PERIOD, PERIOD_DEFAULT);
     private JTextField boundsLimitBox = new DTextField(BOUNDS, BOUNDS_DEFAULT);
     private DeviceList focusDeviceList = new DeviceList(DeviceType.StageDevice, Z_STAGE);
@@ -388,8 +384,6 @@ public class DriftCorrectionGUI{
         configurationPanel.add(LpBox);
         configurationPanel.add(new DLabel(Li_LABEL)); //220118 JE
         configurationPanel.add(LiBox);
-        configurationPanel.add(new DLabel(Ld_LABEL)); //220829 JE
-        configurationPanel.add(LdBox);
         configurationPanel.add(new DLabel(PERIOD_LABEL));
         configurationPanel.add(periodBox);
         configurationPanel.add(new DLabel(BOUNDS_LABEL));
@@ -482,7 +476,6 @@ public class DriftCorrectionGUI{
         driftCorrection.setZi((double) (Double.parseDouble(ZiBox.getText()))); //220118 JE
         driftCorrection.setLp((double) (Double.parseDouble(LpBox.getText()))); //220118 JE
         driftCorrection.setLi((double) (Double.parseDouble(LiBox.getText()))); //220118 JE
-        driftCorrection.setLd((double) (Double.parseDouble(LdBox.getText()))); //220829 JE
         driftCorrection.setSleep((long) (Double.parseDouble(periodBox.getText())));
         driftCorrection.setThreshold(Double.parseDouble(boundsLimitBox.getText()));
 

@@ -64,7 +64,6 @@ public class DriftCorrection extends Observable implements Runnable {
     private double Zi = 0; // Integral gain. 220118 JE
     private double Lp = 1; // Lateral gain 220118 JE
     private double Li = 0; // Lateral gain 220118 JE
-    private double Ld = 0; // Lateral gain 220829 JE
     private double SP = 0; // Z-correction setpoint
     private double PV = 0; // Z-correction process variable
     private double z_err = 0; // Z-correction error (for proportional gain)
@@ -282,8 +281,8 @@ public class DriftCorrection extends Observable implements Runnable {
                     y = 0;
 
                     if (correctionMode == XY || correctionMode == XYZ){
-                        x = Lp*xErr + Li*(xErrSum/t) + Ld*(xErr-oldxErr)/dt;
-                        y = Lp*yErr + Li*(yErrSum/t) + Ld*(yErr-oldyErr)/dt;
+                        x = Lp*xErr + Li*(xErrSum/t);
+                        y = Lp*yErr + Li*(yErrSum/t);
                     }
                     
                     oldTime = getTimeElapsed(); // time of current loop (store for next loop iteration)
@@ -456,11 +455,6 @@ public class DriftCorrection extends Observable implements Runnable {
     // added 220118 JE
     public void setLi(double Li){
         this.Li = Li;
-    }
-    
-    // added 220829 JE
-    public void setLd(double Ld){
-        this.Ld = Ld;
     }
 
     public double getThreshold() {
