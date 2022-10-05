@@ -358,16 +358,23 @@ public class DriftCorrectionGUI{
         configurationPanel.add(xStageList);
         configurationPanel.add(yStageListLabel);
         configurationPanel.add(yStageList);
-        configurationPanel.add(new DButton(CLEAR_BG_LABEL, new ClearBackgroundListener()));
-        configurationPanel.add(new DLabel(BACK_STEP_SIZE_LABEL)); // 201223 kw
-        configurationPanel.add(backgroundStepSizeBox);
-        configurationPanel.add(new DLabel(CAL_STEP_SIZE_LABEL)); // 201223 kw
-        configurationPanel.add(calibrationStepSizeBox);
         configurationPanel.add(calibrationScalingLabel);
         configurationPanel.add(calibrationAngleLabel);
         configurationPanel.add(calibrationFlip_XLabel);
         configurationPanel.add(calibrationFlip_YLabel);
         configurationPanel.add(calibrationSwitch_XYLabel);
+        configurationPanel.add(new DButton(CLEAR_BG_LABEL, new ClearBackgroundListener()));
+        configurationPanel.add(new DLabel("Current Calibration:"));
+        configurationPanel.add(calibrationScalingLabel);
+        configurationPanel.add(calibrationAngleLabel);
+        configurationPanel.add(calibrationFlip_XLabel);
+        configurationPanel.add(calibrationFlip_YLabel);
+        configurationPanel.add(calibrationSwitch_XYLabel);
+        configurationPanel.add(new JSeparator());
+        configurationPanel.add(new DLabel(BACK_STEP_SIZE_LABEL)); // 201223 kw
+        configurationPanel.add(backgroundStepSizeBox);
+        configurationPanel.add(new DLabel(CAL_STEP_SIZE_LABEL)); // 201223 kw
+        configurationPanel.add(calibrationStepSizeBox);       
         configurationPanel.add(new DLabel(EXPOSURE_TIME_LABEL));
         configurationPanel.add(exposureTimeBox);
         configurationPanel.add(new DLabel(ROI_BOX_LABEL));
@@ -1018,6 +1025,8 @@ public class DriftCorrectionGUI{
                 preferences.putDouble(CAL_SCALING, scale);
                 preferences.putDouble(CAL_ANGLE, angle);
                 preferences.putBoolean(CAL_FLIPPING_X, flip_X);
+                preferences.putBoolean(CAL_FLIPPING_Y, flip_Y);
+                preferences.putBoolean(CAL_SWITCHING_XY, switch_XY);
                 String scaling = SCALING + df.format(scale*1000);
                 String angling = ANGLE + df.format(angle);
                 String flipping_X = FLIP_X + flip_X;

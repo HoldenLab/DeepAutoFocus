@@ -117,22 +117,20 @@ public class DriftCorrectionCalibration extends Observable implements Runnable {
                         temp = xMovementY;
                         xMovementY = yMovementY;
                         yMovementY = temp;
-                        ReportingUtils.showMessage("here1");
+                        
                     }
                     //if ((!driftData.getSwitchXY() && xMovementX < 0) || (driftData.getSwitchXY() && xMovementX > 0)){
                     if (xMovementX < 0){
                         driftData.setflipX(true);
                         xMovementXY = -xMovementXY;
-                        ReportingUtils.showMessage("here2");
+                        
                     }
                     //if ((!driftData.getSwitchXY() && yMovementY < 0) || (driftData.getSwitchXY() && xMovementY < 0)){
                     if (yMovementY < 0){
                         driftData.setflipY(true);
                         yMovementXY = -yMovementXY;
-                        ReportingUtils.showMessage("here3");
+                        
                     }
-                    
-                    ReportingUtils.showMessage(Double.toString(xMovementX) + " " + Double.toString(yMovementX) + "\n" + Double.toString(xMovementY) + " " + Double.toString(yMovementY) + "\n" + Double.toString(xMovementXY) + " " + Double.toString(yMovementXY));
                 
                     // We now calculate the angle of the observed movement versus the original movement we told it to perform.
                     // Subtract from the expected angle (45° degrees or pi/4 radians) the observed angle

@@ -181,32 +181,9 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
         else if (getDriftCore() == null) throw new NullPointerException(CORE_DEVICE_NOT_SET);
         else {
             try {
-                /*
-                StrVector paths = driftCore.getDeviceAdapterSearchPaths();
-                for (int j=0; j<paths.size(); j++){
-                    ReportingUtils.showMessage(paths.get(j));
-                    ReportingUtils.showMessage("here");
-                }
-                */
-                driftCore.unloadAllDevices();
-                //driftCore.reset();
-                
-                //java.lang.Thread.sleep(1000);
-                ReportingUtils.showMessage(getConfigFileLocation()); 
+                driftCore.unloadAllDevices();                
                 driftCore.loadSystemConfiguration(getConfigFileLocation());
-
-                //java.lang.Thread.sleep(1000);
-                //ReportingUtils.showMessage("here 2");
-                //if (driftCore.deviceBusy("Camera-1")){ReportingUtils.showMessage("Busy");}
-                //else {ReportingUtils.showMessage("Not Busy");}
-                //ReportingUtils.showMessage(driftCore.getProperty("CellCam", "Camera ID"));
-                
-                //driftCore.waitForSystem();
-                //driftCore.reset();
-                //driftCore.loadSystemConfiguration(getConfigFileLocation());
-                //ReportingUtils.showMessage("here 3");
                 driftCore.initializeAllDevices();
-                //ReportingUtils.showMessage("here 4");
             } catch (Exception e) {
                 ReportingUtils.showError(e, ERROR_LOADING_DEVICES);
             }

@@ -314,6 +314,7 @@ javax.swing.Box
 java.awt.Dimension
 nanoj.liveDriftCorrection.java.DriftCorrectionHardware
 nanoj.liveDriftCorrection.java.DriftCorrectionGUI$ShowMapButtonListener
+javax.swing.JSeparator
 javax.swing.JCheckBox
 java.lang.StringBuilder
 javax.swing.GroupLayout$ParallelGroup
