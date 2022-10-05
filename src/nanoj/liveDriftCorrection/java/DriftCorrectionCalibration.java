@@ -40,7 +40,7 @@ public class DriftCorrectionCalibration extends Observable implements Runnable {
     
     
     private ImageStack driftStackX;
-    private ImageStack driftStackXY;
+    private ImageStack driftStackY;
     private ImagePlus driftPlus = new ImagePlus();
     private ImageStack plainStack;
     private ImagePlus plainPlus = new ImagePlus();
@@ -69,6 +69,9 @@ public class DriftCorrectionCalibration extends Observable implements Runnable {
             while(itIsAlive()) {
                 while(isRunning()) {
                     ArrayList<FloatProcessor> images = new ArrayList<FloatProcessor>();
+                    driftData.setflipX(false);
+                    driftData.setflipY(false);
+                    driftData.setSwitchXY(false);
                     
                     double travel = totalSteps * step;
                     // Move along X and Y in steps until reaching totalSteps range
@@ -100,23 +103,35 @@ public class DriftCorrectionCalibration extends Observable implements Runnable {
                         ReportingUtils.showError(NO_Y_MOVEMENT_ERROR);
                         runAcquisition(false);
                     }
-                    else if (Math.abs(xMovementX)<Math.abs(yMovementX) && Math.abs(yMovementY)<Math.abs(xMovementY)){
+                    
+                    if (Math.abs(xMovementX)<Math.abs(yMovementX) && Math.abs(yMovementY)<Math.abs(xMovementY)){
                         driftData.setSwitchXY(true);
                         double temp = xMovementXY;
                         xMovementXY = yMovementXY;
                         yMovementXY = temp;
+                        
+                        temp = xMovementX;
+                        xMovementX = yMovementX;
+                        yMovementX = temp;
+                        
+                        temp = xMovementY;
+                        xMovementY = yMovementY;
+                        yMovementY = temp;
                         ReportingUtils.showMessage("here1");
-                    }                    
-                    else if (xMovementX < 0){
+                    }
+                    //if ((!driftData.getSwitchXY() && xMovementX < 0) || (driftData.getSwitchXY() && xMovementX > 0)){
+                    if (xMovementX < 0){
                         driftData.setflipX(true);
                         xMovementXY = -xMovementXY;
                         ReportingUtils.showMessage("here2");
                     }
-                    else if (yMovementY < 0){
+                    //if ((!driftData.getSwitchXY() && yMovementY < 0) || (driftData.getSwitchXY() && xMovementY < 0)){
+                    if (yMovementY < 0){
                         driftData.setflipY(true);
                         yMovementXY = -yMovementXY;
                         ReportingUtils.showMessage("here3");
                     }
+                    
                     ReportingUtils.showMessage(Double.toString(xMovementX) + " " + Double.toString(yMovementX) + "\n" + Double.toString(xMovementY) + " " + Double.toString(yMovementY) + "\n" + Double.toString(xMovementXY) + " " + Double.toString(yMovementXY));
                 
                     // We now calculate the angle of the observed movement versus the original movement we told it to perform.
@@ -129,10 +144,9 @@ public class DriftCorrectionCalibration extends Observable implements Runnable {
 
                     // If we are working with negative xMovement values, then the coordinates need to be flipped 180 degrees
                     //flipX = xMovement < 0;
-                    //flipX = false;
 
                     // Create affine transform
-                    calibration = createCalibration(scale , angle, driftData.getflipX());
+                    calibration = createCalibration(scale , angle);
                     
                     hardwareManager.setCalibration(calibration);
                     
@@ -267,14 +281,11 @@ public class DriftCorrectionCalibration extends Observable implements Runnable {
         calibration = new AffineTransform();
     }
 
-    public static AffineTransform createCalibration(double scale, double angle, boolean rotate) {
+    public static AffineTransform createCalibration(double scale, double angle) {
         AffineTransform newCalibration = new AffineTransform();
 
         newCalibration.scale(scale, scale);
         newCalibration.rotate(-angle);
-
-        // If we are working with negative xMovement values, then the coordinates need to be flipped 180 degrees
-        if(rotate) newCalibration.quadrantRotate(2);
 
         newCalibration.quadrantRotate(1); // 190418 kw
         
@@ -293,14 +304,14 @@ public class DriftCorrectionCalibration extends Observable implements Runnable {
         for (int i = 0; i < images.size()-2; i=i+2) {
             FloatProcessor mapX =
                     CrossCorrelationMap.calculateCrossCorrelationMap(
-                            images.get(i+1),
                             images.get(i),
+                            images.get(i+1),
                             true)
                             .convertToFloatProcessor();
             FloatProcessor mapY =
                     CrossCorrelationMap.calculateCrossCorrelationMap(
-                            images.get(i+2),
                             images.get(i+1),
+                            images.get(i+2),
                             true)
                             .convertToFloatProcessor();
 
@@ -312,13 +323,13 @@ public class DriftCorrectionCalibration extends Observable implements Runnable {
                 ImageStack dStackX = new ImageStack(mapX.getWidth(),mapX.getHeight());
                 dStackX.addSlice(mapX);
                 driftStackX = dStackX;
-                ImageStack dStackXY = new ImageStack(mapY.getWidth(),mapY.getHeight());
-                dStackXY.addSlice(mapY);
-                driftStackXY = dStackXY;
+                ImageStack dStackY = new ImageStack(mapY.getWidth(),mapY.getHeight());
+                dStackY.addSlice(mapY);
+                driftStackY = dStackY;
             }
             
             driftStackX.addSlice(mapX);
-            driftStackXY.addSlice(mapY);
+            driftStackY.addSlice(mapY);
 
             float[] peakX = CalculateImageStatistics.getMax(mapX);
             double[] shiftX =  processor.PeakFind2(mapX, peakX);
@@ -343,7 +354,7 @@ public class DriftCorrectionCalibration extends Observable implements Runnable {
             yShiftY.add(shiftY[1]);
         }
         
-        driftPlus.setStack(driftStackXY);
+        driftPlus.setStack(driftStackY);
         driftPlus.show();
 
         // Get Median values to minimize stage error

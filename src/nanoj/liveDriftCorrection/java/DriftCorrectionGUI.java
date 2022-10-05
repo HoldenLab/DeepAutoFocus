@@ -257,8 +257,7 @@ public class DriftCorrectionGUI{
         // Load calibration from non-volatile storage
         hardwareManager.setCalibration(DriftCorrectionCalibration.createCalibration(
                 preferences.getDouble(CAL_SCALING, CAL_DEFAULT),
-                preferences.getDouble(CAL_ANGLE, CAL_DEFAULT),
-                preferences.getBoolean(CAL_FLIPPING_X, false)
+                preferences.getDouble(CAL_ANGLE, CAL_DEFAULT)
         ));
         
         // Add Listeners

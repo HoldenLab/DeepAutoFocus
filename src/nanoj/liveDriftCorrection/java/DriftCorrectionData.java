@@ -249,7 +249,7 @@ public class DriftCorrectionData {
     }
     
     synchronized void setflipX(boolean flipX) { // 220930 JE
-        this.flipY = flipX;
+        this.flipX = flipX;
     }
     
     synchronized boolean getflipX() { // 220930 JE
@@ -310,8 +310,6 @@ public class DriftCorrectionData {
     }
 
     synchronized void setLatestImage(FloatProcessor image) {
-        
-        if (flipY) image.flipVertical(); // 201229 kw
         
         latestImage.setProcessor(image);
         

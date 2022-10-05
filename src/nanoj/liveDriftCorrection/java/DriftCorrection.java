@@ -290,15 +290,17 @@ public class DriftCorrection extends Observable implements Runnable {
                     oldxErr = xErr;
                     oldyErr = yErr;
                     
+                    //ReportingUtils.showMessage(Boolean.toString(driftData.getflipY()) + " " + Boolean.toString(driftData.getflipX()) + " " + Boolean.toString(driftData.getSwitchXY()));
                     
-                    if (driftData.getflipY()) y = -y;
-                    if (!driftData.getflipX()) x = -x;
-                    Point2D.Double xyDrift = new Point2D.Double(x,y);
-                    //if (driftData.getflipY()) y = -y; // 201229 kw
+                    
+                    Point2D.Double xyDrift = new Point2D.Double(x,-y);
+                    
                     if (driftData.getSwitchXY()){
                         xyDrift.x = y;
-                        xyDrift.y = x;
+                        xyDrift.y = -x;
                     }
+                    if (driftData.getflipX()) xyDrift.x = -xyDrift.x;
+                    if (driftData.getflipY()) xyDrift.y = -xyDrift.y;
                     
                     //Point2D.Double xyDrift = new Point2D.Double(y,-x); //Not sure why the switch of x and y is needed but it seems to work for now 290922 JE @ CAIRN
 
