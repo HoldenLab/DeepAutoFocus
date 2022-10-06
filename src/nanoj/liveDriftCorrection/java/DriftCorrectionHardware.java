@@ -63,14 +63,6 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
     public static final String ERROR_LOADING_DEVICES = "Error while loading devices";
     public static final String EXPOSURE_TIME_ERROR = "Error while setting exposure time.";
     public static final String ACQUISITION_ERROR = "Error while acquiring image.";
-
-    DriftCorrectionHardware() {
-        try {
-            mainCore.clearROI();
-        } catch (Exception e) {
-            ReportingUtils.showError(e);
-        }
-    }
     
     public void moveFocusStageInSteps(int target) throws Exception {
         moveFocusStage(target*getStepSize());

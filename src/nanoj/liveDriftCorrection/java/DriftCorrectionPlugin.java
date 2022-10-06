@@ -62,6 +62,6 @@ public class DriftCorrectionPlugin implements MenuPlugin, SciJavaPlugin {
 
     @Override
     public String getHelpText() {
-        return "Image-based cross-correlation developed by Ricardo Henriques lab";
+        return "Image-based cross-correlation developed by Henriques and Holden labs";
     }
 }
