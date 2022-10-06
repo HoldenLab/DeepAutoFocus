@@ -18,7 +18,6 @@ import java.awt.geom.Point2D;
 import java.util.Observable;
 
 public class DriftCorrectionHardware extends Observable implements Runnable {
-    CMMCore driftCore = new CMMCore();
     CMMCore mainCore;
     private String[] loadedDevices;
     private String camera;
@@ -67,12 +66,10 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
 
     DriftCorrectionHardware(String config) {
         try {
-            driftCore.setCircularBufferMemoryFootprint(32);
-            driftCore.clearROI();
+            mainCore.clearROI();
         } catch (Exception e) {
             ReportingUtils.showError(e);
         }
-        setConfigFileLocation(config);
     }
     
     public void moveFocusStageInSteps(int target) throws Exception {
@@ -82,17 +79,9 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
     public void moveFocusStage(double target) throws Exception {
         if (target == 0.0) return;
 
-        CMMCore core;
-
-        if (!useMainFocus && getDriftCore() == null)
-            throw new NullPointerException(CORE_DEVICE_NOT_SET);
-
-        else if (getFocusDevice() == null)
-            throw new NullPointerException(Z_STAGE_NOT_SET);
-
+        CMMCore core = mainCore;
+        if (getFocusDevice() == null) throw new NullPointerException(Z_STAGE_NOT_SET);
         else {
-            if (useMainFocus) core = mainCore;
-            else core = driftCore;
             core.waitForDevice(focusDevice); // In case there the user moved the stage while processing
             core.setRelativePosition(focusDevice, target);
             core.waitForDevice(getFocusDevice());
@@ -116,8 +105,7 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
         if ( !isSeparateXYStages() )
             if (getXYStage() == null) throw new NullPointerException(XY_STAGE_NOT_SET);
             else {
-                if (useMainXYAxis) core = mainCore;
-                else core = driftCore;
+                core = mainCore;
                 core.waitForDevice(stageXY);
                 try{
                     core.setRelativeXYPosition(stageXY, xTarget, yTarget);
@@ -135,10 +123,8 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
             if (getSeparateXYStages()[0] == null) throw new NullPointerException(X_STAGE_NOT_SET);
             else if (getSeparateXYStages()[1] == null) throw new NullPointerException(Y_STAGE_NOT_SET);
             else {
-                if (useMainXAxis) Xcore = mainCore;
-                else Xcore = driftCore;
-                if (useMainYAxis) Ycore = mainCore;
-                else Ycore = driftCore;
+                Xcore = mainCore;
+                Ycore = mainCore;
                 Xcore.waitForDevice(stageXaxis); // In case there the user moved the stage while processing
                 Xcore.setRelativePosition(stageXaxis, xTarget);
                 Ycore.waitForDevice(stageYAxis); // In case there the user moved the stage while processing
@@ -151,64 +137,21 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
     }
 
     public String[] getLoadedDevices() {
-        String[] mainDevices = {};
-
-        if (mainCore !=null) mainDevices = mainCore.getLoadedDevices().toArray();
-        String[] driftDevices = driftCore.getLoadedDevices().toArray();
-
-        loadedDevices = (String[]) ArrayUtils.addAll(mainDevices, driftDevices);
+        loadedDevices = mainCore.getLoadedDevices().toArray();
         return loadedDevices;
     }
 
     public String[] getLoadedDevicesOfType(DeviceType type) {
-        String[] mainDevices = {};
-
-        if (!(type == DeviceType.CameraDevice) && mainCore != null) {
-            mainDevices = mainCore.getLoadedDevicesOfType(type).toArray();
-        }
-        String[] driftDevices = driftCore.getLoadedDevicesOfType(type).toArray();
-
-        return (String[]) ArrayUtils.addAll(mainDevices, driftDevices);
-    }
-
-    public CMMCore determineCore(String label, DeviceType type) {
-        if (mainCore == null) return driftCore;
-        String[] mainDevices = mainCore.getLoadedDevicesOfType(type).toArray();
-        if (mainDevices.length == 0) return driftCore;
-
-        String[] driftDevices = driftCore.getLoadedDevicesOfType(type).toArray();
-        for (String device: driftDevices)
-            if (label.equals(device)) return driftCore;
-
-        return mainCore;
+        return mainCore.getLoadedDevicesOfType(type).toArray();
     }
 
     // Load devices from the predetermined configuration file
     public void load() throws NullPointerException {
-        if (getConfigFileLocation() == null) throw new NullPointerException(CONFIG_NOT_SET);
-        else if (getDriftCore() == null) throw new NullPointerException(CORE_DEVICE_NOT_SET);
-        else {
-            try {
-                driftCore.unloadAllDevices();                
-                driftCore.loadSystemConfiguration(getConfigFileLocation());
-                driftCore.initializeAllDevices();
-            } catch (Exception e) {
-                ReportingUtils.showError(e, ERROR_LOADING_DEVICES);
-            }
             getLoadedDevices();
             this.setChanged();
             this.notifyObservers(LOADED);
         }
         loaded = true;
-    }
-
-    public void unLoad() {
-        try {
-            driftCore.unloadAllDevices();
-        } catch (Exception e) {
-            ReportingUtils.showError(e, ERROR_LOADING_DEVICES);
-        }
-        loaded = false;
     }
     
     public void snap(){
@@ -216,14 +159,14 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
         try {
             if (getCamera() == null) throw new NullPointerException(CAMERA_NOT_SET);
             else {
-                driftCore.snapImage();
-                driftCore.waitForDevice(getCamera());
-                int width = (int) driftCore.getImageWidth();
-                int height = (int) driftCore.getImageHeight();
+                mainCore.snapImage();
+                mainCore.waitForDevice(getCamera());
+                int width = (int) mainCore.getImageWidth();
+                int height = (int) mainCore.getImageHeight();
 
-                Object pixels = driftCore.getImage();
+                Object pixels = mainCore.getImage();
 
-                if (driftCore.getImageBitDepth() == 8) {
+                if (mainCore.getImageBitDepth() == 8) {
                     byte[] array = (byte[]) pixels;
                     if (pixels == null || (array.length != (width*height)))
                         return;
@@ -234,7 +177,7 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
                         return;
                 }
 
-                if (driftCore.getImageBitDepth() == 8) {
+                if (mainCore.getImageBitDepth() == 8) {
                     ByteProcessor bp = new ByteProcessor(width, height);
                     bp.setPixels(pixels);
                     newProcessor = bp.convertToFloatProcessor();
@@ -301,14 +244,6 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
         return latestImage;
     }
 
-    public CMMCore getDriftCore() {
-        return driftCore;
-    }
-
-    public void setDriftCore(CMMCore driftCore) {
-        this.driftCore = driftCore;
-    }
-
     public CMMCore getMainCore() {
         return mainCore;
     }
@@ -331,7 +266,7 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
     
     // pixelSize in Microns
     public void setCamera(String camera) throws Exception {
-        CMMCore core = determineCore(camera, DeviceType.CameraDevice);
+        CMMCore core = mainCore;
         core.setCameraDevice(camera);
         if (core.getDeviceLibrary(camera).equals("DemoCamera")) {
             int depth = 16;
@@ -339,8 +274,8 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
         }
         this.camera = camera;
         driftCore.clearROI();
-        this.cameraWidth = (int) driftCore.getImageWidth();
-        this.cameraHeight = (int) driftCore.getImageHeight();
+        this.cameraWidth = (int) core.getImageWidth();
+        this.cameraHeight = (int) core.getImageHeight();
     }
     
     public AffineTransform getCalibration() {
@@ -350,8 +285,8 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
     public void setCalibration(AffineTransform calibration) { this.calibration = calibration; }
 
     public void setROI(int xPositionOfTopLeftCorner, int yPositionOfTopLeftCorner, int width, int height) throws Exception{
-        driftCore.clearROI();
-        driftCore.setROI(xPositionOfTopLeftCorner, yPositionOfTopLeftCorner, width, height);
+        mainCore.clearROI();
+        mainCore.setROI(xPositionOfTopLeftCorner, yPositionOfTopLeftCorner, width, height);
     }
     
     public Rectangle getROI() throws Exception {
@@ -384,8 +319,7 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
     }
     
     public void setXYStage(String stageXY) {
-        if (determineCore(stageXY, DeviceType.XYStageDevice).equals(mainCore)) useMainXYAxis = true;
-        else useMainXYAxis = false;
+        useMainXYAxis = true;
 
         this.stageXY = stageXY;
     }
@@ -395,11 +329,8 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
     }
 
     public void setSeparateXYStageDevices(String xAxis, String yAxis) {
-        if (determineCore(xAxis, DeviceType.StageDevice).equals(mainCore)) useMainXAxis = true;
-        else useMainXAxis = false;
-
-        if (determineCore(yAxis, DeviceType.StageDevice).equals(mainCore)) useMainYAxis = true;
-        else useMainYAxis = false;
+        useMainXAxis = true;
+        useMainYAxis = true;
 
         this.stageXaxis = xAxis;
         this.stageYAxis = yAxis;
@@ -410,18 +341,13 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
     }
     
     public void setFocusDevice(String focusDevice) {
-        if (determineCore(focusDevice, DeviceType.StageDevice).equals(mainCore)) useMainFocus = true;
-        else useMainFocus = false;
+        useMainFocus = true;
 
         this.focusDevice = focusDevice;
     }
 
     public String getConfigFileLocation() {
         return configFileLocation;
-    }
-
-    public void setConfigFileLocation(String configFileLocation) {
-        this.configFileLocation = configFileLocation;
     }
 
     // Get whether or not to treat the X and Y axis as separate stage devices
