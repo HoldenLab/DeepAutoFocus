@@ -163,6 +163,8 @@ public class DriftCorrectionProcess implements Measurements {
         int PeakY = (int) Peak[1];
         int xcenter = CCmap.getWidth()/2;
         int ycenter = CCmap.getHeight()/2;
+        if (Math.abs(PeakX-xcenter) < 2)PeakX = xcenter;
+        if (Math.abs(PeakY-ycenter) < 2)PeakY = ycenter;
         int offset = 5;
         int size = 11;
         /*
@@ -241,6 +243,8 @@ public class DriftCorrectionProcess implements Measurements {
     public double CenterHeightFind3(FloatProcessor image, float[] Center){ // 220131 JE
         int CenterX = (int) Center[0];
         int CenterY = (int) Center[1];
+        if (Math.abs(CenterX-image.getWidth()/2) < 2) CenterX = image.getWidth()/2;
+        if (Math.abs(CenterY-image.getHeight()/2) < 2) CenterY = image.getHeight()/2;
         int offset = 1;
         int size = 3;
         int x = CenterX - offset;
