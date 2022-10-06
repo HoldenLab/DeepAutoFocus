@@ -17,6 +17,7 @@ import java.util.Observable;
 public class DriftCorrection extends Observable implements Runnable {
     private boolean alive = true;
     private boolean runAcquisition = false;
+    private boolean MoveSuccess = true;
     private DriftCorrectionHardware hardwareManager;
     private DriftCorrectionData driftData;
     private DriftCorrectionProcess processor;
@@ -270,7 +271,7 @@ public class DriftCorrection extends Observable implements Runnable {
                     t = t + dt;
                     missX = x+(oldxErr-xErr);
                     missY = y+(oldyErr-yErr);
-                    if (((dt*1000)<10*sleep) && (dt*1000 > 1000)){
+                    if (MoveSuccess && ((dt*1000)<10*sleep) && (dt*1000 > 1000)){
                         xErrSum = xErrSum + missX*dt;
                         yErrSum = yErrSum + missY*dt;
                         //xErrSum = xErrSum + xErr*dt;
@@ -342,7 +343,7 @@ public class DriftCorrection extends Observable implements Runnable {
                         */
                         //if (Math.abs(xyDrift.x) < 0.023) xyDrift.x=0;
                         //if (Math.abs(xyDrift.y) < 0.023) xyDrift.y=0;
-                        if(Lp!=0 || Li!=0) hardwareManager.moveXYStage(xyDrift);
+                        if(Lp!=0 || Li!=0) MoveSuccess = hardwareManager.moveXYStage(xyDrift);
                     }
 
                     // Add data //changed to switch statement from ifs 220128 JE

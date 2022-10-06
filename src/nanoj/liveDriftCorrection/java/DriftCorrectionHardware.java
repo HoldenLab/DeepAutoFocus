@@ -100,12 +100,13 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
     }
 
     // Move XY stage in microns without having to know if the XY stage is a single or two devices
-    public void moveXYStage(Point2D.Double target) throws Exception {
-        moveXYStage(target.x, target.y);
+    public boolean moveXYStage(Point2D.Double target) throws Exception {
+        boolean Success = moveXYStage(target.x, target.y);
+        return Success;
     }
 
     // Move XY stage in microns without having to know if the XY stage is a single or two devices
-    public void moveXYStage(double xTarget, double yTarget) throws Exception {
+    public boolean moveXYStage(double xTarget, double yTarget) throws Exception {
         //if (xTarget == 0 && yTarget == 0) return;
 
         CMMCore core;
@@ -118,8 +119,14 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
                 if (useMainXYAxis) core = mainCore;
                 else core = driftCore;
                 core.waitForDevice(stageXY);
-                core.setRelativeXYPosition(stageXY, xTarget, yTarget);
-                core.waitForDevice(getXYStage());
+                try{
+                    core.setRelativeXYPosition(stageXY, xTarget, yTarget);
+                    core.waitForDevice(getXYStage());
+                }
+                catch(Exception e){ // Guards against timeout hard-fails 22106 JE
+                    core.stop(stageXY);
+                    return(false);
+                }
                 core.setRelativeXYPosition(stageXY, 0, 0);
                 core.stop(stageXY); //Designed to make ASI stages use actual position rather than intended position of last move 220922 JE
                 core.waitForDevice(getXYStage());
@@ -140,6 +147,7 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
                 Ycore.waitForDevice(getSeparateXYStages()[1]);
             }
         }
+        return(true);
     }
 
     public String[] getLoadedDevices() {
