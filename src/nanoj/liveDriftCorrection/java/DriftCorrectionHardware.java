@@ -64,7 +64,7 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
     public static final String EXPOSURE_TIME_ERROR = "Error while setting exposure time.";
     public static final String ACQUISITION_ERROR = "Error while acquiring image.";
 
-    DriftCorrectionHardware(String config) {
+    DriftCorrectionHardware() {
         try {
             mainCore.clearROI();
         } catch (Exception e) {
@@ -147,10 +147,10 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
 
     // Load devices from the predetermined configuration file
     public void load() throws NullPointerException {
-            getLoadedDevices();
-            this.setChanged();
-            this.notifyObservers(LOADED);
-        }
+        getLoadedDevices();
+        this.setChanged();
+        this.notifyObservers(LOADED);
+        
         loaded = true;
     }
     
@@ -273,7 +273,7 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
             core.setProperty(camera,"BitDepth", depth);
         }
         this.camera = camera;
-        driftCore.clearROI();
+        core.clearROI();
         this.cameraWidth = (int) core.getImageWidth();
         this.cameraHeight = (int) core.getImageHeight();
     }
@@ -290,7 +290,7 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
     }
     
     public Rectangle getROI() throws Exception {
-        return driftCore.getROI();
+        return mainCore.getROI();
     }
     
     public double getExposureTime() {
@@ -300,7 +300,7 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
     public void setExposureTime(double exposureTime) {
         this.exposureTime = exposureTime;
         try {
-            driftCore.setExposure(getExposureTime());
+            mainCore.setExposure(getExposureTime());
         } catch (Exception e) {
             ReportingUtils.showError(e, EXPOSURE_TIME_ERROR);
         }

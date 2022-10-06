@@ -352,7 +352,6 @@ nanoj.liveDriftCorrection.java.DriftCorrectionGUI$DComboBox
 org.micromanager.internal.utils.ReportingUtils
 java.awt.event.ActionListener
 nanoj.liveDriftCorrection.java.DriftCorrectionHardware
-javax.swing.JToggleButton
 java.lang.Object
 java.awt.event.ActionEvent
 nanoj.liveDriftCorrection.java.DriftCorrectionGUI$ConfigurationListener
@@ -422,10 +421,8 @@ org.micromanager.internal.utils.ReportingUtils
 ij.process.ByteProcessor
 java.awt.geom.Point2D
 [B
-mmcorej.DeviceType
 java.awt.geom.AffineTransform
 java.lang.Integer
-[Ljava.lang.String;
 java.lang.Runnable
 java.lang.Exception
 java.lang.NullPointerException
@@ -441,7 +438,6 @@ java.lang.Thread
 java.lang.Object
 java.lang.String
 java.util.Observable
-org.apache.commons.lang.ArrayUtils
 ||:nanoj.liveDriftCorrection.java.DriftCorrectionGUI$ShowMapButtonListener
 java.awt.event.ActionListener
 nanoj.liveDriftCorrection.java.DriftCorrectionData

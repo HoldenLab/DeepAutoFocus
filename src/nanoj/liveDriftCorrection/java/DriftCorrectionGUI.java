@@ -172,7 +172,7 @@ public class DriftCorrectionGUI{
     private DriftCorrection driftCorrection;
     //private ConfiguratorDlg2 configurator;
 
-    private DriftCorrectionHardware hardwareManager = new DriftCorrectionHardware(getConfig());
+    private DriftCorrectionHardware hardwareManager = new DriftCorrectionHardware();
     private DriftCorrectionData driftData = new DriftCorrectionData();
     private DriftCorrectionProcess processor = new DriftCorrectionProcess(driftData);
     private DriftCorrectionCalibration calibrator = new DriftCorrectionCalibration(hardwareManager, processor, driftData);
@@ -210,9 +210,7 @@ public class DriftCorrectionGUI{
     private JCheckBox TuningModeButton = new DCheckBox(TUNING_MODE_LABEL, new TuneToggleListener(), TUNING_MODE);
 
     // Configuration Panel objects
-    private JButton selectConfigurationFileButton = new DButton(CONFIGURE_LABEL, configurationListener);
     private JButton loadConfigurationButton = new DButton(LOAD_LABEL, configurationListener);
-    private JButton unloadConfigurationButton = new DButton(UNLOAD_LABEL, configurationListener);
     private JTextField backgroundStepSizeBox = new DTextField(BACK_STEP_SIZE, BACK_STEP_SIZE_DEFAULT);
     private JTextField calibrationStepSizeBox = new DTextField(CAL_STEP_SIZE, CAL_STEP_SIZE_DEFAULT);
     private JLabel calibrationScalingLabel = new DLabel(SCALING + df.format(preferences.getDouble(CAL_SCALING, CAL_DEFAULT)*1000) + SCALE_UNITS);
@@ -341,9 +339,7 @@ public class DriftCorrectionGUI{
         );
 
         // Add GUI elements to CONFIGURATION panel
-        configurationPanel.add(selectConfigurationFileButton);
         configurationPanel.add(loadConfigurationButton);
-        configurationPanel.add(unloadConfigurationButton);
         configurationPanel.add(new DLabel(CAMERA_LIST_LABEL));
         configurationPanel.add(cameraList);
         configurationPanel.add(Box.createRigidArea(new Dimension(1,10)));
@@ -413,7 +409,6 @@ public class DriftCorrectionGUI{
 
     public void initiateThreads() {
         if (!(hardwareManager == null))
-            hardwareManager.unLoad();
 
         // TODO: Does this matter?
         driftData.setShowMap(preferences.getBoolean(SHOW_MAP, false));
@@ -448,15 +443,12 @@ public class DriftCorrectionGUI{
         calThread.start();
 
         // Load devices upon starting the thread if hardware has been previously defined
-        try {
-            if (configIsValid()) {
-                hardwareManager.setConfigFileLocation(getConfig());
-                hardwareManager.load();
-                // Trigger settings listener so it updates GUI with values that hardware manager just loaded
-                hardwareSettingsListener.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_FIRST, INIT));
-                // Give settings to hardware manager
-                giveHardwareSettings();
-            }
+        try{
+            hardwareManager.load();
+            // Trigger settings listener so it updates GUI with values that hardware manager just loaded
+            hardwareSettingsListener.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_FIRST, INIT));
+            // Give settings to hardware manager
+            giveHardwareSettings();
         } catch (Exception e) {
             ReportingUtils.showError(e, HARDWARE_CONNECTION_ERROR);
         }
@@ -551,19 +543,6 @@ public class DriftCorrectionGUI{
             savePath = fileChooser.getSelectedFile();
             preferences.put(key, savePath.getAbsolutePath());
         }
-    }
-
-    private boolean configIsValid() {
-        File file = new File(getConfig());
-        return ((!getConfig().equals(defaultConfigFileLocation) ||
-                getConfig() == null) && file.exists());
-    }
-
-    //////////////////////////// Getters / Setters
-
-    // Get configuration file location from the non-volatile preferences storage
-    private String getConfig() {
-        return preferences.get(CONFIG_FILE_LOCATION, defaultConfigFileLocation);
     }
 
     private int getCorrectionMode() {
@@ -713,13 +692,6 @@ public class DriftCorrectionGUI{
                 // Check the hardware has been loaded
                 if (!hardwareManager.isLoaded()) {
                     ReportingUtils.showError(HARDWARE_NOT_LOADED);
-                    startButton.setSelected(false);
-                    return;
-                }
-
-                // Check that we have a valid configuration
-                if (!configIsValid()) {
-                    ReportingUtils.showError(HARDWARE_NOT_SET);
                     startButton.setSelected(false);
                     return;
                 }
@@ -884,26 +856,8 @@ public class DriftCorrectionGUI{
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            if (e.getSource() == selectConfigurationFileButton) {
-                try {
-                    String description = "Micro-Manager Configuration file";
-                    String extension = "cfg";
-                    chooseFile(CONFIG_FILE_LOCATION, getConfig(), description, extension);
-                    unloadConfiguration();
-                    hardwareManager.setConfigFileLocation(getConfig());
-                    loadConfiguration();
-                } catch (Exception ex) {
-                    ReportingUtils.showError(ex, CONFIGURATION_FILE_ERROR);
-                    return;
-                }
-            }
-
             if (e.getSource() == loadConfigurationButton) {
                 loadConfiguration();
-            }
-
-            if (e.getSource() == unloadConfigurationButton) {
-                unloadConfiguration();
             }
         }
 
@@ -914,14 +868,6 @@ public class DriftCorrectionGUI{
             } catch (Exception e1) {
                 ReportingUtils.showError(e1, HARDWARE_CONNECTION_ERROR);
             }
-        }
-
-        void unloadConfiguration() {
-            if (streamImagesButton.isSelected()) {
-                streamImagesButton.setSelected(false);
-                hardwareManager.setStreamImages(false);
-            }
-            hardwareManager.unLoad();
         }
     }
 
