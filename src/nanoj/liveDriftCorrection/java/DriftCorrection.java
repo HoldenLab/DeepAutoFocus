@@ -26,13 +26,11 @@ public class DriftCorrection extends Observable implements Runnable {
     
     // added 201230 kw
     private ImageStack resultStack = null;
-    private ImageStack resultStack2 = null;
     private ImageStack refStackCC = null; //from Kevin's version 220119 JE
     private ImageProcessor refTopTopCC = null; // 220131 JE
     private ImageProcessor refBottomBottomCC = null; // 220131 JE
     private ImageProcessor resultImage = null;
     private FloatProcessor ccSliceMiddle = null;
-    private FloatProcessor ccSliceMiddle2 = null;
     private FloatProcessor mask = null;
 
     private static final int XYZ = 0;
@@ -359,8 +357,8 @@ public class DriftCorrection extends Observable implements Runnable {
                             break;
                         case XYZ:
                             if (driftData.Tune){
-                                //driftData.addXYZshift(xErr, yErr, zDrift, z_err, getTimeElapsed());
-                                driftData.addXYZshift(xErr, yErr, zDrift, (xyDrift.x), getTimeElapsed());
+                                driftData.addXYZshift(xErr, yErr, zDrift, z_err, getTimeElapsed());
+                                //driftData.addXYZshift(xErr, yErr, zDrift, (xyDrift.x), getTimeElapsed());
                             }
                             else driftData.addXYZshift((xyDrift.x), (xyDrift.y), zDrift, z_err, getTimeElapsed());
                             break;
@@ -375,7 +373,7 @@ public class DriftCorrection extends Observable implements Runnable {
                     if ((System.currentTimeMillis()-startRun) < sleep && (System.currentTimeMillis()-startRun) > 0)
                         java.lang.Thread.sleep(sleep - (System.currentTimeMillis()-startRun));
                 }
-            java.lang.Thread.sleep(500);
+            java.lang.Thread.sleep(100);
             }
         } catch (InterruptedException e) {
             ReportingUtils.showError(e, INTERRUPTION_ERROR);
