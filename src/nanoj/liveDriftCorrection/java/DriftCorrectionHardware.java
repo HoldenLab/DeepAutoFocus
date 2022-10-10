@@ -216,8 +216,8 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
         try {
             if (getCamera() == null) throw new NullPointerException(CAMERA_NOT_SET);
             else {
-                driftCore.snapImage();
                 driftCore.waitForDevice(getCamera());
+                driftCore.snapImage();
                 int width = (int) driftCore.getImageWidth();
                 int height = (int) driftCore.getImageHeight();
 
