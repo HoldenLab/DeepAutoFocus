@@ -373,7 +373,7 @@ public class DriftCorrection extends Observable implements Runnable {
                     if ((System.currentTimeMillis()-startRun) < sleep && (System.currentTimeMillis()-startRun) > 0)
                         java.lang.Thread.sleep(sleep - (System.currentTimeMillis()-startRun));
                 }
-            java.lang.Thread.sleep(100);
+            java.lang.Thread.sleep(500);
             }
         } catch (InterruptedException e) {
             ReportingUtils.showError(e, INTERRUPTION_ERROR);
