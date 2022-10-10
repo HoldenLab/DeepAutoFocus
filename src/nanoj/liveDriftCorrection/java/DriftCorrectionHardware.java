@@ -151,8 +151,9 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
         try {
             if (getCamera() == null) throw new NullPointerException(CAMERA_NOT_SET);
             else {
-                mainCore.snapImage();
                 mainCore.waitForDevice(getCamera());
+                mainCore.snapImage();
+                
                 int width = (int) mainCore.getImageWidth();
                 int height = (int) mainCore.getImageHeight();
 
@@ -265,7 +266,7 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
             core.setProperty(camera,"BitDepth", depth);
         }
         this.camera = camera;
-        core.clearROI();
+        //core.clearROI();
         this.cameraWidth = (int) core.getImageWidth();
         this.cameraHeight = (int) core.getImageHeight();
     }
@@ -275,11 +276,6 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
     }
     
     public void setCalibration(AffineTransform calibration) { this.calibration = calibration; }
-
-    public void setROI(int xPositionOfTopLeftCorner, int yPositionOfTopLeftCorner, int width, int height) throws Exception{
-        mainCore.clearROI();
-        mainCore.setROI(xPositionOfTopLeftCorner, yPositionOfTopLeftCorner, width, height);
-    }
     
     public Rectangle getROI() throws Exception {
         return mainCore.getROI();
@@ -287,15 +283,6 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
     
     public double getExposureTime() {
         return exposureTime;
-    }
-
-    public void setExposureTime(double exposureTime) {
-        this.exposureTime = exposureTime;
-        try {
-            mainCore.setExposure(getExposureTime());
-        } catch (Exception e) {
-            ReportingUtils.showError(e, EXPOSURE_TIME_ERROR);
-        }
     }
     
     public double getStepSize() {

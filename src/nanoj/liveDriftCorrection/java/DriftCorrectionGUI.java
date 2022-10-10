@@ -59,9 +59,6 @@ public class DriftCorrectionGUI{
     private static final String X_STAGE = "xStage";
     private static final String Y_STAGE = "yStage";
     private static final String DRIFT_FILE_LOCATION = "driftFileLocation";
-    private static final String CONFIG_FILE_LOCATION = "driftConfigFileLocation";
-    private static final String EXPOSURE_TIME = "exposureTime";
-    private static final String ROI_SIZE = "roiSize";
     private static final String EDGE_CLIP = "edgeClip";
     private static final String STEP_SIZE = "stepSize";
     private static final String Zp = "Zp"; // 190404 kw
@@ -81,8 +78,6 @@ public class DriftCorrectionGUI{
     // Preference defaults
     private static final String BACK_STEP_SIZE_DEFAULT = "100"; // microns 201223 kw
     private static final String CAL_STEP_SIZE_DEFAULT = "5"; // microns 201223 kw
-    private static final String EXPOSURE_TIME_DEFAULT = "500"; // milliseconds
-    private static final String ROI_SIZE_DEFAULT = "2000";
     private static final String EDGE_CLIP_DEFAULT = "0";
     private static final String STEP_SIZE_DEFAULT = "1500"; // nanometers
     private static final String Zp_DEFAULT = "0.3"; // 190404 kw
@@ -109,8 +104,6 @@ public class DriftCorrectionGUI{
     private static final String GET_BG_LABEL = "1. Get background image";
     private static final String CLEAR_BG_LABEL = "Clear background reference";
     private static final String CALIBRATE_LABEL = "2. Calibrate pixel size";
-    private static final String EXPOSURE_TIME_LABEL = "Exposure time for each frame (ms)";
-    private static final String ROI_BOX_LABEL = "Maximum ROI to analyse";
     private static final String EDGE_CLIP_LABEL = "Pixels to trim from the edges";
     private static final String STEP_SIZE_LABEL = "Step size (nm) for Z correction";
     private static final String Zp_LABEL = "Zp (Axial proportional gain)"; //190404 kw
@@ -140,14 +133,6 @@ public class DriftCorrectionGUI{
                 "XY Drift Correction"};
 
     // Error flags
-    public static final String ROI_SIZE_TOO_SMALL =
-            "The requested ROI size is too small.\n" +
-                    "It should be at least twice the edge clip value plus 10.";
-    public static final String ROI_LARGER_THAN_CAMERA =
-            "The requested ROI size is too large.\n" +
-                    "It should only be as large as the smallest dimension of the camera (width or height).";
-    public static final String ROI_NOT_DIV_4 =
-            "The requested ROI size is not divisible by 4.";
     public static final String HARDWARE_NOT_SET = "Hardware not set, please configure first.";
     public static final String HARDWARE_NOT_LOADED = "Hardware not loaded, please load first.";
     public static final String WIZARD_LAUNCHING_ERROR = "Error during launch of Drift Hardware Configuration Wizard!";
@@ -185,7 +170,6 @@ public class DriftCorrectionGUI{
     private ConfigurationListener configurationListener = new ConfigurationListener();
     
     // Textbox listeners. 201228 kw
-    private ExposureTimeListener exposureTimeListener = new ExposureTimeListener();
 
     private ArrayList<DeviceList> devices = new ArrayList<DeviceList>();
 
@@ -220,8 +204,6 @@ public class DriftCorrectionGUI{
     private JLabel calibrationSwitch_XYLabel = new DLabel(SWITCH_XY + preferences.getBoolean(CAL_SWITCHING_XY, false));
     private DeviceList cameraList = new DeviceList(DeviceType.CameraDevice, CAMERA);
     private JCheckBox separateXYStages = new DCheckBox(SEPARATE_STAGES_LABEL, separateXYStagesListener, SEPARATE);
-    private JTextField exposureTimeBox = new DTextField(EXPOSURE_TIME, EXPOSURE_TIME_DEFAULT, exposureTimeListener);
-    private JTextField roiBox = new DTextField(ROI_SIZE, ROI_SIZE_DEFAULT);
     private JTextField edgeClipBox = new DTextField(EDGE_CLIP, EDGE_CLIP_DEFAULT);
     private JTextField stepSizeBox = new DTextField(STEP_SIZE, STEP_SIZE_DEFAULT);
     private JTextField ZpBox = new DTextField(Zp, Zp_DEFAULT); // 190404 kw
@@ -371,10 +353,6 @@ public class DriftCorrectionGUI{
         configurationPanel.add(backgroundStepSizeBox);
         configurationPanel.add(new DLabel(CAL_STEP_SIZE_LABEL)); // 201223 kw
         configurationPanel.add(calibrationStepSizeBox);       
-        configurationPanel.add(new DLabel(EXPOSURE_TIME_LABEL));
-        configurationPanel.add(exposureTimeBox);
-        configurationPanel.add(new DLabel(ROI_BOX_LABEL));
-        configurationPanel.add(roiBox);
         configurationPanel.add(new DLabel(EDGE_CLIP_LABEL));
         configurationPanel.add(edgeClipBox);
         configurationPanel.add(new DLabel(STEP_SIZE_LABEL));
@@ -479,19 +457,6 @@ public class DriftCorrectionGUI{
         driftCorrection.setThreshold(Double.parseDouble(boundsLimitBox.getText()));
 
         hardwareManager.setCamera(cameraList.getSelectedItem().toString());
-        hardwareManager.setExposureTime(Double.parseDouble(exposureTimeBox.getText()));
-
-        int roiSize = Integer.parseInt(roiBox.getText());
-        int xLocation = 0;
-        int yLocation = 0;
-        if (hardwareManager.getCameraWidth() > roiSize ) {
-            xLocation = (hardwareManager.getCameraWidth() / 2) - (roiSize / 2);
-        }
-        if (hardwareManager.getCameraHeight() > roiSize) {
-            yLocation = (hardwareManager.getCameraHeight() / 2) - (roiSize /2);
-        }
-        hardwareManager.setROI(xLocation, yLocation, roiSize, roiSize);
-        //hardwareManager.snap();
 
         hardwareManager.setFocusDevice(focusDeviceList.getSelectedItem().toString());
 
@@ -1012,29 +977,7 @@ public class DriftCorrectionGUI{
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            // Check that the size of the ROI makes sense
-            try {
-                if (Integer.parseInt(roiBox.getText()) < (processor.getEdgeClip()*2)+10) {
-                    ReportingUtils.showMessage(ROI_SIZE_TOO_SMALL);
-                    roiBox.setText("" + (processor.getEdgeClip()*2+10));
-
-                } else if (Integer.parseInt(roiBox.getText()) > hardwareManager.getCameraHeight() ||
-                        Integer.parseInt(roiBox.getText()) > hardwareManager.getCameraWidth()) {
-
-                    ReportingUtils.showError(ROI_LARGER_THAN_CAMERA);
-                    int size = Math.min(hardwareManager.getCameraHeight(), hardwareManager.getCameraWidth());
-                    roiBox.setText("" + size);
-                } else if (Integer.parseInt(roiBox.getText()) % 4 != 0 &&
-                        Integer.parseInt(roiBox.getText()) > 10) { // new error in case not divisible by 4 (also needs to be >10 or other error triggered). 210205 kw
-                    ReportingUtils.showMessage(ROI_NOT_DIV_4);
-                    int newROIsize = (int) Math.round(Integer.parseInt(roiBox.getText())/4) * 4;
-                    roiBox.setText("" + newROIsize);
-                }
-            } catch (Exception e1) {
-                ReportingUtils.showError(e1, HARDWARE_CONNECTION_ERROR);
-            }
-
-            // Notify Observers that settings have changed
+            // Notify Observers that settings have changed 
             setChanged();
             notifyObservers();
 
@@ -1043,14 +986,6 @@ public class DriftCorrectionGUI{
                 if (list.getItemCount() > 1)
                     preferences.putInt(list.name, list.getSelectedIndex());
             }
-        }
-    }
-    
-    class ExposureTimeListener implements ActionListener {
-            
-        @Override
-        public void actionPerformed(ActionEvent e){
-            hardwareManager.setExposureTime(Double.parseDouble(exposureTimeBox.getText()));
         }
     }
 
