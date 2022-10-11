@@ -350,6 +350,7 @@ public class DriftCorrectionData {
             if (isShowPlotTrue()) showPlots();
             if (isSavePlotsTrue()) {
                 double z = zDrift.get(zDrift.size()-1);
+                if (zDrift.size() == 1) appendDataToFile("timeStamp (ms)" + "," + "z");
                 appendDataToFile(timeStamp + "," + z);
             }
         }
@@ -366,6 +367,7 @@ public class DriftCorrectionData {
             if (isSavePlotsTrue()) {
                 double x = xDrift.get(xDrift.size() - 1);
                 double y = yDrift.get(yDrift.size() - 1);
+                if (xDrift.size() == 1) appendDataToFile("timeStamp (ms)" + "," + "x (microns)" + "," + "y (microns)");
                 appendDataToFile(timeStamp + "," + x + ", " + y);
             }
         }
@@ -390,7 +392,8 @@ public class DriftCorrectionData {
                 double x = xDrift.get(xDrift.size() - 1);
                 double y = yDrift.get(yDrift.size() - 1);
                 double z = zDrift.get(zDrift.size() - 1);
-                appendDataToFile(timeStamp + "," + x + ", " + y + "," + z);
+                if (xDrift.size() == 1) appendDataToFile("timeStamp (ms)" + "," + "x (microns)" + "," + "y (microns)" + "," + "z");
+                appendDataToFile(timeStamp + "," + x + "," + y + "," + z);
             }
         }
     }
@@ -420,6 +423,7 @@ public class DriftCorrectionData {
                 double SP = SPdrift.get(SPdrift.size() - 1);
                 double PV = PVdrift.get(PVdrift.size() - 1);
                 double OP = OPdrift.get(OPdrift.size() - 1);
+                if (xDrift.size() == 1) appendDataToFile("timeStamp (ms)" + "," + "SP" + "," + "PV" + "," + "OP");
                 appendDataToFile(timeStamp + "," + SP + "," + PV + "," + OP);
             }
         }

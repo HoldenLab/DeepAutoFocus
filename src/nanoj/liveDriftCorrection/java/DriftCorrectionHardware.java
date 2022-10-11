@@ -7,7 +7,7 @@ import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ShortProcessor;
 import mmcorej.CMMCore;
-import mmcorej.StrVector;
+//import mmcorej.StrVector;
 import mmcorej.DeviceType;
 import org.apache.commons.lang.ArrayUtils;
 import org.micromanager.internal.utils.ReportingUtils;

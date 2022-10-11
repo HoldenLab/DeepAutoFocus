@@ -6,13 +6,12 @@ import ij.measure.Measurements;
 import ij.process.FHT;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
-import ij.plugin.FFT;
 import nanoj.core.java.image.calculator.FloatProcessorCalculator;
 import nanoj.core.java.image.analysis.CalculateImageStatistics;
-import nanoj.core.java.image.drift.EstimateShiftAndTilt;
+//import nanoj.core.java.image.drift.EstimateShiftAndTilt;
 import ij.gui.OvalRoi;
-import ij.process.ImageStatistics;
-import org.micromanager.internal.utils.ReportingUtils;
+//import ij.process.ImageStatistics;
+//import org.micromanager.internal.utils.ReportingUtils;
 
 import java.awt.*;
 
