@@ -5,9 +5,9 @@ import ij.ImageStack;
 //import ij.measure.Measurements;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
-import ij.process.FloatStatistics;
+//import ij.process.FloatStatistics;
 import ij.process.ImageStatistics;
-import nanoj.core.java.image.drift.EstimateShiftAndTilt;
+//import nanoj.core.java.image.drift.EstimateShiftAndTilt;
 import nanoj.core.java.image.transform.CrossCorrelationMap;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -117,6 +117,7 @@ public class DriftCorrection extends Observable implements Runnable {
                         yErrSum = 0;
                         oldyErr = 0;
                         oldxErr = 0;
+                        oldTime = 0;
                         t=0;
                     } 
                     
@@ -269,19 +270,19 @@ public class DriftCorrection extends Observable implements Runnable {
                     t = t + dt;
                     missX = x+(oldxErr-xErr);
                     missY = y+(oldyErr-yErr);
-                    if (MoveSuccess && ((dt*1000)<10*sleep) && (dt*1000 > 1000)){
-                        xErrSum = xErrSum + missX*dt;
-                        yErrSum = yErrSum + missY*dt;
-                        //xErrSum = xErrSum + xErr*dt;
-                        //yErrSum = yErrSum + yErr*dt;
-                    }
+                    //if (MoveSuccess && ((dt*1000)<10*sleep) && (dt*1000 > 1000)){
+                        //xErrSum = xErrSum + missX*dt;
+                        //yErrSum = yErrSum + missY*dt;
+                        xErrSum = xErrSum + xErr*dt;
+                        yErrSum = yErrSum + yErr*dt;
+                    //}
                     
                     x = 0;
                     y = 0;
 
                     if (correctionMode == XY || correctionMode == XYZ){
-                        x = Lp*xErr + Li*(xErrSum/t);
-                        y = Lp*yErr + Li*(yErrSum/t);
+                        x = Lp*xErr + Li*xErrSum;
+                        y = Lp*yErr + Li*yErrSum;
                     }
                     
                     oldTime = getTimeElapsed(); // time of current loop (store for next loop iteration)
@@ -323,7 +324,7 @@ public class DriftCorrection extends Observable implements Runnable {
                     // Now using PI controller instead of equation in McGorty 2013 paper (220110 kw)
                     if (isRunning() && (correctionMode == Z || correctionMode == XYZ) ) {
                         z_err = SP - PV; // Z-correction error 220110
-                        z_errSum = z_errSum + missZ*dt;//z_err*dt;
+                        z_errSum = z_errSum + z_err*dt;
                         zDrift = Zp*z_err + Zi*z_errSum;
                         if(Zp!=0 || Zi!=0) hardwareManager.moveFocusStage(zDrift);
                         oldzErr = z_err;
