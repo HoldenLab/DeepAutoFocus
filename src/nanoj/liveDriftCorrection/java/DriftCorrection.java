@@ -5,9 +5,9 @@ import ij.ImageStack;
 //import ij.measure.Measurements;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
-import ij.process.FloatStatistics;
+//import ij.process.FloatStatistics;
 import ij.process.ImageStatistics;
-import nanoj.core.java.image.drift.EstimateShiftAndTilt;
+//import nanoj.core.java.image.drift.EstimateShiftAndTilt;
 import nanoj.core.java.image.transform.CrossCorrelationMap;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -117,6 +117,7 @@ public class DriftCorrection extends Observable implements Runnable {
                         yErrSum = 0;
                         oldyErr = 0;
                         oldxErr = 0;
+                        oldTime = 0;
                         t=0;
                     } 
                     
@@ -269,19 +270,19 @@ public class DriftCorrection extends Observable implements Runnable {
                     t = t + dt;
                     missX = x+(oldxErr-xErr);
                     missY = y+(oldyErr-yErr);
-                    if (MoveSuccess && ((dt*1000)<10*sleep) && (dt*1000 > 1000)){
-                        xErrSum = xErrSum + missX*dt;
-                        yErrSum = yErrSum + missY*dt;
-                        //xErrSum = xErrSum + xErr*dt;
-                        //yErrSum = yErrSum + yErr*dt;
-                    }
+                    //if (MoveSuccess && ((dt*1000)<10*sleep) && (dt*1000 > 1000)){
+                    //xErrSum = xErrSum + missX*dt;
+                    //yErrSum = yErrSum + missY*dt;
+                    xErrSum = xErrSum + xErr*dt;
+                    yErrSum = yErrSum + yErr*dt;
+                    //}
                     
                     x = 0;
                     y = 0;
 
                     if (correctionMode == XY || correctionMode == XYZ){
-                        x = Lp*xErr + Li*(xErrSum/t);
-                        y = Lp*yErr + Li*(yErrSum/t);
+                        x = Lp*xErr + Li*xErrSum;//*(dt/t);
+                        y = Lp*yErr + Li*yErrSum;//*(dt/t);
                     }
                     
                     oldTime = getTimeElapsed(); // time of current loop (store for next loop iteration)
@@ -303,7 +304,7 @@ public class DriftCorrection extends Observable implements Runnable {
                     //Point2D.Double xyDrift = new Point2D.Double(y,-x); //Not sure why the switch of x and y is needed but it seems to work for now 290922 JE @ CAIRN
 
                     // Convert from pixel units to microns
-                    xyDrift = hardwareManager.convertPixelsToMicrons(xyDrift);
+                    Point2D.Double xyDriftU = hardwareManager.convertPixelsToMicrons(xyDrift);
                     
                     //LatMag = Math.sqrt(Math.pow(xErr,2) + Math.pow(yErr,2));
                     
@@ -323,7 +324,7 @@ public class DriftCorrection extends Observable implements Runnable {
                     // Now using PI controller instead of equation in McGorty 2013 paper (220110 kw)
                     if (isRunning() && (correctionMode == Z || correctionMode == XYZ) ) {
                         z_err = SP - PV; // Z-correction error 220110
-                        z_errSum = z_errSum + missZ*dt;//z_err*dt;
+                        z_errSum = z_errSum + z_err*dt;
                         zDrift = Zp*z_err + Zi*z_errSum;
                         if(Zp!=0 || Zi!=0) hardwareManager.moveFocusStage(zDrift);
                         oldzErr = z_err;
@@ -341,7 +342,7 @@ public class DriftCorrection extends Observable implements Runnable {
                         */
                         //if (Math.abs(xyDrift.x) < 0.023) xyDrift.x=0;
                         //if (Math.abs(xyDrift.y) < 0.023) xyDrift.y=0;
-                        if(Lp!=0 || Li!=0) MoveSuccess = hardwareManager.moveXYStage(xyDrift);
+                        if(Lp!=0 || Li!=0) MoveSuccess = hardwareManager.moveXYStage(xyDriftU);
                     }
 
                     // Add data //changed to switch statement from ifs 220128 JE
@@ -353,14 +354,14 @@ public class DriftCorrection extends Observable implements Runnable {
                             if (driftData.Tune){
                                 driftData.addXYshift(xErr, yErr, getTimeElapsed());
                             }
-                            else driftData.addXYshift((xyDrift.x), (xyDrift.y), getTimeElapsed());
+                            else driftData.addXYshift((xyDriftU.x), (xyDriftU.y), getTimeElapsed());
                             break;
                         case XYZ:
                             if (driftData.Tune){
-                                //driftData.addXYZshift(xErr, yErr, zDrift, z_err, getTimeElapsed());
-                                driftData.addXYZshift(xErr, yErr, zDrift, (xyDrift.x), getTimeElapsed());
+                                driftData.addXYZshift(xErr, yErr, zDrift, z_err, getTimeElapsed());
+                                //driftData.addXYZshift(xErr, yErr, zDrift, (xyDrift.x), getTimeElapsed());
                             }
-                            else driftData.addXYZshift((xyDrift.x), (xyDrift.y), zDrift, z_err, getTimeElapsed());
+                            else driftData.addXYZshift((xyDriftU.x), (xyDriftU.y), zDrift, z_err, getTimeElapsed());
                             break;
                     }
 
