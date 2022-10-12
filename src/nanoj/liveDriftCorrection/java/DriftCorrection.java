@@ -124,8 +124,11 @@ public class DriftCorrection extends Observable implements Runnable {
                         HeightRatio = 0;
                         
                         driftData.setReferenceImage(snapAndProcess());
-                        refCC = CrossCorrelationMap.calculateCrossCorrelationMap(driftData.getReferenceImage(), driftData.getReferenceImage(), true); // 220131 JE
-                        refCCmidMidMax = processor.CenterHeightFind2(refCC.convertToFloatProcessor()); // 221012 JE
+                        if (correctionMode == XY){
+                            refCC = CrossCorrelationMap.calculateCrossCorrelationMap(driftData.getReferenceImage(), driftData.getReferenceImage(), true); // 220131 JE
+                            refCCmidMidMax = processor.CenterHeightFind2(refCC.convertToFloatProcessor()); // 221012 JE
+                        }
+                        
                     } 
                     
                     // If we've just started, get the reference stack (190401 kw)
