@@ -104,8 +104,6 @@ public class DriftCorrectionProcess implements Measurements {
     }
 
     public double[] PeakFind(FloatProcessor CCmap) {
-        //CCmap.setRoi(0,0, CCmap.getWidth()-1, CCmap.getHeight()-1);
-        //CCmap.crop();
         int x;
         int y;
         float[] peak = CalculateImageStatistics.getMax(CCmap);
@@ -114,14 +112,14 @@ public class DriftCorrectionProcess implements Measurements {
         int xcenter = CCmap.getWidth()/2;
         int ycenter = CCmap.getHeight()/2;
         int offset = 5;
-        int size = 10;
+        int size = 11;
         //if (CCmap.getWidth()%2 == 0); offset = 5;
         if (CCmap.getWidth()%2 == 0); size = size + 1;
         if (Math.abs(peakX-xcenter)>3 || Math.abs(peakY-ycenter)>3){
-            //x = peakX - offset;
-            //y = peakY - offset;
-            x = xcenter - offset;
-            y = ycenter - offset;
+            x = peakX - offset;
+            y = peakY - offset;
+            //x = xcenter - offset;
+            //y = ycenter - offset;
         }
         else{
             x = xcenter - offset;
@@ -161,23 +159,9 @@ public class DriftCorrectionProcess implements Measurements {
         int y;
         int PeakX = (int) Peak[0];
         int PeakY = (int) Peak[1];
-        int xcenter = CCmap.getWidth()/2;
-        int ycenter = CCmap.getHeight()/2;
         int offset = 5;
         int size = 11;
-        /*
-        if (Math.abs(PeakX-xcenter)>3 || Math.abs(PeakY-ycenter)>3){
-            x = PeakX - offset;
-            y = PeakY - offset;
-            //x = xcenter - offset;
-            //y = ycenter - offset;
-        }
-        else{
-            x = xcenter - offset;
-            y = ycenter - offset;
-        }
-        */
-        
+
         x = PeakX - offset;
         y = PeakY - offset;
         
