@@ -126,9 +126,9 @@ public class DriftCorrection extends Observable implements Runnable {
                         driftData.setReferenceImage(snapAndProcess());
                         if (correctionMode == XY){
                             refCC = CrossCorrelationMap.calculateCrossCorrelationMap(driftData.getReferenceImage(), driftData.getReferenceImage(), true); // 220131 JE
-                            refCCmidMidMax = processor.CenterHeightFind2(refCC.convertToFloatProcessor()); // 221012 JE
-
                             Peak = CalculateImageStatistics.getMax(refCC); // 221012 JE
+                            refCCmidMidMax = processor.CenterHeightFind3(refCC.convertToFloatProcessor(),Peak); // 221012 JE
+
                             currentCenter = processor.PeakFind2(refCC.convertToFloatProcessor(), Peak); // 221012 JE
                             imCentx = currentCenter[0];
                             imCenty = currentCenter[1];
@@ -189,22 +189,24 @@ public class DriftCorrection extends Observable implements Runnable {
                             //refCCtopMidMax = refCCtopMiddle.getMax();
                             //refCCmidMidMax = refCCmidMid.getMax();*/
                             
-                            refCCbottomMidMax = processor.CenterHeightFind2(refCCbottom); // 220131 JE
-                            refCCtopMidMax = processor.CenterHeightFind2(refCCtop); // 220131 JE
-                            refCCmidMidMax = processor.CenterHeightFind2(refCCmiddle); // 220131 JE
-                            refCCTopTopMax = processor.CenterHeightFind2(refTopTopProc); // 220131 JE
-                            refCCBottomBottomMax = processor.CenterHeightFind2(refBottomBottomProc); // 220131 JE
+                            Peak = processor.PickPlane(refStackCC);
+                            
+                            refCCbottomMidMax = processor.CenterHeightFind3(refCCbottom, Peak); // 220131 JE
+                            refCCtopMidMax = processor.CenterHeightFind3(refCCtop, Peak); // 220131 JE
+                            refCCmidMidMax = processor.CenterHeightFind3(refCCmiddle, Peak); // 220131 JE
+                            refCCTopTopMax = processor.CenterHeightFind3(refTopTopProc, Peak); // 220131 JE
+                            refCCBottomBottomMax = processor.CenterHeightFind3(refBottomBottomProc, Peak); // 220131 JE
                             
                             Top = (refCCtopMidMax/refCCTopTopMax); // 220131 JE
                             Bottom = (refCCbottomMidMax/refCCBottomBottomMax); // 220131 JE
-                            Middle = (refCCmidMidMax/refCCmidMidMax)+0.6; // 220131 JE
+                            Middle = (refCCmidMidMax/refCCmidMidMax); // 220131 JE
                               
-                            SP = (Top - Bottom);// / Middle; // Z-correction setpoint // 220131 JE
+                            SP = (Top - Bottom);// / (Middle + 0.6); // Z-correction setpoint // 220131 JE
                                                         
                             //SP = (refCCtopMidMax - refCCbottomMidMax) / refCCmidMidMax; // Z-correction setpoint
                         
                             driftData.setReferenceStack(refStack);
-                            Peak = processor.PickPlane(refStackCC);
+                            
                             int Plane = (int) Peak[2];
                             currentCenter = processor.PeakFind2(refStackCC.getProcessor(Plane).convertToFloatProcessor(), Peak); // 221012 JE
                             
