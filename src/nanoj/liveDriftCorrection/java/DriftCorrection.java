@@ -201,7 +201,7 @@ public class DriftCorrection extends Observable implements Runnable {
                             Bottom = (refCCbottomMidMax/refCCBottomBottomMax); // 220131 JE
                             Middle = (refCCmidMidMax/refCCmidMidMax); // 220131 JE
                               
-                            SP = (Top - Bottom);// / (Middle + 0.6); // Z-correction setpoint // 220131 JE
+                            SP = (Top - Bottom) / (Middle + 0.6); // Z-correction setpoint // 220131 JE
                                                         
                             //SP = (refCCtopMidMax - refCCbottomMidMax) / refCCmidMidMax; // Z-correction setpoint
                         
@@ -246,7 +246,7 @@ public class DriftCorrection extends Observable implements Runnable {
                         Bottom = (ccSliceBottomMax/refCCBottomBottomMax); // 220131 JE
                         Middle = (ccSliceMiddleMax/refCCmidMidMax); // 220131 JE
                         
-                        PV = (Top - Bottom);///(MedianT/refmiddleMedian);// / (Middle + 0.6); // eq 5 in McGorty et al. 2013 // 220131 JE
+                        PV = (Top - Bottom) / (Middle + 0.6);//(MedianT/refmiddleMedian); // eq 5 in McGorty et al. 2013 // 220131 JE
 
                         //PV = (ccSliceTopMax - ccSliceBottomMax) / ccSliceMiddleMax; // eq 5 in McGorty et al. 2013
                         
@@ -332,7 +332,7 @@ public class DriftCorrection extends Observable implements Runnable {
                     //LatMag = Math.sqrt(Math.pow(xErr,2) + Math.pow(yErr,2));
                     
                     // Check if detected movement is within bounds
-                    if (((correctionMode == XY || correctionMode == XYZ) && (Math.abs(xyDrift.x) > threshold || Math.abs(xyDrift.y) > threshold) || HeightRatio < 0.2) 
+                    if (((correctionMode == XY || correctionMode == XYZ) && (Math.abs(xyDrift.x) > threshold || Math.abs(xyDrift.y) > threshold) || HeightRatio < 0.2)
                             || (correctionMode == Z && HeightRatio < 0.2)) {
                         runAcquisition(false);
                         setChanged();
