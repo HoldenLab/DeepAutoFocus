@@ -412,37 +412,6 @@ public class DriftCorrectionData {
             }
         }
     }
-    
-    private synchronized void setSPshiftData(ArrayList<Double> SPshift) {
-        this.SPdrift = SPshift;
-    }
-    
-    private synchronized void setPVshiftData(ArrayList<Double> PVshift) {
-        this.PVdrift = PVshift;
-    }
-    
-    private synchronized void setOPshiftData(ArrayList<Double> OPshift) {
-        this.OPdrift = OPshift;
-    }
-    
-    // created 220110 by kw. For debugging/tuning PI controller parameters
-    synchronized void addPIshift(double SPshift, double PVshift, double OPshift, double timeStamp){
-        if (Double.isNaN(SPshift) || Double.isNaN(PVshift) || Double.isNaN(OPshift)) return;
-        addTimeStamp(timeStamp);
-        
-        addPIPoint(SPshift, PVshift, OPshift);
-        
-        if (!OPdrift.isEmpty()) {
-            if (isShowPlotTrue()) showPlots();
-            if (isSavePlotsTrue()) {
-                double SP = SPdrift.get(SPdrift.size() - 1);
-                double PV = PVdrift.get(PVdrift.size() - 1);
-                double OP = OPdrift.get(OPdrift.size() - 1);
-                if (xDrift.size() == 1) appendDataToFile("timeStamp (ms)" + "," + "SP" + "," + "PV" + "," + "OP");
-                appendDataToFile(timeStamp + "," + SP + "," + PV + "," + OP);
-            }
-        }
-    }
 
     private void addXYPoint(double x, double y) {
         if (xDrift.size() == 0) {
@@ -458,20 +427,6 @@ public class DriftCorrectionData {
             xDrift.add(x + xDrift.get(xDrift.size()-1));
             yDrift.add(y + yDrift.get(yDrift.size()-1));
             }
-        }
-    }
-    
-    // added 220110 by kw
-    private void addPIPoint(double SP, double PV, double OP){
-        if (OPdrift.size() ==0) {
-            SPdrift.add(OP);
-            PVdrift.add(PV);
-            OPdrift.add(SP);
-        }
-        else {
-            SPdrift.add(SP + SPdrift.get(SPdrift.size()-1));
-            PVdrift.add(PV + PVdrift.get(PVdrift.size()-1));
-            OPdrift.add(OP + OPdrift.get(OPdrift.size()-1));
         }
     }
 
@@ -507,14 +462,5 @@ public class DriftCorrectionData {
         setZShiftData(zDrift = new ArrayList<Double>());
         setZPositionData(zPosition = new ArrayList<Double>());
         setTimeStamps(timeStamps = new ArrayList<Double>());
-    }
-
-    public double PointMean(ArrayList<Double> DataList, int index, int range) {
-        double[] Data = ArrayCasting.toArray(DataList, 1d);
-        double sum = 0;
-        for (int i = index-1; i < index+(range-1); i++) {
-            sum += Data[i];
-        }
-        return sum / 3;
     }
 }
