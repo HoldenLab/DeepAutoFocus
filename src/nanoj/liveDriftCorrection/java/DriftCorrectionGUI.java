@@ -66,6 +66,7 @@ public class DriftCorrectionGUI{
     private static final String Lp = "Lp"; // 220118 JE
     private static final String Li = "Li"; // 220118 JE
     private static final String PERIOD = "period";
+    private static final String REF_UPDATE = "refUpdate";
     private static final String BOUNDS = "bounds";
     private static final String CAL_STEP_SIZE = "calStepSize"; // 201223 kw
     private static final String CAL_SCALING = "calScaling";
