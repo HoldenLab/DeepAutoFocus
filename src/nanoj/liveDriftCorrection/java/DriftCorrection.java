@@ -116,8 +116,7 @@ public class DriftCorrection extends Observable implements Runnable {
             while (itIsAlive()) {
                 while (isRunning()) {
                     long startRun = System.currentTimeMillis();
-                    if (refUpdate != 0 && getTimeElapsed() > UpdateTime) {
-                        ReportingUtils.showMessage("here");
+                    if (refUpdate != 0 && getTimeElapsed() > UpdateTime) { // forces update to reference images 221021 JE
                         driftData.setReferenceImage(null);
                         driftData.setReferenceStack(new ImageStack());
                     }
