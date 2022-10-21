@@ -15,6 +15,9 @@ import org.micromanager.internal.utils.ReportingUtils;
 import java.awt.geom.Point2D;
 import java.util.Observable;
 import nanoj.core.java.image.analysis.CalculateImageStatistics;
+import org.micromanager.internal.MMStudio;
+import org.micromanager.acquisition.internal.AcquisitionWrapperEngine;
+import org.micromanager.events.EventManager;
 
 public class DriftCorrection extends Observable implements Runnable {
     private boolean alive = true;
@@ -23,7 +26,9 @@ public class DriftCorrection extends Observable implements Runnable {
     private DriftCorrectionHardware hardwareManager;
     private DriftCorrectionData driftData;
     private DriftCorrectionProcess processor;
-
+    private MMStudio studio;
+    private AcquisitionWrapperEngine MDA;
+    private EventManager events;
     private int correctionMode = 0;
     
     // added 201230 kw
@@ -73,9 +78,6 @@ public class DriftCorrection extends Observable implements Runnable {
     double x = 0;
     double y = 0;
     double t = 0;
-    double missX = 0;
-    double missY = 0;
-    double missZ = 0;
     private double xErr = 0; // 220119 JE
     private double yErr = 0; // 220119 JE
     private double xErrSum = 0; // 220414 JE
@@ -102,6 +104,10 @@ public class DriftCorrection extends Observable implements Runnable {
         hardwareManager = manager;
         driftData = data;
         this.processor = processor;
+        studio = MMStudio.getInstance();
+        MDA = studio.getAcquisitionEngine();
+        events = studio.getEventManager();
+        events.registerForEvents();
     }
 
     @Override
@@ -216,6 +222,16 @@ public class DriftCorrection extends Observable implements Runnable {
                                                         
                         }
                         
+                        ReportingUtils.showMessage(Long.toString(MDA.getNextWakeTime()));
+                        ReportingUtils.showMessage(Long.toString(System.currentTimeMillis()/1000));
+                        
+                        if (MDA.isAcquisitionRunning() && !MDA.isPaused() && (MDA.getNextWakeTime() < 1000 || MDA.getNextWakeTime() < getSleep())) { // Stops ImLock trying to correct for deliberate moves from MDA 221018 JE
+                            double WaitLeft = MDA.getNextWakeTime() - System.currentTimeMillis();
+                            
+                            ReportingUtils.showMessage("blocked by MDA");
+                            continue;
+                        }
+                        
                         ImageProcessor ImageT = snapAndProcess();
                         resultStack = CrossCorrelationMap.calculateCrossCorrelationMap(ImageT, driftData.getReferenceStack(), true);
                         driftData.setResultMap(resultStack);
@@ -259,6 +275,10 @@ public class DriftCorrection extends Observable implements Runnable {
                     
                     // XY drift correction ONLY 201230 kw
                     else {
+                        //if (MDA.isAcquisitionRunning() && !MDA.isPaused() && (MDA.getNextWakeTime() < 1000 || MDA.getNextWakeTime() < getSleep())) {
+                        //    ReportingUtils.showMessage("blocked by MDA");
+                        //    continue;
+                        //}
                         resultImage =  CrossCorrelationMap.calculateCrossCorrelationMap(snapAndProcess(), driftData.getReferenceImage(), true);
                         driftData.setResultMap(resultImage);
 
@@ -291,11 +311,7 @@ public class DriftCorrection extends Observable implements Runnable {
                     yErr = currentCenter[1]  - imCenty;
                     dt = (getTimeElapsed() - oldTime)/1000;
                     t = t + dt;
-                    missX = x+(oldxErr-xErr);
-                    missY = y+(oldyErr-yErr);
                     //if (MoveSuccess && ((dt*1000)<10*sleep) && (dt*1000 > 1000)){
-                        //xErrSum = xErrSum + missX*dt;
-                        //yErrSum = yErrSum + missY*dt;
                         xErrSum = xErrSum + xErr*dt;
                         yErrSum = yErrSum + yErr*dt;
                     //}
@@ -343,7 +359,6 @@ public class DriftCorrection extends Observable implements Runnable {
                         break;
                     }
                     
-                    missZ = zDrift+(oldzErr-z_err);
                     // Move Z stage to more appropriate position. We get zDrift in microns instead of steps to save later to Data. (added 190403 kw)
                     // Now using PI controller instead of equation in McGorty 2013 paper (220110 kw)
                     if (isRunning() && (correctionMode == Z || correctionMode == XYZ) ) {
