@@ -214,6 +214,7 @@ public class DriftCorrectionGUI{
     private JTextField LpBox = new DTextField(Lp, Lp_DEFAULT); // 220118 JE
     private JTextField LiBox = new DTextField(Li, Li_DEFAULT); // 220118 JE
     private JTextField periodBox = new DTextField(PERIOD, PERIOD_DEFAULT);
+    private JTextField refUpdateBox = new DTextField(REF_UPDATE, REF_UPDATE_DEFAULT);
     private JTextField boundsLimitBox = new DTextField(BOUNDS, BOUNDS_DEFAULT);
     private DeviceList focusDeviceList = new DeviceList(DeviceType.StageDevice, Z_STAGE);
     private DeviceList xyStageList = new DeviceList(DeviceType.XYStageDevice, XY_STAGE);
