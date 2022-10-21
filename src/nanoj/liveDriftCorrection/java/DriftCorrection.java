@@ -97,7 +97,7 @@ public class DriftCorrection extends Observable implements Runnable {
     private double refCCmidMidMax = 0; // 220201 JE
     private double refCCTopTopMax = 0; // 220201 JE
     private double refCCBottomBottomMax = 0; // 220201 JE
-    private double refmiddleMedian = 0; // 220916 JE
+    //private double refmiddleMedian = 0; // 220916 JE
     float[] Peak = null; //220926 JE
     double[] currentCenter = null; //221012 JE
 
@@ -117,9 +117,18 @@ public class DriftCorrection extends Observable implements Runnable {
                 while (isRunning()) {
                     long startRun = System.currentTimeMillis();
                     if (refUpdate != 0 && getTimeElapsed() > UpdateTime) {
+                        ReportingUtils.showMessage("here");
                         driftData.setReferenceImage(null);
                         driftData.setReferenceStack(new ImageStack());
-                        UpdateTime = getTimeElapsed() + (double) refUpdate;
+                    }
+                                            
+                    //ReportingUtils.showMessage(Long.toString(MDA.getNextWakeTime()));
+                    //ReportingUtils.showMessage(Long.toString(System.currentTimeMillis()/1000));
+                        
+                    if (MDA.isAcquisitionRunning() && !MDA.isPaused() && (MDA.getNextWakeTime() < 1000 || MDA.getNextWakeTime() < getSleep())) { // Stops ImLock trying to correct for deliberate moves from MDA 221018 JE
+                        double WaitLeft = MDA.getNextWakeTime() - System.currentTimeMillis();
+                        ReportingUtils.showMessage("blocked by MDA");
+                        continue;
                     }
                     // If we've just started, get the reference image
                     if (driftData.getReferenceImage() == null){                       
@@ -144,7 +153,7 @@ public class DriftCorrection extends Observable implements Runnable {
                             imCentx = currentCenter[0];
                             imCenty = currentCenter[1];
                         }
-                        
+                        UpdateTime = getTimeElapsed() +  refUpdate;
                     } 
                     
                     // If we've just started, get the reference stack (190401 kw)
@@ -189,7 +198,7 @@ public class DriftCorrection extends Observable implements Runnable {
                             FloatProcessor refTopTopProc = refTopTopCC.convertToFloatProcessor(); // 220131 JE
                             FloatProcessor refBottomBottomProc = refBottomBottomCC.convertToFloatProcessor(); // 220131 JE
                             
-                            refmiddleMedian = ImageStatistics.getStatistics(refStack.getProcessor(2)).median;
+                            //refmiddleMedian = ImageStatistics.getStatistics(refStack.getProcessor(2)).median;
                             
                             //refCCbottomMidMax = refCCbottom.getMax();
                             //refCCtopMidMax = refCCtop.getMax();
@@ -224,17 +233,7 @@ public class DriftCorrection extends Observable implements Runnable {
                             t = 0;
                             imCentx = currentCenter[0];
                             imCenty = currentCenter[1];
-                                                        
-                        }
-                        
-                        ReportingUtils.showMessage(Long.toString(MDA.getNextWakeTime()));
-                        ReportingUtils.showMessage(Long.toString(System.currentTimeMillis()/1000));
-                        
-                        if (MDA.isAcquisitionRunning() && !MDA.isPaused() && (MDA.getNextWakeTime() < 1000 || MDA.getNextWakeTime() < getSleep())) { // Stops ImLock trying to correct for deliberate moves from MDA 221018 JE
-                            double WaitLeft = MDA.getNextWakeTime() - System.currentTimeMillis();
-                            
-                            ReportingUtils.showMessage("blocked by MDA");
-                            continue;
+                            UpdateTime = getTimeElapsed() + refUpdate;
                         }
                         
                         ImageProcessor ImageT = snapAndProcess();
@@ -246,7 +245,7 @@ public class DriftCorrection extends Observable implements Runnable {
                         ccSliceMiddle = resultStack.getProcessor(2).convertToFloatProcessor();
                         FloatProcessor ccSliceTop = resultStack.getProcessor(1).convertToFloatProcessor();
                         
-                        double MedianT = ImageStatistics.getStatistics(ImageT).median;
+                        //double MedianT = ImageStatistics.getStatistics(ImageT).median;
                         
                         // offset maxima because minima not at zero
                         //double ccSliceBottomMax = ccSliceBottom.getMax();
@@ -482,7 +481,7 @@ public class DriftCorrection extends Observable implements Runnable {
     }
 
     public void setRefUpdate(double refUpdate) {
-        this.refUpdate = (long) refUpdate*60000; //convert box value in mins to useful value in ms 221021 JE
+        this.refUpdate = refUpdate*60000; //convert box value in mins to useful value in ms 221021 JE
     }
     
     // added 190404 kw
