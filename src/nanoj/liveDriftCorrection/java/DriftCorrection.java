@@ -49,6 +49,7 @@ public class DriftCorrection extends Observable implements Runnable {
 
     // Settings
     private long sleep = 200; // time in between loops in milliseconds
+    private double refUpdate = 0; // time between updates to reference images
 
     // Stack labels
     private static final String TOP = "Top";
@@ -63,6 +64,7 @@ public class DriftCorrection extends Observable implements Runnable {
 
     // Running variables
     private long startTimeStamp;
+    private long UpdateTime;
     private double oldTime;
     private double dt;
     private double threshold;
@@ -116,6 +118,11 @@ public class DriftCorrection extends Observable implements Runnable {
             while (itIsAlive()) {
                 while (isRunning()) {
                     long startRun = System.currentTimeMillis();
+                    if (refUpdate != 0 && getTimeElapsed() > UpdateTime) {
+                        driftData.setReferenceImage(null);
+                        driftData.setReferenceStack(new ImageStack());
+                        UpdateTime = getTimeElapsed + refUpdate
+                    }
                     // If we've just started, get the reference image
                     if (driftData.getReferenceImage() == null){                       
                         //Initialise variables for new run 220119 JE
@@ -474,6 +481,10 @@ public class DriftCorrection extends Observable implements Runnable {
 
     public void setSleep(long sleep) {
         this.sleep = sleep;
+    }
+
+    public void setRefUpdate(double refUpdate) {
+        this.refUpdate = (long) refUpdate*60000; //convert box value in mins to useful value in ms 221021 JE
     }
     
     // added 190404 kw
