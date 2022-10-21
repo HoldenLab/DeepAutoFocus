@@ -382,7 +382,7 @@ public class DriftCorrectionData {
             if (isSavePlotsTrue()) {
                 double x = xDrift.get(xDrift.size() - 1);
                 double y = yDrift.get(yDrift.size() - 1);
-                if (xDrift.size() == 1) appendDataToFile("timeStamp (ms)" + "," + "x (microns)" + "," + "y (microns)");
+                if (xDrift.size() == 1) appendDataToFile("time (ms)" + "," + "x (microns)" + "," + "y (microns)");
                 appendDataToFile(timeStamp + "," + x + ", " + y);
             }
         }
