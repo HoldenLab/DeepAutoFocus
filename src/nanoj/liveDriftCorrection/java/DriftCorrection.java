@@ -64,7 +64,7 @@ public class DriftCorrection extends Observable implements Runnable {
 
     // Running variables
     private long startTimeStamp;
-    private long UpdateTime;
+    private double UpdateTime;
     private double oldTime;
     private double dt;
     private double threshold;
@@ -108,8 +108,6 @@ public class DriftCorrection extends Observable implements Runnable {
         this.processor = processor;
         studio = MMStudio.getInstance();
         MDA = studio.getAcquisitionEngine();
-        events = studio.getEventManager();
-        events.registerForEvents();
     }
 
     @Override
@@ -121,7 +119,7 @@ public class DriftCorrection extends Observable implements Runnable {
                     if (refUpdate != 0 && getTimeElapsed() > UpdateTime) {
                         driftData.setReferenceImage(null);
                         driftData.setReferenceStack(new ImageStack());
-                        UpdateTime = getTimeElapsed + refUpdate
+                        UpdateTime = getTimeElapsed() + (double) refUpdate;
                     }
                     // If we've just started, get the reference image
                     if (driftData.getReferenceImage() == null){                       
