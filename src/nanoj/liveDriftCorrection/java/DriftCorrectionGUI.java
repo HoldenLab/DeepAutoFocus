@@ -370,6 +370,8 @@ public class DriftCorrectionGUI{
         configurationPanel.add(LiBox);
         configurationPanel.add(new DLabel(PERIOD_LABEL));
         configurationPanel.add(periodBox);
+        configurationPanel.add(new DLabel(REF_UPDATE_LABEL));
+        configurationPanel.add(refUpdateBox);
         configurationPanel.add(new DLabel(BOUNDS_LABEL));
         configurationPanel.add(boundsLimitBox);
         
