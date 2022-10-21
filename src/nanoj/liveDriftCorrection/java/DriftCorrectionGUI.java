@@ -86,6 +86,7 @@ public class DriftCorrectionGUI{
     private static final String Lp_DEFAULT = "0.1"; // 220118 JE
     private static final String Li_DEFAULT = "0"; // 220118 JE
     private static final String PERIOD_DEFAULT = "500"; // milliseconds
+    private static final String REF_UPDATE_DEFAULT = "0"; // minutes
     private static final String BOUNDS_DEFAULT = "10"; // microns
     private static final double CAL_DEFAULT = -1;
     DecimalFormat df = new DecimalFormat("#.##");
@@ -113,6 +114,7 @@ public class DriftCorrectionGUI{
     private static final String Li_LABEL = "Li (Lateral integral gain)"; // 220118 JE
     private static final String PERIOD_LABEL = "Time between corrections (ms)";
     private static final String BOUNDS_LABEL = "Maximum translation (um)";
+    private static final String REF_UPDATE_LABEL = "Time between reference updates (min)";
     private static final String SEPARATE_STAGES_LABEL = "Separate XY stage devices?";
     private static final String SAVE_DIALOG_TITLE = "File name and location (date and time added automatically)";
     private static final String CAMERA_LIST_LABEL = "Camera";
