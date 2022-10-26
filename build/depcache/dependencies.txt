@@ -27,7 +27,6 @@ java.lang.Exception
 nanoj.core.java.image.analysis.CalculateImageStatistics
 java.awt.geom.Point2D$Double
 ij.process.FloatProcessor
-ij.process.ImageStatistics
 java.lang.InterruptedException
 nanoj.liveDriftCorrection.java.DriftCorrectionHardware
 ij.ImageStack

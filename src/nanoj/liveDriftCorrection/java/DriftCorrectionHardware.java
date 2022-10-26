@@ -93,8 +93,28 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
         else {
             if (useMainFocus) core = mainCore;
             else core = driftCore;
-            core.waitForDevice(focusDevice); // In case there the user moved the stage while processing
+            core.waitForDevice(focusDevice); // In case the user moved the stage while processing
             core.setRelativePosition(focusDevice, target);
+            core.waitForDevice(getFocusDevice());
+        }
+    }
+    
+    public void AbsMoveFocusStage(double target) throws Exception { // 221026 JE
+        if (target == 0.0) return;
+
+        CMMCore core;
+
+        if (!useMainFocus && getDriftCore() == null)
+            throw new NullPointerException(CORE_DEVICE_NOT_SET);
+
+        else if (getFocusDevice() == null)
+            throw new NullPointerException(Z_STAGE_NOT_SET);
+
+        else {
+            if (useMainFocus) core = mainCore;
+            else core = driftCore;
+            core.waitForDevice(focusDevice); // In case the user moved the stage while processing
+            core.setPosition(focusDevice, target);
             core.waitForDevice(getFocusDevice());
         }
     }
@@ -103,6 +123,44 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
     public boolean moveXYStage(Point2D.Double target) throws Exception {
         boolean Success = moveXYStage(target.x, target.y);
         return Success;
+    }
+    
+    public void AbsMoveXYStage(double xTarget, double yTarget) throws Exception { // 221026 JE
+        
+        CMMCore core;
+        CMMCore Xcore;
+        CMMCore Ycore;
+
+        if ( !isSeparateXYStages() )
+            if (getXYStage() == null) throw new NullPointerException(XY_STAGE_NOT_SET);
+            else {
+                if (useMainXYAxis) core = mainCore;
+                else core = driftCore;
+                core.waitForDevice(stageXY);
+                try{
+                    core.setXYPosition(stageXY, xTarget, yTarget);
+                    core.waitForDevice(getXYStage());
+                }
+                catch(Exception e){ // Guards against timeout hard-fails 22106 JE
+                    core.stop(stageXY);
+                }
+        }
+        else {
+            if (getSeparateXYStages()[0] == null) throw new NullPointerException(X_STAGE_NOT_SET);
+            else if (getSeparateXYStages()[1] == null) throw new NullPointerException(Y_STAGE_NOT_SET);
+            else {
+                if (useMainXAxis) Xcore = mainCore;
+                else Xcore = driftCore;
+                if (useMainYAxis) Ycore = mainCore;
+                else Ycore = driftCore;
+                Xcore.waitForDevice(stageXaxis); // In case there the user moved the stage while processing
+                Xcore.setPosition(stageXaxis, xTarget);
+                Ycore.waitForDevice(stageYAxis); // In case there the user moved the stage while processing
+                Ycore.setPosition(stageYAxis, yTarget);
+                Xcore.waitForDevice(getSeparateXYStages()[0]);
+                Ycore.waitForDevice(getSeparateXYStages()[1]);
+            }
+        }
     }
 
     // Move XY stage in microns without having to know if the XY stage is a single or two devices
@@ -394,6 +452,15 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
         return new String[]{stageXaxis, stageYAxis};
     }
 
+    public boolean getMainCoreBusy() {
+        try{
+            return mainCore.systemBusy();
+        }
+        catch(Exception e) {
+            return true;
+        }
+    }
+    
     public void setSeparateXYStageDevices(String xAxis, String yAxis) {
         if (determineCore(xAxis, DeviceType.StageDevice).equals(mainCore)) useMainXAxis = true;
         else useMainXAxis = false;

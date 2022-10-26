@@ -17,7 +17,7 @@ import java.util.Observable;
 import nanoj.core.java.image.analysis.CalculateImageStatistics;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.acquisition.internal.AcquisitionWrapperEngine;
-import org.micromanager.events.EventManager;
+import org.micromanager.PositionList;
 
 public class DriftCorrection extends Observable implements Runnable {
     private boolean alive = true;
@@ -28,7 +28,7 @@ public class DriftCorrection extends Observable implements Runnable {
     private DriftCorrectionProcess processor;
     private MMStudio studio;
     private AcquisitionWrapperEngine MDA;
-    private EventManager events;
+    private PositionList Positions;
     private int correctionMode = 0;
     
     // added 201230 kw
@@ -90,7 +90,9 @@ public class DriftCorrection extends Observable implements Runnable {
     private double Top = 0; // 220131 JE
     private double Bottom = 0; // 220131 JE
     private double Middle = 0; // 220131 JE
-    private double HeightRatio = 0; // 220131 JE
+    private double HeightRatio = 0; // 220131 JE 
+    private boolean StartMDA = false; // Starts at -1 to make it obvious if it hasn't been set yet 221025 JE
+    private double WaitLeft = 0; // 221025 JE
     
     private double refCCbottomMidMax = 0; // 220201 JE
     private double refCCtopMidMax = 0; // 220201 JE
@@ -108,6 +110,7 @@ public class DriftCorrection extends Observable implements Runnable {
         this.processor = processor;
         studio = MMStudio.getInstance();
         MDA = studio.getAcquisitionEngine();
+        Positions = studio.getPositionList();
     }
 
     @Override
@@ -116,19 +119,28 @@ public class DriftCorrection extends Observable implements Runnable {
             while (itIsAlive()) {
                 while (isRunning()) {
                     long startRun = System.currentTimeMillis();
+                    
+                    if (MDA.isAcquisitionRunning() && !MDA.isPaused()){ // Stops ImLock trying to correct for deliberate moves from MDA 221018 JE
+                        StartMDA = true;
+                        WaitLeft = (MDA.getNextWakeTime() - System.nanoTime() / 1000000.0);
+                        if(hardwareManager.getMainCoreBusy() || WaitLeft < 1200) {
+                            continue;
+                        }
+                    }
+                    if (StartMDA && !MDA.isAcquisitionRunning()) { // Returns stage to start position after MDA 
+                        StartMDA = false;
+                        x = Positions.getPosition(0).getX();
+                        y = Positions.getPosition(0).getY();
+                        double z = Positions.getPosition(0).getZ();
+                        hardwareManager.AbsMoveXYStage(x, y);
+                        hardwareManager.AbsMoveFocusStage(z);
+                    }
+                    
                     if (refUpdate != 0 && getTimeElapsed() > UpdateTime) { // forces update to reference images 221021 JE
                         driftData.setReferenceImage(null);
                         driftData.setReferenceStack(new ImageStack());
                     }
                                             
-                    //ReportingUtils.showMessage(Long.toString(MDA.getNextWakeTime()));
-                    //ReportingUtils.showMessage(Long.toString(System.currentTimeMillis()/1000));
-                        
-                    if (MDA.isAcquisitionRunning() && !MDA.isPaused() && (MDA.getNextWakeTime() < 1000 || MDA.getNextWakeTime() < getSleep())) { // Stops ImLock trying to correct for deliberate moves from MDA 221018 JE
-                        double WaitLeft = MDA.getNextWakeTime() - System.currentTimeMillis();
-                        ReportingUtils.showMessage("blocked by MDA");
-                        continue;
-                    }
                     // If we've just started, get the reference image
                     if (driftData.getReferenceImage() == null){                       
                         //Initialise variables for new run 220119 JE
@@ -386,7 +398,19 @@ public class DriftCorrection extends Observable implements Runnable {
                         //if (Math.abs(xyDrift.y) < 0.023) xyDrift.y=0;
                         if(Lp!=0 || Li!=0) MoveSuccess = hardwareManager.moveXYStage(xyDrift);
                     }
+                    /*
+                    if (MDA.isAcquisitionRunning()){
+                        list = Positions.getPositions();
+                        offset = getPosition list
+                        for (msp : list) {
+                            sp = msp.get(zDrive);
+                            sp.set1DPosition(zDrive, sp.get1DPosition() + offset);
+                        }
 
+                        Positions.setPositions(list);
+                        studio.positions().setPositionList(Positions);
+                    }
+                    */
                     // Add data //changed to switch statement from ifs 220128 JE
                     switch(correctionMode){
                         case Z:
