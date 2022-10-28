@@ -13,11 +13,17 @@ import nanoj.core.java.image.transform.CrossCorrelationMap;
 import org.micromanager.internal.utils.ReportingUtils;
 
 import java.awt.geom.Point2D;
+import java.util.ArrayList;
 import java.util.Observable;
 import nanoj.core.java.image.analysis.CalculateImageStatistics;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.acquisition.internal.AcquisitionWrapperEngine;
+import org.micromanager.acquisition.AcquisitionManager;
+import org.micromanager.acquisition.SequenceSettings;
+import org.micromanager.PositionListManager;
 import org.micromanager.PositionList;
+import org.micromanager.MultiStagePosition;
+import org.micromanager.StagePosition;
 
 public class DriftCorrection extends Observable implements Runnable {
     private boolean alive = true;
@@ -28,6 +34,9 @@ public class DriftCorrection extends Observable implements Runnable {
     private DriftCorrectionProcess processor;
     private MMStudio studio;
     private AcquisitionWrapperEngine MDA;
+    private AcquisitionManager MDAManager;
+    private SequenceSettings SeqSettings;
+    private PositionListManager PositionsManager;
     private PositionList Positions;
     private int correctionMode = 0;
     
@@ -93,6 +102,7 @@ public class DriftCorrection extends Observable implements Runnable {
     private double HeightRatio = 0; // 220131 JE 
     private boolean StartMDA = false; // Starts at -1 to make it obvious if it hasn't been set yet 221025 JE
     private double WaitLeft = 0; // 221025 JE
+    double OldZoffset = 0; // 221028 JE
     
     private double refCCbottomMidMax = 0; // 220201 JE
     private double refCCtopMidMax = 0; // 220201 JE
@@ -110,7 +120,10 @@ public class DriftCorrection extends Observable implements Runnable {
         this.processor = processor;
         studio = MMStudio.getInstance();
         MDA = studio.getAcquisitionEngine();
-        Positions = studio.getPositionList();
+        MDAManager = studio.getAcquisitionManager();
+        SeqSettings = MDAManager.getAcquisitionSettings();
+        PositionsManager = studio.getPositionListManager();
+        Positions = PositionsManager.getPositionList();
     }
 
     @Override
@@ -119,14 +132,15 @@ public class DriftCorrection extends Observable implements Runnable {
             while (itIsAlive()) {
                 while (isRunning()) {
                     long startRun = System.currentTimeMillis();
-                    
-                    if (MDA.isAcquisitionRunning() && !MDA.isPaused()){ // Stops ImLock trying to correct for deliberate moves from MDA 221018 JE
+
+                    if (MDA.isAcquisitionRunning() && !MDA.isPaused() && (SeqSettings.usePositionList() || SeqSettings.useSlices())){ // Stops ImLock trying to correct for deliberate moves from MDA 221018 JE
                         StartMDA = true;
                         WaitLeft = (MDA.getNextWakeTime() - System.nanoTime() / 1000000.0);
                         if(hardwareManager.getMainCoreBusy() || WaitLeft < 1200) {
                             continue;
                         }
                     }
+                    
                     if (StartMDA && !MDA.isAcquisitionRunning()) { // Returns stage to start position after MDA 
                         StartMDA = false;
                         x = Positions.getPosition(0).getX();
@@ -153,6 +167,7 @@ public class DriftCorrection extends Observable implements Runnable {
                         oldTime = 0;
                         t=0;
                         HeightRatio = 0;
+                        OldZoffset =0;
                         
                         driftData.setReferenceImage(snapAndProcess());
                         if (correctionMode == XY){
@@ -398,19 +413,33 @@ public class DriftCorrection extends Observable implements Runnable {
                         //if (Math.abs(xyDrift.y) < 0.023) xyDrift.y=0;
                         if(Lp!=0 || Li!=0) MoveSuccess = hardwareManager.moveXYStage(xyDrift);
                     }
-                    /*
-                    if (MDA.isAcquisitionRunning()){
-                        list = Positions.getPositions();
-                        offset = getPosition list
-                        for (msp : list) {
-                            sp = msp.get(zDrive);
-                            sp.set1DPosition(zDrive, sp.get1DPosition() + offset);
-                        }
 
+                    if (MDA.isAcquisitionRunning() && SeqSettings.usePositionList()){                         
+                        MultiStagePosition[] list = Positions.getPositions();
+                        double Zoffset = hardwareManager.getMainCore().getPosition(hardwareManager.getFocusDevice()) - Positions.getPosition(0).getZ();
+                        double[] xpos = new double[1];
+                        double[] ypos = new double[1];
+                        hardwareManager.getMainCore().getXYPosition(hardwareManager.getXYStage(), xpos, ypos);
+                        double Xoffset = xpos[0] - Positions.getPosition(0).getX();
+                        double Yoffset = ypos[0] - Positions.getPosition(0).getY();
+                        for (MultiStagePosition msp : list) {
+                            StagePosition sp = msp.get(hardwareManager.getFocusDevice());
+                            sp.set1DPosition(hardwareManager.getFocusDevice(), sp.get1DPosition() + Zoffset);
+                            sp.set2DPosition(hardwareManager.getXYStage(), sp.get2DPositionX() + Xoffset, sp.get2DPositionY() + Yoffset);
+                        }
                         Positions.setPositions(list);
                         studio.positions().setPositionList(Positions);
+                    }                    
+                    if (MDA.isAcquisitionRunning() && SeqSettings.useSlices()) {
+                        double StartSlice = SeqSettings.sliceZBottomUm();
+                        double Zoffset = hardwareManager.getMainCore().getPosition(hardwareManager.getFocusDevice()) - StartSlice + OldZoffset;
+                        OldZoffset = Zoffset;
+                        ArrayList<Double> Slices = SeqSettings.slices();
+                        for (int i = 0; i < Slices.size()-1; i++) {
+                            Slices.set(i,Slices.get(i) + Zoffset);
+                        }
                     }
-                    */
+                    
                     // Add data //changed to switch statement from ifs 220128 JE
                     switch(correctionMode){
                         case Z:
