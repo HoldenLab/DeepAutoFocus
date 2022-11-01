@@ -460,6 +460,7 @@ public class DriftCorrectionGUI{
         driftCorrection.setLp((double) (Double.parseDouble(LpBox.getText()))); //220118 JE
         driftCorrection.setLi((double) (Double.parseDouble(LiBox.getText()))); //220118 JE
         driftCorrection.setSleep((long) (Double.parseDouble(periodBox.getText())));
+        driftCorrection.setRefUpdate((double) (Double.parseDouble(refUpdateBox.getText())));
         driftCorrection.setThreshold(Double.parseDouble(boundsLimitBox.getText()));
 
         hardwareManager.setCamera(cameraList.getSelectedItem().toString());

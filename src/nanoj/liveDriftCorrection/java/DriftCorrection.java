@@ -470,7 +470,7 @@ public class DriftCorrection extends Observable implements Runnable {
     }
 
     public void setRefUpdate(double refUpdate) {
-        this.refUpdate = (long) refUpdate*60000; //convert box value in mins to useful value in ms 221021 JE
+        this.refUpdate = refUpdate*60000; //convert box value in mins to useful value in ms 221021 JE
     }
     
     // added 190404 kw
