@@ -1078,17 +1078,13 @@ public class DriftCorrectionGUI{
                 if (Integer.parseInt(roiBox.getText()) < (processor.getEdgeClip()*2)+10) {
                     ReportingUtils.showMessage(ROI_SIZE_TOO_SMALL);
                     roiBox.setText("" + (processor.getEdgeClip()*2+10));
-
-                } else if (Integer.parseInt(roiBox.getText()) > hardwareManager.getCameraHeight() ||
-                        Integer.parseInt(roiBox.getText()) > hardwareManager.getCameraWidth()) {
-
+                } else if (Integer.parseInt(roiBox.getText()) > hardwareManager.getCameraHeight() || Integer.parseInt(roiBox.getText()) > hardwareManager.getCameraWidth()) {
                     ReportingUtils.showError(ROI_LARGER_THAN_CAMERA);
                     int size = Math.min(hardwareManager.getCameraHeight(), hardwareManager.getCameraWidth());
                     roiBox.setText("" + size);
-                } else if (Integer.parseInt(roiBox.getText()) % 4 != 0 &&
-                        Integer.parseInt(roiBox.getText()) > 10) { // new error in case not divisible by 4 (also needs to be >10 or other error triggered). 210205 kw
+                } else if (Integer.parseInt(roiBox.getText()) % 4 != 0 && Integer.parseInt(roiBox.getText()) > 10) { // new error in case not divisible by 4 (also needs to be >10 or other error triggered). 210205 kw
                     ReportingUtils.showMessage(ROI_NOT_DIV_4);
-                    int newROIsize = (int) Math.round(Integer.parseInt(roiBox.getText())/4) * 4;
+                    int newROIsize = (int) (Math.ceil(Integer.parseInt(roiBox.getText())/4)) * 4;
                     roiBox.setText("" + newROIsize);
                 }
             } catch (Exception e1) {

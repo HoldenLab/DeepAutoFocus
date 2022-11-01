@@ -8,6 +8,7 @@ ij.process.ImageProcessor
 [D
 org.micromanager.StagePosition
 java.lang.Runnable
+java.util.ArrayList
 mmcorej.CMMCore
 java.awt.geom.Point2D$Double
 java.lang.Thread
@@ -18,6 +19,7 @@ org.micromanager.MultiStagePosition
 org.micromanager.internal.utils.ReportingUtils
 nanoj.liveDriftCorrection.java.DriftCorrectionData
 nanoj.liveDriftCorrection.java.DriftCorrectionProcess
+org.micromanager.internal.MMUIManager
 org.micromanager.PositionList
 org.micromanager.internal.MMStudio
 java.lang.Exception

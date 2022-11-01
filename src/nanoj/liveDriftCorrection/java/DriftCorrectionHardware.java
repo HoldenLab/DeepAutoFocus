@@ -100,7 +100,7 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
     }
     
     public void AbsMoveFocusStage(double target) throws Exception { // 221026 JE
-        if (target == 0.0) return;
+        //if (target == 0.0) return;
 
         CMMCore core;
 
@@ -141,7 +141,7 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
                     core.setXYPosition(stageXY, xTarget, yTarget);
                     core.waitForDevice(getXYStage());
                 }
-                catch(Exception e){ // Guards against timeout hard-fails 22106 JE
+                catch(Exception e){ // Guards against timeout hard-fails 221006 JE
                     core.stop(stageXY);
                 }
         }

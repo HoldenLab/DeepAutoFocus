@@ -100,9 +100,8 @@ public class DriftCorrection extends Observable implements Runnable {
     private double Bottom = 0; // 220131 JE
     private double Middle = 0; // 220131 JE
     private double HeightRatio = 0; // 220131 JE 
-    private boolean StartMDA = false; // Starts at -1 to make it obvious if it hasn't been set yet 221025 JE
+    private boolean StartMDA = false; // 221025 JE
     private double WaitLeft = 0; // 221025 JE
-    double OldZoffset = 0; // 221028 JE
     
     private double refCCbottomMidMax = 0; // 220201 JE
     private double refCCtopMidMax = 0; // 220201 JE
@@ -134,6 +133,11 @@ public class DriftCorrection extends Observable implements Runnable {
                     long startRun = System.currentTimeMillis();
 
                     if (MDA.isAcquisitionRunning() && !MDA.isPaused() && (SeqSettings.usePositionList() || SeqSettings.useSlices())){ // Stops ImLock trying to correct for deliberate moves from MDA 221018 JE
+                        if (!StartMDA){
+                            SeqSettings = MDAManager.getAcquisitionSettings();
+                            PositionsManager = studio.getPositionListManager();
+                            Positions = PositionsManager.getPositionList();
+                        }
                         StartMDA = true;
                         WaitLeft = (MDA.getNextWakeTime() - System.nanoTime() / 1000000.0);
                         if(hardwareManager.getMainCoreBusy() || WaitLeft < 1200) {
@@ -143,11 +147,15 @@ public class DriftCorrection extends Observable implements Runnable {
                     
                     if (StartMDA && !MDA.isAcquisitionRunning()) { // Returns stage to start position after MDA 
                         StartMDA = false;
-                        x = Positions.getPosition(0).getX();
-                        y = Positions.getPosition(0).getY();
-                        double z = Positions.getPosition(0).getZ();
-                        hardwareManager.AbsMoveXYStage(x, y);
-                        hardwareManager.AbsMoveFocusStage(z);
+                        if (SeqSettings.usePositionList()) {
+                            x = Positions.getPosition(0).getX();
+                            y = Positions.getPosition(0).getY();
+                            MultiStagePosition.goToPosition(Positions.getPosition(0), hardwareManager.getMainCore());
+                            continue;
+                        }
+                        else if (SeqSettings.useSlices() && SeqSettings.relativeZSlice()) {
+                            hardwareManager.AbsMoveFocusStage(SeqSettings.zReference()); 
+                        }
                     }
                     
                     if (refUpdate != 0 && getTimeElapsed() > UpdateTime) { // forces update to reference images 221021 JE
@@ -167,7 +175,6 @@ public class DriftCorrection extends Observable implements Runnable {
                         oldTime = 0;
                         t=0;
                         HeightRatio = 0;
-                        OldZoffset =0;
                         
                         driftData.setReferenceImage(snapAndProcess());
                         if (correctionMode == XY){
@@ -414,29 +421,34 @@ public class DriftCorrection extends Observable implements Runnable {
                         if(Lp!=0 || Li!=0) MoveSuccess = hardwareManager.moveXYStage(xyDrift);
                     }
 
-                    if (MDA.isAcquisitionRunning() && SeqSettings.usePositionList()){                         
-                        MultiStagePosition[] list = Positions.getPositions();
-                        double Zoffset = hardwareManager.getMainCore().getPosition(hardwareManager.getFocusDevice()) - Positions.getPosition(0).getZ();
+                    // Updates Position list used for Multi Dimentional Acquisition
+                    if (MDA.isAcquisitionRunning() && SeqSettings.usePositionList() && Positions.getNumberOfPositions() > 1) {
+                        PositionList posList = studio.uiManager().getPositionList(); // workaround from https://forum.image.sc/t/micro-manager-mda-doesnt-use-updated-positionlist-during-acquisition/48095/5 221101 JE
+                        MultiStagePosition[] list = posList.getPositions();
+                        double ZoffsetPos = hardwareManager.getMainCore().getPosition(hardwareManager.getFocusDevice()) - Positions.getPosition(0).getZ();
                         double[] xpos = new double[1];
                         double[] ypos = new double[1];
                         hardwareManager.getMainCore().getXYPosition(hardwareManager.getXYStage(), xpos, ypos);
                         double Xoffset = xpos[0] - Positions.getPosition(0).getX();
                         double Yoffset = ypos[0] - Positions.getPosition(0).getY();
                         for (MultiStagePosition msp : list) {
-                            StagePosition sp = msp.get(hardwareManager.getFocusDevice());
-                            sp.set1DPosition(hardwareManager.getFocusDevice(), sp.get1DPosition() + Zoffset);
-                            sp.set2DPosition(hardwareManager.getXYStage(), sp.get2DPositionX() + Xoffset, sp.get2DPositionY() + Yoffset);
+                            StagePosition spz = msp.get(hardwareManager.getFocusDevice());
+                            StagePosition spxy = msp.get(hardwareManager.getXYStage());
+                            spz.set1DPosition(hardwareManager.getFocusDevice(), spz.get1DPosition() + ZoffsetPos);
+                            spxy.set2DPosition(hardwareManager.getXYStage(), spxy.get2DPositionX() + Xoffset, spxy.get2DPositionY() + Yoffset);
                         }
                         Positions.setPositions(list);
-                        studio.positions().setPositionList(Positions);
-                    }                    
-                    if (MDA.isAcquisitionRunning() && SeqSettings.useSlices()) {
-                        double StartSlice = SeqSettings.sliceZBottomUm();
-                        double Zoffset = hardwareManager.getMainCore().getPosition(hardwareManager.getFocusDevice()) - StartSlice + OldZoffset;
-                        OldZoffset = Zoffset;
+                        posList.setPositions(list);
+                        MDA.setPositionList(Positions);
+                        PositionsManager.setPositionList(Positions);
+                    }
+                    if (MDA.isAcquisitionRunning() && SeqSettings.useSlices() && SeqSettings.relativeZSlice()) {
+                        double ZoffsetSlice = hardwareManager.getMainCore().getPosition(hardwareManager.getFocusDevice()) - SeqSettings.zReference();
+                        SeqSettings.zReference = hardwareManager.getMainCore().getPosition(hardwareManager.getFocusDevice());
+                        //SeqSettings.Builder.zReference(hardwareManager.getMainCore().getPosition(hardwareManager.getFocusDevice()));
                         ArrayList<Double> Slices = SeqSettings.slices();
                         for (int i = 0; i < Slices.size()-1; i++) {
-                            Slices.set(i,Slices.get(i) + Zoffset);
+                            Slices.set(i,Slices.get(i) + ZoffsetSlice);
                         }
                     }
                     
