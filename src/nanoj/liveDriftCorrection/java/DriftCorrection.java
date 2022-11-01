@@ -59,7 +59,7 @@ public class DriftCorrection extends Observable implements Runnable {
 
     // Running variables
     private long startTimeStamp;
-    private long UpdateTime;
+    private double UpdateTime;
     private double oldTime;
     private double dt;
     private double threshold;
@@ -112,11 +112,12 @@ public class DriftCorrection extends Observable implements Runnable {
             while (itIsAlive()) {
                 while (isRunning()) {
                     long startRun = System.currentTimeMillis();
-                    if (refUpdate != 0 && getTimeElapsed() > UpdateTime) {
+                    
+                    if (refUpdate != 0 && getTimeElapsed() > UpdateTime) { // forces update to reference images 221021 JE
                         driftData.setReferenceImage(null);
                         driftData.setReferenceStack(new ImageStack());
-                        UpdateTime = getTimeElapsed + refUpdate
                     }
+
                     // If we've just started, get the reference image
                     if (driftData.getReferenceImage() == null){                       
                         //Initialise variables for new run 220119 JE
@@ -140,7 +141,7 @@ public class DriftCorrection extends Observable implements Runnable {
                             imCentx = currentCenter[0];
                             imCenty = currentCenter[1];
                         }
-                        
+                        UpdateTime = getTimeElapsed() +  refUpdate;
                     } 
                     
                     // If we've just started, get the reference stack (190401 kw)
@@ -220,7 +221,7 @@ public class DriftCorrection extends Observable implements Runnable {
                             t = 0;
                             imCentx = currentCenter[0];
                             imCenty = currentCenter[1];
-                                                        
+                            UpdateTime = getTimeElapsed() +  refUpdate;
                         }
                         
                         ImageProcessor ImageT = snapAndProcess();
