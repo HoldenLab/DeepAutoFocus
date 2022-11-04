@@ -22,6 +22,7 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
     private String[] loadedDevices;
     private String camera;
     private String stageXY;
+    private String trigger; // 221103 JE
     private boolean useMainXYAxis;
     private String stageXaxis;
     private boolean useMainXAxis;
@@ -137,7 +138,7 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
         return mainCore.getLoadedDevicesOfType(type).toArray();
     }
 
-    // Load devices from the predetermined configuration file
+    // Load devices from micromanager core
     public void load() throws NullPointerException {
         getLoadedDevices();
         this.setChanged();
@@ -269,6 +270,24 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
         //core.clearROI();
         this.cameraWidth = (int) core.getImageWidth();
         this.cameraHeight = (int) core.getImageHeight();
+    }
+    
+    public String getTrigger() {
+        return trigger;
+    }
+    
+    public void setTrigger(String trigger) throws Exception {
+        if (trigger != null){
+            CMMCore core = mainCore;
+            core.setShutterDevice(trigger);
+            this.trigger = trigger;
+        }
+    }
+
+    public boolean getTriggerState() throws Exception {
+        CMMCore core = mainCore;
+        String property = core.getProperty(trigger,"DigitalInput");
+        return Boolean.getBoolean(property);
     }
     
     public AffineTransform getCalibration() {

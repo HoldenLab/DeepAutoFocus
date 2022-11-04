@@ -53,6 +53,7 @@ public class DriftCorrectionGUI{
     private static final String TUNING_MODE = "TuningMode";
     private static final String CORRECTION_MODE = "correctionMode";
     private static final String CAMERA = "camera";
+    private static final String TRIGGER = "trigger";
     private static final String SEPARATE = "separateXYStages";
     private static final String Z_STAGE = "zStage";
     private static final String XY_STAGE = "xyStage";
@@ -118,6 +119,7 @@ public class DriftCorrectionGUI{
     private static final String SEPARATE_STAGES_LABEL = "Separate XY stage devices?";
     private static final String SAVE_DIALOG_TITLE = "File name and location (date and time added automatically)";
     private static final String CAMERA_LIST_LABEL = "Camera";
+    private static final String TRIGGER_LIST_LABEL = "Trigger";
     private static final String XY_STAGE_LIST_LABEL = "XY Stage";
     private static final String X_STAGE_LIST_LABEL = "X Axis Stage";
     private static final String Y_STAGE_LIST_LABEL = "Y Axis Stage";
@@ -206,6 +208,7 @@ public class DriftCorrectionGUI{
     private JLabel calibrationFlip_YLabel = new DLabel(FLIP_Y + preferences.getBoolean(CAL_FLIPPING_Y, false));
     private JLabel calibrationSwitch_XYLabel = new DLabel(SWITCH_XY + preferences.getBoolean(CAL_SWITCHING_XY, false));
     private DeviceList cameraList = new DeviceList(DeviceType.CameraDevice, CAMERA);
+    private DeviceList triggerList = new DeviceList(DeviceType.GenericDevice, TRIGGER);
     private JCheckBox separateXYStages = new DCheckBox(SEPARATE_STAGES_LABEL, separateXYStagesListener, SEPARATE);
     private JTextField edgeClipBox = new DTextField(EDGE_CLIP, EDGE_CLIP_DEFAULT);
     private JTextField stepSizeBox = new DTextField(STEP_SIZE, STEP_SIZE_DEFAULT);
@@ -340,6 +343,8 @@ public class DriftCorrectionGUI{
         configurationPanel.add(xStageList);
         configurationPanel.add(yStageListLabel);
         configurationPanel.add(yStageList);
+        configurationPanel.add(new DLabel(TRIGGER_LIST_LABEL));
+        configurationPanel.add(triggerList);
         configurationPanel.add(calibrationScalingLabel);
         configurationPanel.add(calibrationAngleLabel);
         configurationPanel.add(calibrationFlip_XLabel);
@@ -464,6 +469,13 @@ public class DriftCorrectionGUI{
         driftCorrection.setThreshold(Double.parseDouble(boundsLimitBox.getText()));
 
         hardwareManager.setCamera(cameraList.getSelectedItem().toString());
+        
+        try {
+            hardwareManager.setTrigger(triggerList.getSelectedItem().toString());
+        }
+        catch (Exception e){
+            hardwareManager.setTrigger(null);
+        }
 
         hardwareManager.setFocusDevice(focusDeviceList.getSelectedItem().toString());
 
