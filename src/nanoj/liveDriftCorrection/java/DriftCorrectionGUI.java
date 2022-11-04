@@ -343,8 +343,10 @@ public class DriftCorrectionGUI{
         configurationPanel.add(xStageList);
         configurationPanel.add(yStageListLabel);
         configurationPanel.add(yStageList);
+        configurationPanel.add(Box.createRigidArea(new Dimension(1,5)));
         configurationPanel.add(new DLabel(TRIGGER_LIST_LABEL));
         configurationPanel.add(triggerList);
+        configurationPanel.add(Box.createRigidArea(new Dimension(1,5)));
         configurationPanel.add(calibrationScalingLabel);
         configurationPanel.add(calibrationAngleLabel);
         configurationPanel.add(calibrationFlip_XLabel);
@@ -469,7 +471,7 @@ public class DriftCorrectionGUI{
         driftCorrection.setThreshold(Double.parseDouble(boundsLimitBox.getText()));
 
         hardwareManager.setCamera(cameraList.getSelectedItem().toString());
-        
+
         try {
             hardwareManager.setTrigger(triggerList.getSelectedItem().toString());
         }

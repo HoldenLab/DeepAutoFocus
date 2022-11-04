@@ -277,17 +277,15 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
     }
     
     public void setTrigger(String trigger) throws Exception {
-        if (trigger != null){
-            CMMCore core = mainCore;
-            core.setShutterDevice(trigger);
-            this.trigger = trigger;
-        }
+
+        this.trigger = trigger;
     }
 
     public boolean getTriggerState() throws Exception {
         CMMCore core = mainCore;
         String property = core.getProperty(trigger,"DigitalInput");
-        return Boolean.getBoolean(property);
+        int state =  Integer.parseInt(property);
+        return state == 1;
     }
     
     public AffineTransform getCalibration() {

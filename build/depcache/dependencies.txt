@@ -418,7 +418,6 @@ java.lang.InterruptedException
 mmcorej.StrVector
 java.lang.Thread
 [S
-java.lang.Boolean
 java.lang.Object
 java.lang.String
 java.util.Observable

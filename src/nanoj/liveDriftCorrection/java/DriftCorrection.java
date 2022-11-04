@@ -58,6 +58,7 @@ public class DriftCorrection extends Observable implements Runnable {
     private static final String procedure_succeeded = "The procedure has succeeded!";
 
     // Running variables
+    private boolean StartMDA = false;
     private long startTimeStamp;
     private double UpdateTime;
     private double oldTime;
@@ -112,6 +113,17 @@ public class DriftCorrection extends Observable implements Runnable {
             while (itIsAlive()) {
                 while (isRunning()) {
                     long startRun = System.currentTimeMillis();
+
+                    if (hardwareManager.getTrigger() != null && hardwareManager.getTriggerState()){ // Stops ImLock trying to correct for deliberate moves from MDA 221018 JE
+                        StartMDA = true;
+                        continue;
+                    }
+
+                    if (StartMDA && hardwareManager.getTrigger() != null && !hardwareManager.getTriggerState()) { // Can't return scanning stage to start position so update reference images for new position 221104
+                        StartMDA = false;
+                        driftData.setReferenceImage(null);
+                        driftData.setReferenceStack(new ImageStack());
+                    }
                     
                     if (refUpdate != 0 && getTimeElapsed() > UpdateTime) { // forces update to reference images 221021 JE
                         driftData.setReferenceImage(null);
