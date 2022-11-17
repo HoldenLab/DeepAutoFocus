@@ -185,9 +185,9 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
                     core.stop(stageXY);
                     return(false);
                 }
-                core.setRelativeXYPosition(stageXY, 0, 0);
-                core.stop(stageXY); //Designed to make ASI stages use actual position rather than intended position of last move 220922 JE
-                core.waitForDevice(getXYStage());
+                //core.setRelativeXYPosition(stageXY, 0, 0);
+                //core.stop(stageXY); //Designed to make ASI stages use actual position rather than intended position of last move 220922 JE
+                //core.waitForDevice(getXYStage());
             }
         else {
             if (getSeparateXYStages()[0] == null) throw new NullPointerException(X_STAGE_NOT_SET);

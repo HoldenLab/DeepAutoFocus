@@ -132,22 +132,27 @@ public class DriftCorrection extends Observable implements Runnable {
                 while (isRunning()) {
                     long startRun = System.currentTimeMillis();
 
-                    if (MDA.isAcquisitionRunning() && !MDA.isPaused() && (SeqSettings.usePositionList() || SeqSettings.useSlices())){ // Stops ImLock trying to correct for deliberate moves from MDA 221018 JE
+                    if (MDA.isAcquisitionRunning() && !MDA.isPaused() && ((SeqSettings.usePositionList() && Positions.getNumberOfPositions() > 0) || SeqSettings.useSlices())){ // Stops ImLock trying to correct for deliberate moves from MDA 221018 JE
                         if (!StartMDA){
                             SeqSettings = MDAManager.getAcquisitionSettings();
                             PositionsManager = studio.getPositionListManager();
                             Positions = PositionsManager.getPositionList();
                         }
-                        StartMDA = true;
                         WaitLeft = (MDA.getNextWakeTime() - System.nanoTime() / 1000000.0);
                         if(hardwareManager.getMainCoreBusy() || WaitLeft < 1200) {
                             continue;
                         }
                     }
                     
+                    if (MDA.isAcquisitionRunning()){
+                        StartMDA = true;
+                        driftData.setStartMDA(1);
+                    }
+                    
                     if (StartMDA && !MDA.isAcquisitionRunning()) { // Returns stage to start position after MDA 
                         StartMDA = false;
-                        if (SeqSettings.usePositionList()) {
+                        driftData.setStartMDA(0);
+                        if (SeqSettings.usePositionList() && Positions.getNumberOfPositions() > 0) {
                             x = Positions.getPosition(0).getX();
                             y = Positions.getPosition(0).getY();
                             MultiStagePosition.goToPosition(Positions.getPosition(0), hardwareManager.getMainCore());
@@ -574,5 +579,5 @@ public class DriftCorrection extends Observable implements Runnable {
 
     public void setThreshold(double threshold) {
         this.threshold = threshold;
-    }
+    }  
 }

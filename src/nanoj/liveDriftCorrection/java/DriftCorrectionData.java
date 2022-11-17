@@ -47,6 +47,7 @@ public class DriftCorrectionData {
     private ArrayList<Double> PVdrift = new ArrayList<Double>(); // process variable for PI controller 220110
     private ArrayList<Double> OPdrift = new ArrayList<Double>(); // output for PI controller 220110
     private ArrayList<Double> timeStamps = new ArrayList<Double>();
+    private int StartMDA;
 
     private int dataType = 0;
 
@@ -365,8 +366,8 @@ public class DriftCorrectionData {
             if (isShowPlotTrue()) showPlots();
             if (isSavePlotsTrue()) {
                 double z = zDrift.get(zDrift.size()-1);
-                if (zDrift.size() == 1) appendDataToFile("timeStamp (ms)" + "," + "z");
-                appendDataToFile(timeStamp + "," + z);
+                if (zDrift.size() <= 2) appendDataToFile("timeStamp (ms)" + "," + "z" + "," + "MDA");
+                appendDataToFile(timeStamp + "," + z + "," + getStartMDA());
             }
         }
     }
@@ -382,8 +383,8 @@ public class DriftCorrectionData {
             if (isSavePlotsTrue()) {
                 double x = xDrift.get(xDrift.size() - 1);
                 double y = yDrift.get(yDrift.size() - 1);
-                if (xDrift.size() == 1) appendDataToFile("time (ms)" + "," + "x (microns)" + "," + "y (microns)");
-                appendDataToFile(timeStamp + "," + x + ", " + y);
+                if (xDrift.size() <= 2) appendDataToFile("time (ms)" + "," + "x (microns)" + "," + "y (microns)" + "," + "MDA");
+                appendDataToFile(timeStamp + "," + x + ", " + y + "," + getStartMDA());
             }
         }
     }
@@ -407,8 +408,8 @@ public class DriftCorrectionData {
                 double x = xDrift.get(xDrift.size() - 1);
                 double y = yDrift.get(yDrift.size() - 1);
                 double z = zDrift.get(zDrift.size() - 1);
-                if (xDrift.size() == 1) appendDataToFile("timeStamp (ms)" + "," + "x (microns)" + "," + "y (microns)" + "," + "z");
-                appendDataToFile(timeStamp + "," + x + "," + y + "," + z);
+                if (xDrift.size() <= 2) appendDataToFile("timeStamp (ms)" + "," + "x (um)" + "," + "y (um)" + "," + "z" + "," + "MDA");
+                appendDataToFile(timeStamp + "," + x + "," + y + "," + z + "," + getStartMDA());
             }
         }
     }
@@ -454,6 +455,14 @@ public class DriftCorrectionData {
 
     public void setSwitchXY(boolean SwitchXY) {
         this.SwitchXY = SwitchXY;
+    }
+    
+    public int getStartMDA() {
+        return StartMDA;
+    }
+    
+    public void setStartMDA(int StartMDA) {
+        this.StartMDA = StartMDA;
     }
 
     synchronized void clearData() {
