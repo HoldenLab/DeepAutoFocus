@@ -32,7 +32,6 @@ public class DriftCorrection extends Observable implements Runnable {
     private DriftCorrectionHardware hardwareManager;
     private DriftCorrectionData driftData;
     private DriftCorrectionProcess processor;
-    private DriftCorrectionCalibration calibration;
     private MMStudio studio;
     private AcquisitionWrapperEngine MDA;
     private AcquisitionManager MDAManager;
@@ -94,8 +93,6 @@ public class DriftCorrection extends Observable implements Runnable {
     private double yErr = 0; // 220119 JE
     private double xErrSum = 0; // 220414 JE
     private double yErrSum = 0; // 220414 JE
-    private double oldyErr = 0; // 220829 JE
-    private double oldxErr = 0; // 220829 JE
     private double oldzErr = 0; // 220906 JE
     private double Top = 0; // 220131 JE
     private double Bottom = 0; // 220131 JE
@@ -176,8 +173,6 @@ public class DriftCorrection extends Observable implements Runnable {
                         yErr = 0;
                         xErrSum = 0;
                         yErrSum = 0;
-                        oldyErr = 0;
-                        oldxErr = 0;
                         oldTime = 0;
                         t=0;
                         HeightRatio = 0;
@@ -354,45 +349,38 @@ public class DriftCorrection extends Observable implements Runnable {
                     yErr = currentCenter[1]  - imCenty;
                     dt = (getTimeElapsed() - oldTime)/1000;
                     t = t + dt;
+                    
+                    Point2D.Double xyError = new Point2D.Double(xErr,-yErr);
+                    
+                    if (driftData.getSwitchXY()){
+                        xyError.x = yErr;
+                        xyError.y = -xErr;
+                    }
+                    if (driftData.getflipX()) xyError.x = -xyError.x;
+                    if (driftData.getflipY()) xyError.y = -xyError.y;
+
+                    // Convert from pixel units to microns
+                    xyError = hardwareManager.convertPixelsToMicrons(xyError);
+                    
                     //if (MoveSuccess && ((dt*1000)<10*sleep) && (dt*1000 > 1000)){
-                        xErrSum = xErrSum + xErr*dt;
-                        yErrSum = yErrSum + yErr*dt;
+                        xErrSum = xErrSum + xyError.x*dt;
+                        yErrSum = yErrSum + xyError.y*dt;
                     //}
                     
                     x = 0;
                     y = 0;
 
                     if (correctionMode == XY || correctionMode == XYZ){
-                        x = Lp*xErr + Li*xErrSum;
-                        y = Lp*yErr + Li*yErrSum;
+                        x = Lp*xyError.x + Li*xErrSum;
+                        y = Lp*xyError.y + Li*yErrSum;
                     }
                     
                     oldTime = getTimeElapsed(); // time of current loop (store for next loop iteration)
-                    oldxErr = xErr;
-                    oldyErr = yErr;
                     
-                    //ReportingUtils.showMessage(Boolean.toString(driftData.getflipY()) + " " + Boolean.toString(driftData.getflipX()) + " " + Boolean.toString(driftData.getSwitchXY()));
-                    
-                    
-                    Point2D.Double xyDrift = new Point2D.Double(x,-y);
-                    
-                    if (driftData.getSwitchXY()){
-                        xyDrift.x = y;
-                        xyDrift.y = -x;
-                    }
-                    if (driftData.getflipX()) xyDrift.x = -xyDrift.x;
-                    if (driftData.getflipY()) xyDrift.y = -xyDrift.y;
-                    
-                    //Point2D.Double xyDrift = new Point2D.Double(y,-x); //Not sure why the switch of x and y is needed but it seems to work for now 290922 JE @ CAIRN
-
-                    // Convert from pixel units to microns
-                    xyDrift = hardwareManager.convertPixelsToMicrons(xyDrift);
-                    
-                    //LatMag = Math.sqrt(Math.pow(xErr,2) + Math.pow(yErr,2));
+                    Point2D.Double xyMove = new Point2D.Double(x,y);
                     
                     // Check if detected movement is within bounds
-                    if (((correctionMode == XY || correctionMode == XYZ) && (Math.abs(xyDrift.x) > threshold || Math.abs(xyDrift.y) > threshold) || HeightRatio < 0.2) 
-                            || (correctionMode == Z && HeightRatio < 0.2)) {
+                    if (((correctionMode == XY || correctionMode == XYZ) && (Math.abs(xyError.x) > threshold || Math.abs(xyError.y) > threshold) || HeightRatio < 0.2) || (correctionMode == Z && HeightRatio < 0.2)) {
                         runAcquisition(false);
                         setChanged();
                         notifyObservers(OUT_OF_BOUNDS_ERROR);
@@ -424,7 +412,7 @@ public class DriftCorrection extends Observable implements Runnable {
                         */
                         //if (Math.abs(xyDrift.x) < 0.023) xyDrift.x=0;
                         //if (Math.abs(xyDrift.y) < 0.023) xyDrift.y=0;
-                        if(Lp!=0 || Li!=0) MoveSuccess = hardwareManager.moveXYStage(xyDrift);
+                        if(Lp!=0 || Li!=0) MoveSuccess = hardwareManager.moveXYStage(xyMove);
                     }
 
                     // Updates Position list used for Multi Dimentional Acquisition
@@ -465,16 +453,15 @@ public class DriftCorrection extends Observable implements Runnable {
                              break;
                         case XY:
                             if (driftData.Tune){
-                                driftData.addXYshift(calibration.getScale()*xErr, calibration.getScale()*yErr, getTimeElapsed());
+                                driftData.addXYshift(xyError.x, xyError.y, getTimeElapsed());
                             }
-                            else driftData.addXYshift((xyDrift.x), (xyDrift.y), getTimeElapsed());
+                            else driftData.addXYshift((xyMove.x), (xyMove.y), getTimeElapsed());
                             break;
                         case XYZ:
                             if (driftData.Tune){
-                                driftData.addXYZshift(calibration.getScale()*xErr, calibration.getScale()*yErr, zDrift, z_err, getTimeElapsed());
-                                //driftData.addXYZshift(xErr, yErr, zDrift, (xyDrift.x), getTimeElapsed());
+                                driftData.addXYZshift(xyError.x, xyError.y, zDrift, z_err, getTimeElapsed());
                             }
-                            else driftData.addXYZshift((xyDrift.x), (xyDrift.y), zDrift, z_err, getTimeElapsed());
+                            else driftData.addXYZshift((xyMove.x), (xyMove.y), zDrift, z_err, getTimeElapsed());
                             break;
                     }
 
