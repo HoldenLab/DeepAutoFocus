@@ -39,6 +39,7 @@ java.lang.Exception
 nanoj.core.java.image.analysis.CalculateImageStatistics
 org.micromanager.acquisition.SequenceSettings
 ij.process.FloatProcessor
+nanoj.liveDriftCorrection.java.DriftCorrectionCalibration
 java.lang.InterruptedException
 nanoj.liveDriftCorrection.java.DriftCorrectionHardware
 ij.ImageStack

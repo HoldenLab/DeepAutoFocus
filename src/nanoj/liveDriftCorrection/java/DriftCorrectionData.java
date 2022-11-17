@@ -141,15 +141,15 @@ public class DriftCorrectionData {
             double[] timeStamps = ArrayCasting.toArray(this.timeStamps, 1d);
                 
             if (Tune){ 
-                xUnit = " (pixels)";
-                yUnit = " (pixels)";
+                xUnit = " (um)";
+                yUnit = " (um)";
                 zUnit = "";
                 tUnit = " (ms)";
             }
             else {
-                xUnit = " (microns)";
-                yUnit = " (microns)";
-                zUnit = " (microns)";
+                xUnit = " (um)";
+                yUnit = " (um)";
+                zUnit = " (um)";
                 tUnit = " (min)";
             }
             

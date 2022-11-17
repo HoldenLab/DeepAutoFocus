@@ -32,6 +32,7 @@ public class DriftCorrection extends Observable implements Runnable {
     private DriftCorrectionHardware hardwareManager;
     private DriftCorrectionData driftData;
     private DriftCorrectionProcess processor;
+    private DriftCorrectionCalibration calibration;
     private MMStudio studio;
     private AcquisitionWrapperEngine MDA;
     private AcquisitionManager MDAManager;
@@ -464,13 +465,13 @@ public class DriftCorrection extends Observable implements Runnable {
                              break;
                         case XY:
                             if (driftData.Tune){
-                                driftData.addXYshift(xErr, yErr, getTimeElapsed());
+                                driftData.addXYshift(calibration.getScale()*xErr, calibration.getScale()*yErr, getTimeElapsed());
                             }
                             else driftData.addXYshift((xyDrift.x), (xyDrift.y), getTimeElapsed());
                             break;
                         case XYZ:
                             if (driftData.Tune){
-                                driftData.addXYZshift(xErr, yErr, zDrift, z_err, getTimeElapsed());
+                                driftData.addXYZshift(calibration.getScale()*xErr, calibration.getScale()*yErr, zDrift, z_err, getTimeElapsed());
                                 //driftData.addXYZshift(xErr, yErr, zDrift, (xyDrift.x), getTimeElapsed());
                             }
                             else driftData.addXYZshift((xyDrift.x), (xyDrift.y), zDrift, z_err, getTimeElapsed());
