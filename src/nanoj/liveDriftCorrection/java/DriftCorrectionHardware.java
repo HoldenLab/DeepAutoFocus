@@ -178,12 +178,13 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
                 else core = driftCore;
                 core.waitForDevice(stageXY);
                 try{
-                    //double Pos1 = core.getYPosition();
+                    //double Pos1 = core.getXPosition();
                     core.setRelativeXYPosition(stageXY, xTarget, yTarget);
                     core.waitForDevice(getXYStage());
-                    //double Pos2 = core.getYPosition();
-                    //double PosD = Pos2 - Pos1;
-                    //ReportingUtils.showMessage(Double.toString(PosD));
+                    //Point2D.Double Position = core.getXYStagePosition(stageXY);
+                    //double Pos2 = core.getXPosition();
+                    //double Move = Pos2 - Pos1;
+                    //ReportingUtils.showMessage(Double.toString(Move) + ", " + Double.toString(xTarget));
                 }
                 catch(Exception e){ // Guards against timeout hard-fails 22106 JE
                     core.stop(stageXY);
