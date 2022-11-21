@@ -412,8 +412,9 @@ public class DriftCorrection extends Observable implements Runnable {
                         */
                         //if (Math.abs(xyDrift.x) < 0.023) xyDrift.x=0;
                         //if (Math.abs(xyDrift.y) < 0.023) xyDrift.y=0;
-                        if((Lp!=0 || Li!=0) && (Math.abs(xyMove.x)>=0.01 || Math.abs(xyMove.y)>=0.01)) MoveSuccess = hardwareManager.moveXYStage(xyMove);
-                        else MoveSuccess = false;
+                        MoveSuccess = hardwareManager.moveXYStage(xyMove);
+                        //if((Lp!=0 || Li!=0) && (Math.abs(xyMove.x)>=0.01 || Math.abs(xyMove.y)>=0.01)) MoveSuccess = hardwareManager.moveXYStage(xyMove);
+                        //else MoveSuccess = false;
                     }
 
                     // Updates Position list used for Multi Dimentional Acquisition
