@@ -344,9 +344,6 @@ public class DriftCorrection extends Observable implements Runnable {
                     // A moving image will have the peak shifted in relation to the center
                     // We subtract the rawCenter from the image center to obtain the drift
                     
-                    double oldxErr = xyError.x;
-                    double oldyErr = xyError.y;
-                    
 
                     xErr = currentCenter[0]  - imCentx;
                     yErr = currentCenter[1]  - imCenty;
@@ -355,9 +352,6 @@ public class DriftCorrection extends Observable implements Runnable {
                     
                     Point2D.Double xyError = new Point2D.Double(xErr,-yErr);
                     
-                    double xMiss = x - (oldxErr - xyError.x);
-                    double yMiss = y - (oldyErr - xyError.y);
-
                     if (driftData.getSwitchXY()){
                         xyError.x = yErr;
                         xyError.y = -xErr;
@@ -377,8 +371,8 @@ public class DriftCorrection extends Observable implements Runnable {
                     y = 0;
 
                     if (correctionMode == XY || correctionMode == XYZ){
-                        x = Lp*xyError.x + Li*xMiss; // Li*xErrSum;
-                        y = Lp*xyError.y + Li*yMiss; // Li*yErrSum;
+                        x = Lp*xyError.x + Li*xErrSum;
+                        y = Lp*xyError.y + Li*yErrSum;
                     }
                     
                     oldTime = getTimeElapsed(); // time of current loop (store for next loop iteration)
