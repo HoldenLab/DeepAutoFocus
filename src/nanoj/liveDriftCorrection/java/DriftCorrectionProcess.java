@@ -166,7 +166,7 @@ public class DriftCorrectionProcess implements Measurements {
         if (Math.abs(PeakY-ycenter) < 2)PeakY = ycenter;
         int offset = 5;
         int size = 11;
-        /*
+        
         if (Math.abs(PeakX-xcenter)>3 || Math.abs(PeakY-ycenter)>3){
             x = PeakX - offset;
             y = PeakY - offset;
@@ -177,10 +177,10 @@ public class DriftCorrectionProcess implements Measurements {
             x = xcenter - offset;
             y = ycenter - offset;
         }
-        */
         
-        x = PeakX - offset;
-        y = PeakY - offset;
+        
+        //x = PeakX - offset;
+        //y = PeakY - offset;
         
         CCmap.setRoi(x,y, size,size);
         FloatProcessor region = CCmap.crop().convertToFloatProcessor();
