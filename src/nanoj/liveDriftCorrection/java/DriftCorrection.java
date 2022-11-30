@@ -101,6 +101,7 @@ public class DriftCorrection extends Observable implements Runnable {
     private double HeightRatio = 0; // 220131 JE 
     private boolean StartMDA = false; // 221025 JE
     private double WaitLeft = 0; // 221025 JE
+    private int MeasNum = 3; // 221130 JE
     
     private double refCCbottomMidMax = 0; // 220201 JE
     private double refCCtopMidMax = 0; // 220201 JE
@@ -271,87 +272,57 @@ public class DriftCorrection extends Observable implements Runnable {
                             UpdateTime = getTimeElapsed() + refUpdate;
                         }
                         
-                        ImageProcessor ImageT = snapAndProcess();
-                        //ImageProcessor Image1 = snapAndProcess();
-                        //ImageProcessor Image2 = snapAndProcess();
-                        //ImageProcessor ImageT = ImageCalculator.add(Image1,Image2);
-                        //ImageT.multiply(0.5);
-                        resultStack = CrossCorrelationMap.calculateCrossCorrelationMap(ImageT, driftData.getReferenceStack(), true);
-                        driftData.setResultMap(resultStack);
+                        PV = 0;
+                        currentCenter[0] = 0;
+                        currentCenter[1] = 0;
+                        for(int i = 0; i < MeasNum; i++) { // Loop to average multiple position measurements for each correction 221130 JE
+                            
+                            ImageProcessor ImageT = snapAndProcess();
+                            resultStack = CrossCorrelationMap.calculateCrossCorrelationMap(ImageT, driftData.getReferenceStack(), true);
+                            driftData.setResultMap(resultStack);
 
-                        // Measure XYZ drift
-                        FloatProcessor ccSliceBottom = resultStack.getProcessor(3).convertToFloatProcessor();
-                        ccSliceMiddle = resultStack.getProcessor(2).convertToFloatProcessor();
-                        FloatProcessor ccSliceTop = resultStack.getProcessor(1).convertToFloatProcessor();
+                            // Measure XYZ drift
+                            FloatProcessor ccSliceBottom = resultStack.getProcessor(3).convertToFloatProcessor();
+                            ccSliceMiddle = resultStack.getProcessor(2).convertToFloatProcessor();
+                            FloatProcessor ccSliceTop = resultStack.getProcessor(1).convertToFloatProcessor();
                         
-                        //double MedianT = ImageStatistics.getStatistics(ImageT).median;
+                            //double MedianT = ImageStatistics.getStatistics(ImageT).median;
                         
-                        // offset maxima because minima not at zero
-                        //double ccSliceBottomMax = ccSliceBottom.getMax();
-                        //double ccSliceTopMax = ccSliceTop.getMax();
-                        //double ccSliceMiddleMax = ccSliceMiddle.getMax();
+                            // offset maxima because minima not at zero
+                            //double ccSliceBottomMax = ccSliceBottom.getMax();
+                            //double ccSliceTopMax = ccSliceTop.getMax();
+                            //double ccSliceMiddleMax = ccSliceMiddle.getMax();
 
-                        //double ccSliceBottomMax = processor.CenterHeightFind2(ccSliceBottom); // 220131 JE
-                        //double ccSliceTopMax = processor.CenterHeightFind2(ccSliceTop); // 220131 JE
-                        //double ccSliceMiddleMax = processor.CenterHeightFind2(ccSliceMiddle); // 220131 JE
+                            //double ccSliceBottomMax = processor.CenterHeightFind2(ccSliceBottom); // 220131 JE
+                            //double ccSliceTopMax = processor.CenterHeightFind2(ccSliceTop); // 220131 JE
+                            //double ccSliceMiddleMax = processor.CenterHeightFind2(ccSliceMiddle); // 220131 JE
 
-                        Peak = processor.PickPlane(resultStack);
+                            Peak = processor.PickPlane(resultStack);
 
-                        double ccSliceBottomMax = processor.CenterHeightFind3(ccSliceBottom, Peak); // 220926 JE
-                        double ccSliceTopMax = processor.CenterHeightFind3(ccSliceTop, Peak); // 220926 JE
-                        double ccSliceMiddleMax = processor.CenterHeightFind3(ccSliceMiddle, Peak); // 220926 JE
+                            double ccSliceBottomMax = processor.CenterHeightFind3(ccSliceBottom, Peak); // 220926 JE
+                            double ccSliceTopMax = processor.CenterHeightFind3(ccSliceTop, Peak); // 220926 JE
+                            double ccSliceMiddleMax = processor.CenterHeightFind3(ccSliceMiddle, Peak); // 220926 JE
 
-                        Top = (ccSliceTopMax/refCCTopTopMax); // 220131 JE
-                        Bottom = (ccSliceBottomMax/refCCBottomBottomMax); // 220131 JE
-                        Middle = (ccSliceMiddleMax/refCCmidMidMax); // 220131 JE
+                            Top = (ccSliceTopMax/refCCTopTopMax); // 220131 JE
+                            Bottom = (ccSliceBottomMax/refCCBottomBottomMax); // 220131 JE
+                            Middle = (ccSliceMiddleMax/refCCmidMidMax); // 220131 JE
                         
-                        PV = (Top - Bottom) / (Middle + 0.6);//(MedianT/refmiddleMedian); // eq 5 in McGorty et al. 2013 // 220131 JE
+                            double imPV = (Top - Bottom) / (Middle + 0.6);//(MedianT/refmiddleMedian); // eq 5 in McGorty et al. 2013 // 220131 JE
+                            PV = PV + imPV;
 
-                        //PV = (ccSliceTopMax - ccSliceBottomMax) / ccSliceMiddleMax; // eq 5 in McGorty et al. 2013
+                            //PV = (ccSliceTopMax - ccSliceBottomMax) / ccSliceMiddleMax; // eq 5 in McGorty et al. 2013
                         
-                        int Plane = (int) Peak[2];
-                        currentCenter = processor.PeakFind2(resultStack.getProcessor(Plane).convertToFloatProcessor(), Peak); // 221012 JE
+                            int Plane = (int) Peak[2];
+                            double[] imageCenter = processor.PeakFind2(resultStack.getProcessor(Plane).convertToFloatProcessor(), Peak); // 221012 JE
+                            currentCenter[0] = currentCenter[0] + imageCenter[0];
+                            currentCenter[1] = currentCenter[1] + imageCenter[1];
+                        }
                         
-                        ///////////////////////////////////////
-                        
-                        ImageProcessor Image2 = snapAndProcess();
-                        //ImageProcessor Image1 = snapAndProcess();
-                        //ImageProcessor Image2 = snapAndProcess();
-                        //ImageProcessor ImageT = ImageCalculator.add(Image1,Image2);
-                        //ImageT.multiply(0.5);
-                        resultStack = CrossCorrelationMap.calculateCrossCorrelationMap(Image2, driftData.getReferenceStack(), true);
-                        driftData.setResultMap(resultStack);
-
-                        // Measure XYZ drift
-                        ccSliceBottom = resultStack.getProcessor(3).convertToFloatProcessor();
-                        ccSliceMiddle = resultStack.getProcessor(2).convertToFloatProcessor();
-                        ccSliceTop = resultStack.getProcessor(1).convertToFloatProcessor();
-
-                        Peak = processor.PickPlane(resultStack);
-
-                        ccSliceBottomMax = processor.CenterHeightFind3(ccSliceBottom, Peak); // 220926 JE
-                        ccSliceTopMax = processor.CenterHeightFind3(ccSliceTop, Peak); // 220926 JE
-                        ccSliceMiddleMax = processor.CenterHeightFind3(ccSliceMiddle, Peak); // 220926 JE
-
-                        Top = (ccSliceTopMax/refCCTopTopMax); // 220131 JE
-                        Bottom = (ccSliceBottomMax/refCCBottomBottomMax); // 220131 JE
-                        Middle = (ccSliceMiddleMax/refCCmidMidMax); // 220131 JE
-                        
-                        double PV2 = (Top - Bottom) / (Middle + 0.6);//(MedianT/refmiddleMedian); // eq 5 in McGorty et al. 2013 // 220131 JE
-
-                        //PV = (ccSliceTopMax - ccSliceBottomMax) / ccSliceMiddleMax; // eq 5 in McGorty et al. 2013
-                        
-                        Plane = (int) Peak[2];
-                        double[] currentCenter2 = processor.PeakFind2(resultStack.getProcessor(Plane).convertToFloatProcessor(), Peak); // 221012 JE
-                        
-                        currentCenter[0] = (currentCenter[0] + currentCenter2[0])/2;
-                        currentCenter[1] = (currentCenter[1] + currentCenter2[1])/2;
-                        PV = (PV + PV2)/2;
-                        
-                        ///////////////////////////////////////////////////////
+                        PV = PV/MeasNum;
+                        currentCenter[0] = currentCenter[0]/MeasNum;
+                        currentCenter[1] = currentCenter[1]/MeasNum;
                         
                         HeightRatio = Math.max(Top,Math.max(Middle,Bottom));
-                        
                     }
                     
                     // XY drift correction ONLY 201230 kw
