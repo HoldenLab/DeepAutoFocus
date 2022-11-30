@@ -162,21 +162,21 @@ public class DriftCorrectionProcess implements Measurements {
         int PeakY = (int) Peak[1];
         int xcenter = CCmap.getWidth()/2;
         int ycenter = CCmap.getHeight()/2;
-        if (Math.abs(PeakX-xcenter) < 2)PeakX = xcenter;
-        if (Math.abs(PeakY-ycenter) < 2)PeakY = ycenter;
+        if (Math.abs(PeakX-xcenter) < 3)PeakX = xcenter;
+        if (Math.abs(PeakY-ycenter) < 3)PeakY = ycenter;
         int offset = 5;
-        int size = 11;
+        int size = 10;
         
-        if (Math.abs(PeakX-xcenter)>3 || Math.abs(PeakY-ycenter)>3){
-            x = PeakX - offset;
-            y = PeakY - offset;
+        //if (Math.abs(PeakX-xcenter)>3 || Math.abs(PeakY-ycenter)>3){
+        x = PeakX - offset;
+        y = PeakY - offset;
             //x = xcenter - offset;
             //y = ycenter - offset;
-        }
-        else{
-            x = xcenter - offset;
-            y = ycenter - offset;
-        }
+        //}
+        //else{
+        //    x = xcenter - offset;
+        //    y = ycenter - offset;
+        //}
         
         
         //x = PeakX - offset;
@@ -244,8 +244,8 @@ public class DriftCorrectionProcess implements Measurements {
         int CenterY = (int) Center[1];
         if (Math.abs(CenterX-image.getWidth()/2) < 2) CenterX = image.getWidth()/2;
         if (Math.abs(CenterY-image.getHeight()/2) < 2) CenterY = image.getHeight()/2;
-        int offset = 1;
-        int size = 3;
+        int offset = 2;
+        int size = 4;
         int x = CenterX - offset;
         int y = CenterY - offset;
         image.setRoi(x,y, size, size);
