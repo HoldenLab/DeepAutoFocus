@@ -75,7 +75,7 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
         setConfigFileLocation(config);
     }
     
-    public void moveFocusStageInSteps(int target) throws Exception {
+    public void moveFocusStageInSteps(double target) throws Exception {
         moveFocusStage(target*getStepSize());
     }
     

@@ -210,13 +210,19 @@ public class DriftCorrection extends Observable implements Runnable {
                             // Take picture at current position, filter, clip and add to image stack
                             hardwareManager.moveXYStage(new Point2D.Double(0,0)); // give xy stage oppertunity to reset 220908 JE
                             refStack.addSlice(MIDDLE, snapAndProcess());
+                            
+                            hardwareManager.moveFocusStageInSteps(0.25);
+                            ImageProcessor MidTop = snapAndProcess();
                         
                             // Move one stepSize above focus, snap and add to image stack
-                            hardwareManager.moveFocusStageInSteps(1);
+                            hardwareManager.moveFocusStageInSteps(0.75);
                             refStack.addSlice(TOP, snapAndProcess(), 0);
+                            
+                            hardwareManager.moveFocusStageInSteps(-1.25);
+                            ImageProcessor MidBottom = snapAndProcess();
 
                             // Move two stepSizes below the focus, snap and add to image stack
-                            hardwareManager.moveFocusStageInSteps(-2);
+                            hardwareManager.moveFocusStageInSteps(-0.75);
                             refStack.addSlice(BOTTOM, snapAndProcess());
 
                             // Move back to original position
@@ -323,6 +329,8 @@ public class DriftCorrection extends Observable implements Runnable {
                         currentCenter[1] = currentCenter[1]/MeasNum;
                         
                         HeightRatio = Math.max(Top,Math.max(Middle,Bottom));
+                        
+                        
                     }
                     
                     // XY drift correction ONLY 201230 kw
