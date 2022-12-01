@@ -202,7 +202,7 @@ public class DriftCorrectionProcess implements Measurements {
         xCM /= sSum; yCM /= sSum;
         xCM += x; yCM += y;
         
-        return new double[] {xCM, yCM};       
+        return new double[] {xCM, yCM};
     }
     
     public double CenterHeightFind(FloatProcessor image){ // 220131 JE
