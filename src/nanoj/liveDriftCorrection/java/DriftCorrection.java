@@ -577,6 +577,11 @@ public class DriftCorrection extends Observable implements Runnable {
     public void setLi(double Li){
         this.Li = Li;
     }
+    
+    // added 220118 JE
+    public void setMeasNum(int MeasNum){
+        this.MeasNum = MeasNum;
+    }
 
     public double getThreshold() {
         return threshold;

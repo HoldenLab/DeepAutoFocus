@@ -98,7 +98,7 @@ public class DriftCorrectionProcess implements Measurements {
     public FloatProcessor clip(FloatProcessor image) {
         int width = image.getWidth() - edgeClip*2;
         int height = image.getHeight() - edgeClip*2;
-        image.setRoi(edgeClip,edgeClip, width, height);
+        image.setRoi(edgeClip,edgeClip, width-1, height-1);
         return image.crop().convertToFloatProcessor();
     }
 
@@ -165,7 +165,7 @@ public class DriftCorrectionProcess implements Measurements {
         if (Math.abs(PeakX-xcenter) < 3)PeakX = xcenter;
         if (Math.abs(PeakY-ycenter) < 3)PeakY = ycenter;
         int offset = 5;
-        int size = 10;
+        int size = 11;
         
         //if (Math.abs(PeakX-xcenter)>3 || Math.abs(PeakY-ycenter)>3){
         x = PeakX - offset;
@@ -244,8 +244,8 @@ public class DriftCorrectionProcess implements Measurements {
         int CenterY = (int) Center[1];
         if (Math.abs(CenterX-image.getWidth()/2) < 2) CenterX = image.getWidth()/2;
         if (Math.abs(CenterY-image.getHeight()/2) < 2) CenterY = image.getHeight()/2;
-        int offset = 2;
-        int size = 4;
+        int offset = 1;
+        int size = 3;
         int x = CenterX - offset;
         int y = CenterY - offset;
         image.setRoi(x,y, size, size);
