@@ -211,30 +211,28 @@ public class DriftCorrection extends Observable implements Runnable {
                             hardwareManager.moveXYStage(new Point2D.Double(0,0)); // give xy stage oppertunity to reset 220908 JE
                             refStack.addSlice(MIDDLE, snapAndProcess());
                             
-                            hardwareManager.moveFocusStageInSteps(0.2);
-                            FloatProcessor MidTop = snapAndProcess();
+                            hardwareManager.moveFocusStageInSteps(0.25);
+                            ImageProcessor MidTop = snapAndProcess();
                         
                             // Move one stepSize above focus, snap and add to image stack
-                            hardwareManager.moveFocusStageInSteps(0.8);
+                            hardwareManager.moveFocusStageInSteps(0.75);
                             refStack.addSlice(TOP, snapAndProcess(), 0);
                             
-                            hardwareManager.moveFocusStageInSteps(-1.2);
-                            FloatProcessor MidBottom = snapAndProcess();
+                            hardwareManager.moveFocusStageInSteps(-1.25);
+                            ImageProcessor MidBottom = snapAndProcess();
 
                             // Move two stepSizes below the focus, snap and add to image stack
-                            hardwareManager.moveFocusStageInSteps(-0.8);
+                            hardwareManager.moveFocusStageInSteps(-0.75);
                             refStack.addSlice(BOTTOM, snapAndProcess());
 
                             // Move back to original position
                             hardwareManager.moveFocusStageInSteps(1);
                             hardwareManager.moveXYStage(new Point2D.Double(0,0)); // give xy stage oppertunity to reset 220908 JE
 
+                            //refStackCC = CrossCorrelationMap.calculateCrossCorrelationMap(snapAndProcess(), refStack, true);
                             refStackCC = CrossCorrelationMap.calculateCrossCorrelationMap(refStack.getProcessor(2), refStack, true); // 220131 JE
                             refTopTopCC = CrossCorrelationMap.calculateCrossCorrelationMap(refStack.getProcessor(1), refStack.getProcessor(1), true); // 220131 JE
                             refBottomBottomCC = CrossCorrelationMap.calculateCrossCorrelationMap(refStack.getProcessor(3), refStack.getProcessor(3), true); // 220131 JE
-
-                            ImageStack MidTopCC = CrossCorrelationMap.calculateCrossCorrelationMap(MidTop, refStack, true); // 221201 JE
-                            ImageStack MidBottomCC = CrossCorrelationMap.calculateCrossCorrelationMap(MidBottom, refStack, true); // 221201 JE
 
                             FloatProcessor refCCbottom = refStackCC.getProcessor(3).convertToFloatProcessor();
                             FloatProcessor refCCmiddle = refStackCC.getProcessor(2).convertToFloatProcessor();
@@ -278,28 +276,52 @@ public class DriftCorrection extends Observable implements Runnable {
                             imCentx = currentCenter[0];
                             imCenty = currentCenter[1];
                             UpdateTime = getTimeElapsed() + refUpdate;
-
-                            ////////////////////////////////////
-                            double[] MidTopShift = CalculatePeakValues(MidTopCC.getProcessor(Plane), refStack, refCCTopTopMax, refCCBottomBottomMax, refCCmidMidMax);
-                            double[] MidBottomShift = CalculatePeakValues(MidBottomCC.getProcessor(Plane), refStack, refCCTopTopMax, refCCBottomBottomMax, refCCmidMidMax);
-
-                            MidTopShift[0] = MidTopShift[0] - currentCenter[0];
-                            MidTopShift[1] = MidTopShift[1] - currentCenter[1];
-                            MidTopShift[2] = SP - MidTopShift[2]
-                            MidBottomShift[0] = MidBottomShift[0] - currentCenter[0];
-                            MidBottomShift[1] = MidBottomShift[1] - currentCenter[1];
-                            MidBottomShift[2] = SP - MidBottomShift[2]
-                            ////////////////////////////////////
                         }
                         
                         PV = 0;
                         currentCenter[0] = 0;
                         currentCenter[1] = 0;
                         for(int i = 0; i < MeasNum; i++) { // Loop to average multiple position measurements for each correction 221130 JE
-                            double[] imagePeak = CalculatePeakValues(snapAndProcess(), refStack, refCCTopTopMax, refCCBottomBottomMax, refCCmidMidMax);
-                            currentCenter[0] = currentCenter[0] + imagePeak[0];
-                            currentCenter[1] = currentCenter[1] + imagePeak[1];
-                            PV = PV + imagePeak[2]
+                            
+                            ImageProcessor ImageT = snapAndProcess();
+                            resultStack = CrossCorrelationMap.calculateCrossCorrelationMap(ImageT, driftData.getReferenceStack(), true);
+                            driftData.setResultMap(resultStack);
+
+                            // Measure XYZ drift
+                            FloatProcessor ccSliceBottom = resultStack.getProcessor(3).convertToFloatProcessor();
+                            ccSliceMiddle = resultStack.getProcessor(2).convertToFloatProcessor();
+                            FloatProcessor ccSliceTop = resultStack.getProcessor(1).convertToFloatProcessor();
+                        
+                            //double MedianT = ImageStatistics.getStatistics(ImageT).median;
+                        
+                            // offset maxima because minima not at zero
+                            //double ccSliceBottomMax = ccSliceBottom.getMax();
+                            //double ccSliceTopMax = ccSliceTop.getMax();
+                            //double ccSliceMiddleMax = ccSliceMiddle.getMax();
+
+                            //double ccSliceBottomMax = processor.CenterHeightFind2(ccSliceBottom); // 220131 JE
+                            //double ccSliceTopMax = processor.CenterHeightFind2(ccSliceTop); // 220131 JE
+                            //double ccSliceMiddleMax = processor.CenterHeightFind2(ccSliceMiddle); // 220131 JE
+
+                            Peak = processor.PickPlane(resultStack);
+
+                            double ccSliceBottomMax = processor.CenterHeightFind3(ccSliceBottom, Peak); // 220926 JE
+                            double ccSliceTopMax = processor.CenterHeightFind3(ccSliceTop, Peak); // 220926 JE
+                            double ccSliceMiddleMax = processor.CenterHeightFind3(ccSliceMiddle, Peak); // 220926 JE
+
+                            Top = (ccSliceTopMax/refCCTopTopMax); // 220131 JE
+                            Bottom = (ccSliceBottomMax/refCCBottomBottomMax); // 220131 JE
+                            Middle = (ccSliceMiddleMax/refCCmidMidMax); // 220131 JE
+                        
+                            double imPV = (Top - Bottom) / (Middle + 0.6);//(MedianT/refmiddleMedian); // eq 5 in McGorty et al. 2013 // 220131 JE
+                            PV = PV + imPV;
+
+                            //PV = (ccSliceTopMax - ccSliceBottomMax) / ccSliceMiddleMax; // eq 5 in McGorty et al. 2013
+                        
+                            int Plane = (int) Peak[2];
+                            double[] imageCenter = processor.PeakFind2(resultStack.getProcessor(Plane).convertToFloatProcessor(), Peak); // 221012 JE
+                            currentCenter[0] = currentCenter[0] + imageCenter[0];
+                            currentCenter[1] = currentCenter[1] + imageCenter[1];
                         }
                         
                         PV = PV/MeasNum;
@@ -307,6 +329,8 @@ public class DriftCorrection extends Observable implements Runnable {
                         currentCenter[1] = currentCenter[1]/MeasNum;
                         
                         HeightRatio = Math.max(Top,Math.max(Middle,Bottom));
+                        
+                        
                     }
                     
                     // XY drift correction ONLY 201230 kw
@@ -328,6 +352,7 @@ public class DriftCorrection extends Observable implements Runnable {
                         //double[] currentCenter = processor.PeakFind(ccSliceMiddle);
                         //imCentx = currentCenter[0];
                         //imCenty = currentCenter[1];
+                       
                     }
                     
                     
@@ -572,30 +597,5 @@ public class DriftCorrection extends Observable implements Runnable {
 
     public void setThreshold(double threshold) {
         this.threshold = threshold;
-    }
-
-    private double[] CalculatePeakValues(FloatProcessor Image, ImageStack refStack, double refCCTopTopMax, double refCCBottomBottomMax, double refCCmidMidMax){
-        ImageStack ccStack = CrossCorrelationMap.calculateCrossCorrelationMap(Image, refStack, true);
-
-        FloatProcessor ccSliceBottom = ccStack.getProcessor(3).convertToFloatProcessor();
-        FloatProcessor ccSliceMiddle = ccStack.getProcessor(2).convertToFloatProcessor();
-        FloatProcessor ccSliceTop = ccStack.getProcessor(1).convertToFloatProcessor();
-
-        float[] Peak = processor.PickPlane(ccStack);
-
-        double ccSliceBottomMax = processor.CenterHeightFind3(ccSliceBottom, Peak); // 220926 JE
-        double ccSliceTopMax = processor.CenterHeightFind3(ccSliceTop, Peak); // 220926 JE
-        double ccSliceMiddleMax = processor.CenterHeightFind3(ccSliceMiddle, Peak); // 220926 JE
-
-        double Top = (ccSliceTopMax/refCCTopTopMax); // 220131 JE
-        double Bottom = (ccSliceBottomMax/refCCBottomBottomMax); // 220131 JE
-        double Middle = (ccSliceMiddleMax/refCCmidMidMax); // 220131 JE
-                        
-        double PV = (Top - Bottom) / (Middle + 0.6);//(MedianT/refmiddleMedian); // eq 5 in McGorty et al. 2013 // 220131 JE
-                        
-        int Plane = (int) Peak[2];
-        double[] currentCenter = processor.PeakFind2(resultStack.getProcessor(Plane).convertToFloatProcessor(), Peak); // 221012 JE
-        
-        return new double[] {currentCenter[0], currentCenter[0], PV}; 
-    }
+    }  
 }
