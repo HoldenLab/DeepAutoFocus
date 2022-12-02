@@ -211,18 +211,18 @@ public class DriftCorrection extends Observable implements Runnable {
                             hardwareManager.moveXYStage(new Point2D.Double(0,0)); // give xy stage oppertunity to reset 220908 JE
                             refStack.addSlice(MIDDLE, snapAndProcess());
                             
-                            hardwareManager.moveFocusStageInSteps(0.25);
+                            hardwareManager.moveFocusStageInSteps(0.2);
                             ImageProcessor MidTop = snapAndProcess();
                         
                             // Move one stepSize above focus, snap and add to image stack
-                            hardwareManager.moveFocusStageInSteps(0.75);
+                            hardwareManager.moveFocusStageInSteps(0.8);
                             refStack.addSlice(TOP, snapAndProcess(), 0);
                             
-                            hardwareManager.moveFocusStageInSteps(-1.25);
+                            hardwareManager.moveFocusStageInSteps(-1.2);
                             ImageProcessor MidBottom = snapAndProcess();
 
                             // Move two stepSizes below the focus, snap and add to image stack
-                            hardwareManager.moveFocusStageInSteps(-0.75);
+                            hardwareManager.moveFocusStageInSteps(-0.8);
                             refStack.addSlice(BOTTOM, snapAndProcess());
 
                             // Move back to original position
@@ -276,6 +276,20 @@ public class DriftCorrection extends Observable implements Runnable {
                             imCentx = currentCenter[0];
                             imCenty = currentCenter[1];
                             UpdateTime = getTimeElapsed() + refUpdate;
+                            
+                            //////////////////////////////////////////////////
+                            ImageStack MidTopStackCC = CrossCorrelationMap.calculateCrossCorrelationMap(MidTop, refStack, true);
+                            ImageStack MidBottomStackCC = CrossCorrelationMap.calculateCrossCorrelationMap(MidBottom, refStack, true);
+                            
+                            Peak = processor.PickPlane(MidTopStackCC);
+                            currentCenter = processor.PeakFind2(MidTopStackCC.getProcessor(Plane).convertToFloatProcessor(), Peak); // 221202 JE
+                            double MidTopShift = (currentCenter[0] - imCentx) / (0.2*hardwareManager.getStepSize());
+                                                       
+                            Peak = processor.PickPlane(MidBottomStackCC);
+                            currentCenter = processor.PeakFind2(MidBottomStackCC.getProcessor(Plane).convertToFloatProcessor(), Peak); // 221202 JE
+                            double MidBottomShift = (currentCenter[0] - imCenty) / (0.2*hardwareManager.getStepSize());
+                            
+                            //////////////////////////////////////////////////
                         }
                         
                         PV = 0;
