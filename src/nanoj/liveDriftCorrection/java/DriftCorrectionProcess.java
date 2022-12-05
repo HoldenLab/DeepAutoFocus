@@ -194,13 +194,13 @@ public class DriftCorrectionProcess implements Measurements {
             for (int i = 0; i < region.getWidth(); i++) {
                 v = region.getf(i, j);
                 //if (v < 0) continue;
-                xCM += i * v;
-                yCM += j * v;
+                xCM += (i+1) * v;
+                yCM += (j+1) * v;
                 sSum += v;
             }
         }
         xCM /= sSum; yCM /= sSum;
-        xCM += x; yCM += y;
+        xCM += (x-1); yCM += (y-1);
         
         return new double[] {xCM, yCM};
     }
