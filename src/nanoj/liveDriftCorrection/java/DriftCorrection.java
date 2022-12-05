@@ -580,9 +580,17 @@ public class DriftCorrection extends Observable implements Runnable {
         this.refUpdate = refUpdate*60000; //convert box value in mins to useful value in ms 221021 JE
     }
     
+    public double getRefUpdate() {
+        return refUpdate;
+    }
+    
     // added 190404 kw
     public void setZp(double Zp){
         this.Zp = Zp;
+    }
+    
+    public double getZp(){
+        return Zp;
     }
     
     // added 220110 kw
@@ -590,14 +598,26 @@ public class DriftCorrection extends Observable implements Runnable {
         this.Zi = Zi;
     }
     
+    public double getZi(){
+        return Zi;
+    }
+    
     // added 220118 JE
     public void setLp(double Lp){
         this.Lp = Lp;
     }
     
+    public double getLp(){
+        return Lp;
+    }
+    
     // added 220118 JE
     public void setLi(double Li){
         this.Li = Li;
+    }
+    
+    public double getLi(){
+        return Li;
     }
     
     // added 220118 JE

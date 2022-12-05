@@ -72,6 +72,9 @@ public class DriftCorrectionData {
     public static final String CLOSING_FILE_ERROR = "Error when trying to close drift data file.";
     public static final String DATA_MISMATCH_ERROR = "Data is not of the correct type, it is actually: ";
     private static final String procedure_succeeded = "The procedure has succeeded!";
+    
+    private DriftCorrection driftCorrection;
+    private DriftCorrectionHardware hardwareManager;
 
     DriftCorrectionData() {
         resultMap.setTitle(MAP_NAME);
@@ -366,6 +369,9 @@ public class DriftCorrectionData {
             if (isShowPlotTrue()) showPlots();
             if (isSavePlotsTrue()) {
                 double z = zDrift.get(zDrift.size()-1);
+                if (xDrift.size() <= 2) appendDataToFile("Zp" + "," + "Zi" + "," + "Step size (nm) for Z correction" + "," + "Time between reference updates (min),");
+                if (xDrift.size() <= 2) appendDataToFile(Double.toString(driftCorrection.getZp()) + "," + Double.toString(driftCorrection.getZi()) + "," + Double.toString(hardwareManager.getStepSize()) + "," + Double.toString(driftCorrection.getRefUpdate()));
+                if (xDrift.size() <= 2) appendDataToFile("");
                 if (zDrift.size() <= 2) appendDataToFile("timeStamp (ms)" + "," + "z" + "," + "MDA");
                 appendDataToFile(timeStamp + "," + z + "," + getStartMDA());
             }
@@ -383,6 +389,9 @@ public class DriftCorrectionData {
             if (isSavePlotsTrue()) {
                 double x = xDrift.get(xDrift.size() - 1);
                 double y = yDrift.get(yDrift.size() - 1);
+                if (xDrift.size() <= 2) appendDataToFile("Lp" + "," + "Li" + "," + "Step size (nm) for Z correction" + "," + "Time between reference updates (min),");
+                if (xDrift.size() <= 2) appendDataToFile(Double.toString(driftCorrection.getLp()) + "," + Double.toString(driftCorrection.getLi()) + "," + Double.toString(hardwareManager.getStepSize()) + "," + Double.toString(driftCorrection.getRefUpdate()));
+                if (xDrift.size() <= 2) appendDataToFile("");
                 if (xDrift.size() <= 2) appendDataToFile("time (ms)" + "," + "x (microns)" + "," + "y (microns)" + "," + "MDA");
                 appendDataToFile(timeStamp + "," + x + ", " + y + "," + getStartMDA());
             }
@@ -408,6 +417,9 @@ public class DriftCorrectionData {
                 double x = xDrift.get(xDrift.size() - 1);
                 double y = yDrift.get(yDrift.size() - 1);
                 double z = zDrift.get(zDrift.size() - 1);
+                if (xDrift.size() <= 2) appendDataToFile("Zp" + "," + "Zi" + "," + "Lp" + "," + "Li" + "," + "Step size (nm) for Z correction" + "," + "Time between reference updates (min),");
+                if (xDrift.size() <= 2) appendDataToFile(Double.toString(driftCorrection.getZp()) + "," + Double.toString(driftCorrection.getZi()) + "," + Double.toString(driftCorrection.getLp()) + "," + Double.toString(driftCorrection.getLi()) + "," + Double.toString(hardwareManager.getStepSize()) + "," + Double.toString(driftCorrection.getRefUpdate()));
+                if (xDrift.size() <= 2) appendDataToFile("");
                 if (xDrift.size() <= 2) appendDataToFile("timeStamp (ms)" + "," + "x (um)" + "," + "y (um)" + "," + "z" + "," + "MDA");
                 appendDataToFile(timeStamp + "," + x + "," + y + "," + z + "," + getStartMDA());
             }
