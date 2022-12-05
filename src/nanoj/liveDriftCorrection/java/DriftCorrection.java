@@ -487,20 +487,20 @@ public class DriftCorrection extends Observable implements Runnable {
                     // Add data //changed to switch statement from ifs 220128 JE
                     switch(correctionMode){
                         case Z:
-                             driftData.addZShift(zDrift, z_err, getTimeElapsed());
+                             driftData.addZShift(zDrift, z_err, getTimeElapsed(), Zp, Zi, refUpdate);
                              break;
                         case XY:
                             if (driftData.Tune){
-                                driftData.addXYshift(xyError.x, xyError.y, getTimeElapsed());
+                                driftData.addXYshift(xyError.x, xyError.y, getTimeElapsed(), Lp, Li, refUpdate);
                             }
-                            else driftData.addXYshift((xyMove.x), (xyMove.y), getTimeElapsed());
+                            else driftData.addXYshift((xyMove.x), (xyMove.y), getTimeElapsed(), Lp, Li, refUpdate);
                             break;
                         case XYZ:
                             if (driftData.Tune){
-                                driftData.addXYZshift(xyError.x, xyError.y, zDrift, z_err, getTimeElapsed());
+                                driftData.addXYZshift(xyError.x, xyError.y, zDrift, z_err, getTimeElapsed(), Zp, Zi, Lp, Li, refUpdate);
                                 //driftData.addXYZshift(xyError.x, zPos, zDrift, z_err, getTimeElapsed());
                             }
-                            else driftData.addXYZshift((xyMove.x), (xyMove.y), zDrift, z_err, getTimeElapsed());
+                            else driftData.addXYZshift((xyMove.x), (xyMove.y), zDrift, z_err, getTimeElapsed(), Zp, Zi, Lp, Li, refUpdate);
                             break;
                     }
 
@@ -580,17 +580,9 @@ public class DriftCorrection extends Observable implements Runnable {
         this.refUpdate = refUpdate*60000; //convert box value in mins to useful value in ms 221021 JE
     }
     
-    public double getRefUpdate() {
-        return refUpdate;
-    }
-    
     // added 190404 kw
     public void setZp(double Zp){
         this.Zp = Zp;
-    }
-    
-    public double getZp(){
-        return Zp;
     }
     
     // added 220110 kw
@@ -598,26 +590,14 @@ public class DriftCorrection extends Observable implements Runnable {
         this.Zi = Zi;
     }
     
-    public double getZi(){
-        return Zi;
-    }
-    
     // added 220118 JE
     public void setLp(double Lp){
         this.Lp = Lp;
     }
     
-    public double getLp(){
-        return Lp;
-    }
-    
     // added 220118 JE
     public void setLi(double Li){
         this.Li = Li;
-    }
-    
-    public double getLi(){
-        return Li;
     }
     
     // added 220118 JE

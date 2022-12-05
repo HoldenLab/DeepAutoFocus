@@ -73,13 +73,13 @@ public class DriftCorrectionData {
     public static final String DATA_MISMATCH_ERROR = "Data is not of the correct type, it is actually: ";
     private static final String procedure_succeeded = "The procedure has succeeded!";
     
-    private DriftCorrection driftCorrection;
-    private DriftCorrectionHardware hardwareManager;
+    private DriftCorrectionHardware hardware;
 
-    DriftCorrectionData() {
+    DriftCorrectionData(DriftCorrectionHardware hardwareManager) {
         resultMap.setTitle(MAP_NAME);
         plotsImage.setTitle(PLOTS_NAME);
         latestImage.setTitle(LIVE_WINDOW_NAME);
+        hardware = hardwareManager;
     }
 
     // Create file
@@ -353,7 +353,7 @@ public class DriftCorrectionData {
         this.zPosition = zPosition;
     }
 
-    synchronized void addZShift(double zShiftPoint, double z_err, double timeStamp) {
+    synchronized void addZShift(double zShiftPoint, double z_err, double timeStamp, double Zp, double Zi, double refUpdate) {
         //if (dataTypeIs() != Z) throw new TypeMismatchException(DATA_MISMATCH_ERROR + dataTypeIs());
         if ( Double.isNaN(zShiftPoint) ) return;
         addTimeStamp(timeStamp);
@@ -369,16 +369,15 @@ public class DriftCorrectionData {
             if (isShowPlotTrue()) showPlots();
             if (isSavePlotsTrue()) {
                 double z = zDrift.get(zDrift.size()-1);
-                if (xDrift.size() <= 2) appendDataToFile("Zp" + "," + "Zi" + "," + "Step size (nm) for Z correction" + "," + "Time between reference updates (min),");
-                if (xDrift.size() <= 2) appendDataToFile(Double.toString(driftCorrection.getZp()) + "," + Double.toString(driftCorrection.getZi()) + "," + Double.toString(hardwareManager.getStepSize()) + "," + Double.toString(driftCorrection.getRefUpdate()));
-                if (xDrift.size() <= 2) appendDataToFile("");
+                if (zDrift.size() <= 2) appendDataToFile("Zp" + "," + "Zi" + "," + "Step size (nm) for Z correction" + "," + "Time between reference updates (min)");
+                if (zDrift.size() <= 2) appendDataToFile(Zp + "," + Zi + "," + hardware.getStepSize()*1000 + "," + refUpdate);
                 if (zDrift.size() <= 2) appendDataToFile("timeStamp (ms)" + "," + "z" + "," + "MDA");
                 appendDataToFile(timeStamp + "," + z + "," + getStartMDA());
             }
         }
     }
 
-    synchronized void addXYshift(double xShiftPoint, double yShiftPoint, double timeStamp) {
+    synchronized void addXYshift(double xShiftPoint, double yShiftPoint, double timeStamp, double Lp, double Li, double refUpdate) {
         //if (dataTypeIs() != XY) throw new TypeMismatchException(DATA_MISMATCH_ERROR + dataTypeIs());
         if ( Double.isNaN(xShiftPoint) || Double.isNaN(yShiftPoint) ) return;
         addTimeStamp(timeStamp);
@@ -389,16 +388,15 @@ public class DriftCorrectionData {
             if (isSavePlotsTrue()) {
                 double x = xDrift.get(xDrift.size() - 1);
                 double y = yDrift.get(yDrift.size() - 1);
-                if (xDrift.size() <= 2) appendDataToFile("Lp" + "," + "Li" + "," + "Step size (nm) for Z correction" + "," + "Time between reference updates (min),");
-                if (xDrift.size() <= 2) appendDataToFile(Double.toString(driftCorrection.getLp()) + "," + Double.toString(driftCorrection.getLi()) + "," + Double.toString(hardwareManager.getStepSize()) + "," + Double.toString(driftCorrection.getRefUpdate()));
-                if (xDrift.size() <= 2) appendDataToFile("");
+                if (xDrift.size() <= 2) appendDataToFile("Lp" + "," + "Li" + "," + "Step size (nm) for Z correction" + "," + "Time between reference updates (min)");
+                if (xDrift.size() <= 2) appendDataToFile(Lp + "," + Li + "," + hardware.getStepSize()*1000 + "," + refUpdate);
                 if (xDrift.size() <= 2) appendDataToFile("time (ms)" + "," + "x (microns)" + "," + "y (microns)" + "," + "MDA");
                 appendDataToFile(timeStamp + "," + x + ", " + y + "," + getStartMDA());
             }
         }
     }
 
-    synchronized void addXYZshift(double xShiftPoint, double yShiftPoint, double zShiftPoint, double z_err, double timeStamp) {
+    synchronized void addXYZshift(double xShiftPoint, double yShiftPoint, double zShiftPoint, double z_err, double timeStamp, double Zp, double Zi, double Lp, double Li, double refUpdate) {
         //if (dataTypeIs() != XYZ) throw new TypeMismatchException(DATA_MISMATCH_ERROR + dataTypeIs());
         if ( Double.isNaN(xShiftPoint) || Double.isNaN(yShiftPoint) || Double.isNaN(zShiftPoint) ) return;
         addTimeStamp(timeStamp);
@@ -417,9 +415,8 @@ public class DriftCorrectionData {
                 double x = xDrift.get(xDrift.size() - 1);
                 double y = yDrift.get(yDrift.size() - 1);
                 double z = zDrift.get(zDrift.size() - 1);
-                if (xDrift.size() <= 2) appendDataToFile("Zp" + "," + "Zi" + "," + "Lp" + "," + "Li" + "," + "Step size (nm) for Z correction" + "," + "Time between reference updates (min),");
-                if (xDrift.size() <= 2) appendDataToFile(Double.toString(driftCorrection.getZp()) + "," + Double.toString(driftCorrection.getZi()) + "," + Double.toString(driftCorrection.getLp()) + "," + Double.toString(driftCorrection.getLi()) + "," + Double.toString(hardwareManager.getStepSize()) + "," + Double.toString(driftCorrection.getRefUpdate()));
-                if (xDrift.size() <= 2) appendDataToFile("");
+                if (xDrift.size() <= 2) appendDataToFile("Zp" + "," + "Zi" + "," + "Lp" + "," + "Li" + "," + "Step size (nm) for Z correction" + "," + "Time between reference updates (min)");
+                if (xDrift.size() <= 2) appendDataToFile(Zp + "," + Zi + "," + Lp + "," + Li + "," + hardware.getStepSize()*1000 + "," + refUpdate);
                 if (xDrift.size() <= 2) appendDataToFile("timeStamp (ms)" + "," + "x (um)" + "," + "y (um)" + "," + "z" + "," + "MDA");
                 appendDataToFile(timeStamp + "," + x + "," + y + "," + z + "," + getStartMDA());
             }

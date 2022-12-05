@@ -179,7 +179,7 @@ public class DriftCorrectionGUI{
     //private ConfiguratorDlg2 configurator;
 
     private DriftCorrectionHardware hardwareManager = new DriftCorrectionHardware(getConfig());
-    private DriftCorrectionData driftData = new DriftCorrectionData();
+    private DriftCorrectionData driftData = new DriftCorrectionData(hardwareManager);
     private DriftCorrectionProcess processor = new DriftCorrectionProcess(driftData);
     private DriftCorrectionCalibration calibrator = new DriftCorrectionCalibration(hardwareManager, processor, driftData);
     private DriftCorrectionBGSub bgSub = new DriftCorrectionBGSub(hardwareManager, processor, driftData);
