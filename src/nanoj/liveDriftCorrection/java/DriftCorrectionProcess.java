@@ -8,7 +8,7 @@ import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import nanoj.core.java.image.calculator.FloatProcessorCalculator;
 import nanoj.core.java.image.analysis.CalculateImageStatistics;
-//import nanoj.core.java.image.drift.EstimateShiftAndTilt;
+import nanoj.core.java.image.drift.EstimateShiftAndTilt;
 import ij.gui.OvalRoi;
 //import ij.process.ImageStatistics;
 //import org.micromanager.internal.utils.ReportingUtils;
@@ -185,6 +185,12 @@ public class DriftCorrectionProcess implements Measurements {
         CCmap.setRoi(x,y, size,size);
         FloatProcessor region = CCmap.crop().convertToFloatProcessor();
         
+        float[] xyFit = EstimateShiftAndTilt.getMaxFindByOptimization(region);
+        double xFit = (double) xyFit[0];
+        double yFit = (double) xyFit[1];
+        xFit += x; yFit += y;
+        return new double[] {xFit, yFit};
+        /*
         double xCM = 0;
         double yCM = 0;
         double v = 0;
@@ -194,15 +200,16 @@ public class DriftCorrectionProcess implements Measurements {
             for (int i = 0; i < region.getWidth(); i++) {
                 v = region.getf(i, j);
                 //if (v < 0) continue;
-                xCM += (i+1) * v;
-                yCM += (j+1) * v;
+                xCM += i * v;
+                yCM += j * v;
                 sSum += v;
             }
         }
         xCM /= sSum; yCM /= sSum;
-        xCM += (x-1); yCM += (y-1);
+        xCM += x; yCM += y;
         
         return new double[] {xCM, yCM};
+        */
     }
     
     public double CenterHeightFind(FloatProcessor image){ // 220131 JE
