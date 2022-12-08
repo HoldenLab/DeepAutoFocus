@@ -220,10 +220,8 @@ public class DriftCorrection extends Observable implements Runnable {
                                 driftData.getReferenceImage().getHeight()
                             );
                             // Take picture at current position, filter, clip and add to image stack
-                            hardwareManager.moveXYStage(new Point2D.Double(0.01,0.01)); // give xy stage oppertunity to reset 220908 JE
-                            java.lang.Thread.sleep(100); // give xy stage oppertunity to complete reset 221208 JE
-                            hardwareManager.moveXYStage(new Point2D.Double(-0.01,-0.01)); // give xy stage oppertunity to reset 220908 JE
-                            java.lang.Thread.sleep(200); // give xy stage oppertunity to complete reset 221208 JE
+                            hardwareManager.moveXYStage(new Point2D.Double(0,0)); // give xy stage oppertunity to reset 220908 JE
+                            java.lang.Thread.sleep(250); // give xy stage oppertunity to complete reset 221208 JE
                             refStack.addSlice(MIDDLE, snapAndProcess());
                         
                             // Move one stepSize above focus, snap and add to image stack
