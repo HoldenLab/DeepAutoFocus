@@ -184,13 +184,13 @@ public class DriftCorrectionProcess implements Measurements {
         
         CCmap.setRoi(x,y, size,size);
         FloatProcessor region = CCmap.crop().convertToFloatProcessor();
-        
+        /*
         float[] xyFit = EstimateShiftAndTilt.getMaxFindByOptimization(region);
         double xFit = (double) xyFit[0];
         double yFit = (double) xyFit[1];
         xFit += x; yFit += y;
         return new double[] {xFit, yFit};
-        /*
+        */
         double xCM = 0;
         double yCM = 0;
         double v = 0;
@@ -208,8 +208,7 @@ public class DriftCorrectionProcess implements Measurements {
         xCM /= sSum; yCM /= sSum;
         xCM += x; yCM += y;
         
-        return new double[] {xCM, yCM};
-        */
+        return new double[] {xCM, yCM};        
     }
     
     public double CenterHeightFind(FloatProcessor image){ // 220131 JE

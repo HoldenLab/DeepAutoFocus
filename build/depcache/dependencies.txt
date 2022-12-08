@@ -18,6 +18,7 @@ java.awt.geom.Point2D
 java.lang.Double
 java.lang.System
 ij.process.ImageProcessor
+org.micromanager.data.DataManager
 [D
 org.micromanager.StagePosition
 java.lang.Runnable

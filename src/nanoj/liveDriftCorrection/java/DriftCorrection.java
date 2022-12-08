@@ -24,6 +24,10 @@ import org.micromanager.PositionListManager;
 import org.micromanager.PositionList;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.StagePosition;
+import org.micromanager.data.ImageJConverter;
+import org.micromanager.data.Image;
+import org.micromanager.data.DataManager;
+import org.micromanager.data.Datastore;
 import nanoj.core.java.image.calculator.ImageCalculator;
 
 public class DriftCorrection extends Observable implements Runnable {
@@ -39,6 +43,9 @@ public class DriftCorrection extends Observable implements Runnable {
     private SequenceSettings SeqSettings;
     private PositionListManager PositionsManager;
     private PositionList Positions;
+    private ImageJConverter IJC;
+    private DataManager DataManager;
+    private Datastore DataStore;
     private int correctionMode = 0;
     
     // added 201230 kw
@@ -49,6 +56,7 @@ public class DriftCorrection extends Observable implements Runnable {
     private ImageProcessor refBottomBottomCC = null; // 220131 JE
     private ImageProcessor resultImage = null;
     private FloatProcessor ccSliceMiddle = null;
+    private Image im = null;
 
     private static final int XYZ = 0;
     private static final int Z = 1;
@@ -123,6 +131,9 @@ public class DriftCorrection extends Observable implements Runnable {
         SeqSettings = MDAManager.getAcquisitionSettings();
         PositionsManager = studio.getPositionListManager();
         Positions = PositionsManager.getPositionList();
+        DataManager = studio.getDataManager();
+        DataStore = DataManager.createRAMDatastore();
+        IJC = DataManager.ij();
     }
 
     @Override
@@ -209,25 +220,20 @@ public class DriftCorrection extends Observable implements Runnable {
                             );
                             // Take picture at current position, filter, clip and add to image stack
                             hardwareManager.moveXYStage(new Point2D.Double(0,0)); // give xy stage oppertunity to reset 220908 JE
+                            java.lang.Thread.sleep(250); // give xy stage oppertunity to complete reset 221208 JE
                             refStack.addSlice(MIDDLE, snapAndProcess());
-                            
-                            hardwareManager.moveFocusStageInSteps(0.2);
-                            ImageProcessor MidTop = snapAndProcess();
                         
                             // Move one stepSize above focus, snap and add to image stack
-                            hardwareManager.moveFocusStageInSteps(0.8);
+                            hardwareManager.moveFocusStageInSteps(1);
                             refStack.addSlice(TOP, snapAndProcess(), 0);
-                            
-                            hardwareManager.moveFocusStageInSteps(-1.2);
-                            ImageProcessor MidBottom = snapAndProcess();
 
                             // Move two stepSizes below the focus, snap and add to image stack
-                            hardwareManager.moveFocusStageInSteps(-0.8);
+                            hardwareManager.moveFocusStageInSteps(-2);
                             refStack.addSlice(BOTTOM, snapAndProcess());
 
                             // Move back to original position
                             hardwareManager.moveFocusStageInSteps(1);
-                            hardwareManager.moveXYStage(new Point2D.Double(0,0)); // give xy stage oppertunity to reset 220908 JE
+                            //hardwareManager.moveXYStage(new Point2D.Double(0,0)); // give xy stage oppertunity to reset 220908 JE
 
                             //refStackCC = CrossCorrelationMap.calculateCrossCorrelationMap(snapAndProcess(), refStack, true);
                             refStackCC = CrossCorrelationMap.calculateCrossCorrelationMap(refStack.getProcessor(2), refStack, true); // 220131 JE
@@ -276,20 +282,6 @@ public class DriftCorrection extends Observable implements Runnable {
                             imCentx = currentCenter[0];
                             imCenty = currentCenter[1];
                             UpdateTime = getTimeElapsed() + refUpdate;
-                            
-                            //////////////////////////////////////////////////
-                            ImageStack MidTopStackCC = CrossCorrelationMap.calculateCrossCorrelationMap(MidTop, refStack, true);
-                            ImageStack MidBottomStackCC = CrossCorrelationMap.calculateCrossCorrelationMap(MidBottom, refStack, true);
-                            
-                            Peak = processor.PickPlane(MidTopStackCC);
-                            currentCenter = processor.PeakFind2(MidTopStackCC.getProcessor(Plane).convertToFloatProcessor(), Peak); // 221202 JE
-                            double MidTopShift = (currentCenter[0] - imCentx) / (0.2*hardwareManager.getStepSize());
-                                                       
-                            Peak = processor.PickPlane(MidBottomStackCC);
-                            currentCenter = processor.PeakFind2(MidBottomStackCC.getProcessor(Plane).convertToFloatProcessor(), Peak); // 221202 JE
-                            double MidBottomShift = (currentCenter[0] - imCenty) / (0.2*hardwareManager.getStepSize());
-                            
-                            //////////////////////////////////////////////////
                         }
                         
                         PV = 0;
@@ -300,7 +292,13 @@ public class DriftCorrection extends Observable implements Runnable {
                             ImageProcessor ImageT = snapAndProcess();
                             resultStack = CrossCorrelationMap.calculateCrossCorrelationMap(ImageT, driftData.getReferenceStack(), true);
                             driftData.setResultMap(resultStack);
-
+                            //if (MDA.isAcquisitionRunning()){
+                            //ImageProcessor imProc = resultStack.getProcessor(1);
+                            //imProc.add(imProc.minValue());
+                            //im = IJC.createImage(imProc,null,null);
+                            //DataStore.putImage(im);
+                            //}
+                            
                             // Measure XYZ drift
                             FloatProcessor ccSliceBottom = resultStack.getProcessor(3).convertToFloatProcessor();
                             ccSliceMiddle = resultStack.getProcessor(2).convertToFloatProcessor();
@@ -509,6 +507,8 @@ public class DriftCorrection extends Observable implements Runnable {
                         driftData.setReferenceImage(null);
                         driftData.setReferenceStack(new ImageStack()); // 190401 kw
                         driftData.clearResultMap(); // 190412 kw
+                        //Datastore.SaveMode SaveMode = Datastore.SaveMode.valueOf("MULTIPAGE_TIFF");
+                        //DataStore.save(SaveMode, "F:/ImLock_Images");
                     }
                     if ((System.currentTimeMillis()-startRun) < sleep && (System.currentTimeMillis()-startRun) > 0)
                         java.lang.Thread.sleep(sleep - (System.currentTimeMillis()-startRun));
@@ -611,5 +611,5 @@ public class DriftCorrection extends Observable implements Runnable {
 
     public void setThreshold(double threshold) {
         this.threshold = threshold;
-    }  
+    }
 }
