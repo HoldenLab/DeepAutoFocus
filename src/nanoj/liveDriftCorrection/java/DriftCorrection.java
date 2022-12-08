@@ -109,6 +109,7 @@ public class DriftCorrection extends Observable implements Runnable {
     private double HeightRatio = 0; // 220131 JE 
     private boolean StartMDA = false; // 221025 JE
     private double WaitLeft = 0; // 221025 JE
+    private double Bias = 0; // 221025 JE
     private int MeasNum = 3; // 221130 JE
     
     private double refCCbottomMidMax = 0; // 220201 JE
@@ -407,8 +408,8 @@ public class DriftCorrection extends Observable implements Runnable {
                     y = 0;
 
                     if (correctionMode == XY || correctionMode == XYZ){
-                        x = Lp*xyError.x + Li*xErrSum;
-                        y = Lp*xyError.y + Li*yErrSum;
+                        x = (1+Bias)*(Lp*xyError.x + Li*xErrSum);
+                        y = (1-Bias)*(Lp*xyError.y + Li*yErrSum);
                     }
                     //double zPos = hardwareManager.getMainCore().getPosition();
                     oldTime = getTimeElapsed(); // time of current loop (store for next loop iteration)
@@ -600,6 +601,11 @@ public class DriftCorrection extends Observable implements Runnable {
     // added 220118 JE
     public void setLi(double Li){
         this.Li = Li;
+    }
+    
+    // added 221208 JE
+    public void setBias(double Bias){
+        this.Bias = Bias;
     }
     
     // added 220118 JE

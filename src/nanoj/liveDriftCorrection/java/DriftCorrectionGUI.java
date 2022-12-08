@@ -68,6 +68,7 @@ public class DriftCorrectionGUI{
     private static final String Zi = "Zi"; // 220110 kw
     private static final String Lp = "Lp"; // 220118 JE
     private static final String Li = "Li"; // 220118 JE
+    private static final String BIAS = "Bias"; // 221208 JE
     private static final String PERIOD = "period";
     private static final String MEASNUM = "averagedMeasurements";
     private static final String REF_UPDATE = "refUpdate";
@@ -91,6 +92,7 @@ public class DriftCorrectionGUI{
     private static final String Zi_DEFAULT = "0"; // 220118 JE
     private static final String Lp_DEFAULT = "0.1"; // 220118 JE
     private static final String Li_DEFAULT = "0"; // 220118 JE
+    private static final String BIAS_DEFAULT = "0"; // 221208 JE
     private static final String PERIOD_DEFAULT = "500"; // milliseconds
     private static final String MEASNUM_DEFAULT = "1"; // 221201 JE
     private static final String REF_UPDATE_DEFAULT = "0"; // minutes
@@ -121,6 +123,7 @@ public class DriftCorrectionGUI{
     private static final String Zi_LABEL = "Zi (Axial integral gain)"; // 220118 JE
     private static final String Lp_LABEL = "Lp (Lateral proportional gain)"; // 220118 JE
     private static final String Li_LABEL = "Li (Lateral integral gain)"; // 220118 JE
+    private static final String BIAS_LABEL = "Lateral gain Bias (+ >> x, - >> y)"; // 221208 JE
     private static final String PERIOD_LABEL = "Time between corrections (ms)";
     private static final String MEASNUM_LABEL = "Number of averaged measurements";
     private static final String REF_UPDATE_LABEL = "Time between reference updates (min)";
@@ -236,6 +239,7 @@ public class DriftCorrectionGUI{
     private JTextField ZiBox = new DTextField(Zi, Zi_DEFAULT); // 220118 JE
     private JTextField LpBox = new DTextField(Lp, Lp_DEFAULT); // 220118 JE
     private JTextField LiBox = new DTextField(Li, Li_DEFAULT); // 220118 JE
+    private JTextField BiasBox = new DTextField(BIAS, BIAS_DEFAULT); // 221208 JE
     private JTextField periodBox = new DTextField(PERIOD, PERIOD_DEFAULT);
     private JTextField MeasNumBox = new DTextField(MEASNUM, MEASNUM_DEFAULT); // 221201 JE
     private JTextField refUpdateBox = new DTextField(REF_UPDATE, REF_UPDATE_DEFAULT);
@@ -399,6 +403,8 @@ public class DriftCorrectionGUI{
         configurationPanel.add(LpBox);
         configurationPanel.add(new DLabel(Li_LABEL)); //220118 JE
         configurationPanel.add(LiBox);
+        configurationPanel.add(new DLabel(BIAS_LABEL)); //220118 JE
+        configurationPanel.add(BiasBox);
         configurationPanel.add(new DLabel(PERIOD_LABEL));
         configurationPanel.add(periodBox);
         configurationPanel.add(new DLabel(MEASNUM_LABEL));
@@ -495,6 +501,7 @@ public class DriftCorrectionGUI{
         driftCorrection.setZi((double) (Double.parseDouble(ZiBox.getText()))); //220118 JE
         driftCorrection.setLp((double) (Double.parseDouble(LpBox.getText()))); //220118 JE
         driftCorrection.setLi((double) (Double.parseDouble(LiBox.getText()))); //220118 JE
+        driftCorrection.setBias((double) (Double.parseDouble(BiasBox.getText()))); //221208 JE
         driftCorrection.setSleep((long) (Double.parseDouble(periodBox.getText())));
         driftCorrection.setMeasNum((int) (Integer.parseInt(MeasNumBox.getText()))); // 221201 JE
         driftCorrection.setRefUpdate((double) (Double.parseDouble(refUpdateBox.getText())));
