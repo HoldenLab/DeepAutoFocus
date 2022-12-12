@@ -103,8 +103,6 @@ public class DriftCorrectionProcess implements Measurements {
     }
 
     public double[] PeakFind(FloatProcessor CCmap) {
-        //CCmap.setRoi(0,0, CCmap.getWidth()-1, CCmap.getHeight()-1);
-        //CCmap.crop();
         int x;
         int y;
         float[] peak = CalculateImageStatistics.getMax(CCmap);
@@ -153,8 +151,8 @@ public class DriftCorrectionProcess implements Measurements {
     
     public double[] PeakFind2(FloatProcessor CCmap, float[] Peak) {
         if (Peak == null) {
-            Peak[0] =  CCmap.getWidth()/2;
-            Peak[1] =  CCmap.getHeight()/2;
+            Peak[0] =  CCmap.getWidth()/2f;
+            Peak[1] =  CCmap.getHeight()/2f;
         }
         int x;
         int y;
@@ -164,8 +162,8 @@ public class DriftCorrectionProcess implements Measurements {
         int ycenter = CCmap.getHeight()/2;
         if (Math.abs(PeakX-xcenter) < 3)PeakX = xcenter;
         if (Math.abs(PeakY-ycenter) < 3)PeakY = ycenter;
-        int offset = 3;
-        int size = 7;
+        int offset = 5;
+        int size = 11;
         
         //if (Math.abs(PeakX-xcenter)>3 || Math.abs(PeakY-ycenter)>3){
         x = PeakX - offset;
@@ -208,7 +206,8 @@ public class DriftCorrectionProcess implements Measurements {
         xCM /= sSum; yCM /= sSum;
         xCM += x; yCM += y;
         
-        return new double[] {xCM, yCM};        
+        return new double[] {xCM, yCM};
+        
     }
     
     public double CenterHeightFind(FloatProcessor image){ // 220131 JE
