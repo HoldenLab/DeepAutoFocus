@@ -164,8 +164,8 @@ public class DriftCorrectionProcess implements Measurements {
         int ycenter = CCmap.getHeight()/2;
         if (Math.abs(PeakX-xcenter) < 3)PeakX = xcenter;
         if (Math.abs(PeakY-ycenter) < 3)PeakY = ycenter;
-        int offset = 5;
-        int size = 11;
+        int offset = 3;
+        int size = 7;
         
         //if (Math.abs(PeakX-xcenter)>3 || Math.abs(PeakY-ycenter)>3){
         x = PeakX - offset;
