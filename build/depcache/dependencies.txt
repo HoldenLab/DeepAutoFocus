@@ -239,7 +239,7 @@ java.lang.Exception
 nanoj.liveDriftCorrection.java.DriftCorrectionGUI
 ||:nanoj.liveDriftCorrection.java.DriftCorrectionProcess
 java.awt.Rectangle
-java.lang.Float
+org.micromanager.internal.utils.ReportingUtils
 ij.process.FHT
 nanoj.liveDriftCorrection.java.DriftCorrectionProcess
 nanoj.liveDriftCorrection.java.DriftCorrectionData
@@ -247,6 +247,7 @@ nanoj.core.java.image.calculator.FloatProcessorCalculator
 ij.process.ImageProcessor
 [F
 ij.gui.OvalRoi
+java.lang.Integer
 java.lang.Exception
 nanoj.core.java.image.analysis.CalculateImageStatistics
 ij.process.FloatProcessor

@@ -11,7 +11,7 @@ import nanoj.core.java.image.analysis.CalculateImageStatistics;
 import nanoj.core.java.image.drift.EstimateShiftAndTilt;
 import ij.gui.OvalRoi;
 //import ij.process.ImageStatistics;
-//import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.ReportingUtils;
 
 import java.awt.*;
 
@@ -165,6 +165,8 @@ public class DriftCorrectionProcess implements Measurements {
         int offset = 5;
         int size = 11;
         
+        //ReportingUtils.showMessage("rough center, " + Integer.toString(PeakX) + ", " + Integer.toString(PeakY));
+        
         //if (Math.abs(PeakX-xcenter)>3 || Math.abs(PeakY-ycenter)>3){
         x = PeakX - offset;
         y = PeakY - offset;
@@ -266,7 +268,7 @@ public class DriftCorrectionProcess implements Measurements {
     
     public float[] PickPlane(ImageStack ccMapStack){ // choses which plane of the ccMap stack has the highest peak to center algorithm on 220926 JE
         float[] Peaks = new float[3];
-        float vMax = -Float.MAX_VALUE;
+        float vMax = 0;
         int pMax = 0;
 
         float[] TopPeak = CalculateImageStatistics.getMax(ccMapStack.getProcessor(1));
@@ -276,6 +278,8 @@ public class DriftCorrectionProcess implements Measurements {
         Peaks[0] = TopPeak[2];
         Peaks[1] = MiddlePeak[2];
         Peaks[2] = BottomPeak[2];
+        
+        Peaks[1] *= 1.5; // to avoid jumping between planes. Only alows for using top or bottom planes when very far from middle 221213 JE
 
         for (int p=0; p<ccMapStack.size(); p++) {
             float v = Peaks[p];
@@ -285,6 +289,8 @@ public class DriftCorrectionProcess implements Measurements {
             }
         }
 
+        if(pMax != 1) ReportingUtils.showMessage("Plane, " + Integer.toString(pMax));
+        
         switch(pMax){
             case 0:
                 TopPeak[2] = 1f;
@@ -296,6 +302,7 @@ public class DriftCorrectionProcess implements Measurements {
                 BottomPeak[2] = 3f;
                 return BottomPeak;
         }
+
         return null;
     }
 

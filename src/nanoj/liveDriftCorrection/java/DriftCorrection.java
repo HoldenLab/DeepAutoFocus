@@ -197,8 +197,8 @@ public class DriftCorrection extends Observable implements Runnable {
                             Peak = CalculateImageStatistics.getMax(refCC); // 221012 JE
                             refCCmidMidMax = processor.CenterHeightFind3(refCC.convertToFloatProcessor(),Peak); // 221012 JE
 
-                            imCentx = refCC.getWidth()/2f;
-                            imCenty = refCC.getHeight()/2f;
+                            imCentx = (refCC.getWidth()/2f)-1; 
+                            imCenty = (refCC.getHeight()/2f)-1;
                         }
                         UpdateTime = getTimeElapsed() +  refUpdate;
                     } 
@@ -280,8 +280,11 @@ public class DriftCorrection extends Observable implements Runnable {
                             t = 0;
                             imCentx = currentCenter[0];
                             imCenty = currentCenter[1];
+                            //ReportingUtils.showMessage("centroid, " + Double.toString(imCentx) + ", " + Double.toString(imCenty));
+                            
                             //imCentx = refCCmiddle.getWidth()/2f;
                             //imCenty = refCCmiddle.getHeight()/2f;
+                            //ReportingUtils.showMessage("Half Image, " + Double.toString(imCentx) + ", " + Double.toString(imCenty));
                             UpdateTime = getTimeElapsed() + refUpdate;
                         }
                         
