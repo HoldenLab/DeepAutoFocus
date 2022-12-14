@@ -207,6 +207,7 @@ public class DriftCorrectionProcess implements Measurements {
         }
         xCM /= sSum; yCM /= sSum;
         xCM += x; yCM += y;
+        xCM += 0.5; yCM += 0.5; // convert from center of pixel indexing to top left corner indexing 221214 JE
         
         return new double[] {xCM, yCM};
         
