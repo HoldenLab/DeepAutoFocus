@@ -278,12 +278,12 @@ public class DriftCorrection extends Observable implements Runnable {
                             currentCenter = processor.PeakFind2(refStackCC.getProcessor(Plane).convertToFloatProcessor(), Peak); // 221012 JE
                             
                             t = 0;
-                            imCentx = currentCenter[0];
-                            imCenty = currentCenter[1];
+                            //imCentx = currentCenter[0];
+                            //imCenty = currentCenter[1];
                             //ReportingUtils.showMessage("centroid, " + Double.toString(imCentx) + ", " + Double.toString(imCenty));
                             
-                            //imCentx = refCCmiddle.getWidth()/2f;
-                            //imCenty = refCCmiddle.getHeight()/2f;
+                            imCentx = refCCmiddle.getWidth()/2f;
+                            imCenty = refCCmiddle.getHeight()/2f;
                             //ReportingUtils.showMessage("Half Image, " + Double.toString(imCentx) + ", " + Double.toString(imCenty));
                             UpdateTime = getTimeElapsed() + refUpdate;
                         }
@@ -491,7 +491,7 @@ public class DriftCorrection extends Observable implements Runnable {
                         case XYZ:
                             if (driftData.Tune){
                                 driftData.addXYZshift(xyError.x, xyError.y, zDrift, z_err, getTimeElapsed(), Zp, Zi, Lp, Li, refUpdate);
-                                //driftData.addXYZshift(xyError.x, zPos, zDrift, z_err, getTimeElapsed());
+                                //driftData.addXYZshift(imCentx, imCenty, zDrift, z_err, getTimeElapsed(), Zp, Zi, Lp, Li, refUpdate);
                             }
                             else driftData.addXYZshift((xyMove.x), (xyMove.y), zDrift, z_err, getTimeElapsed(), Zp, Zi, Lp, Li, refUpdate);
                             break;
