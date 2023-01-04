@@ -280,7 +280,7 @@ public class DriftCorrectionProcess implements Measurements {
         Peaks[1] = MiddlePeak[2];
         Peaks[2] = BottomPeak[2];
         
-        Peaks[1] *= 1.5; // to avoid jumping between planes. Only alows for using top or bottom planes when very far from middle 221213 JE
+        Peaks[1] *= 1.5; // to avoid jumping between planes. Only alows for using top or bottom planes when very far from middle 221213 JE need to tweak sensitivity or find better method maybe turn on or off based on difference between calibration peaks
 
         for (int p=0; p<ccMapStack.size(); p++) {
             float v = Peaks[p];
