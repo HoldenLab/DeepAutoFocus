@@ -304,7 +304,7 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
     }
     
     public void snap(){
-        FloatProcessor newProcessor = null;
+        FloatProcessor newProcessor = null;        
         try {
             if (getCamera() == null) throw new NullPointerException(CAMERA_NOT_SET);
             else {

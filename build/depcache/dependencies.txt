@@ -22,6 +22,7 @@ org.micromanager.data.DataManager
 [D
 org.micromanager.StagePosition
 java.lang.Runnable
+java.lang.Integer
 java.util.ArrayList
 mmcorej.CMMCore
 java.awt.geom.Point2D$Double
@@ -36,13 +37,16 @@ nanoj.liveDriftCorrection.java.DriftCorrectionProcess
 org.micromanager.internal.MMUIManager
 org.micromanager.PositionList
 org.micromanager.internal.MMStudio
+ij.io.Opener
 java.lang.Exception
 nanoj.core.java.image.analysis.CalculateImageStatistics
-org.micromanager.acquisition.SequenceSettings
+ij.ImagePlus
 ij.process.FloatProcessor
+org.micromanager.acquisition.SequenceSettings
 java.lang.InterruptedException
 nanoj.liveDriftCorrection.java.DriftCorrectionHardware
 ij.ImageStack
+java.lang.StringBuilder
 org.micromanager.PositionListManager
 nanoj.core.java.image.transform.CrossCorrelationMap
 java.util.Observable
