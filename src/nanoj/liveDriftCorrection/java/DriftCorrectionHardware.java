@@ -125,12 +125,49 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
         return Success;
     }
     
-    public void AbsMoveXYStage(double xTarget, double yTarget) throws Exception { // 221026 JE
-        
+    public boolean AbsMoveXYStage(Point2D.Double target) throws Exception {
+        boolean Success = AbsMoveXYStage(target.x, target.y);
+        return Success;
+    }
+    
+    public void setZero() throws Exception{
         CMMCore core;
         CMMCore Xcore;
         CMMCore Ycore;
 
+        if ( !isSeparateXYStages() )
+            if (getXYStage() == null) throw new NullPointerException(XY_STAGE_NOT_SET);
+            else {
+                if (useMainXYAxis) core = mainCore;
+                else core = driftCore;
+                core.waitForDevice(stageXY);
+                core.setOriginXY(stageXY);
+                core.waitForDevice(stageXY);
+        }
+        else {
+            if (getSeparateXYStages()[0] == null) throw new NullPointerException(X_STAGE_NOT_SET);
+            else if (getSeparateXYStages()[1] == null) throw new NullPointerException(Y_STAGE_NOT_SET);
+            else {
+                if (useMainXAxis) Xcore = mainCore;
+                else Xcore = driftCore;
+                if (useMainYAxis) Ycore = mainCore;
+                else Ycore = driftCore;
+                Xcore.waitForDevice(stageXaxis); // In case there the user moved the stage while processing
+                Xcore.setOrigin();
+                Ycore.waitForDevice(stageYAxis); // In case there the user moved the stage while processing
+                Ycore.setOrigin();
+                Xcore.waitForDevice(getSeparateXYStages()[0]);
+                Ycore.waitForDevice(getSeparateXYStages()[1]);
+            }
+        }
+    }
+    
+    public boolean AbsMoveXYStage(double xTarget, double yTarget) throws Exception { // 221026 JE
+        
+        CMMCore core;
+        CMMCore Xcore;
+        CMMCore Ycore;
+        
         if ( !isSeparateXYStages() )
             if (getXYStage() == null) throw new NullPointerException(XY_STAGE_NOT_SET);
             else {
@@ -143,6 +180,7 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
                 }
                 catch(Exception e){ // Guards against timeout hard-fails 221006 JE
                     core.stop(stageXY);
+                    return(false);
                 }
         }
         else {
@@ -161,6 +199,7 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
                 Ycore.waitForDevice(getSeparateXYStages()[1]);
             }
         }
+        return(true);
     }
 
     // Move XY stage in microns without having to know if the XY stage is a single or two devices
@@ -284,6 +323,7 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
                 driftCore.unloadAllDevices();                
                 driftCore.loadSystemConfiguration(getConfigFileLocation());
                 driftCore.initializeAllDevices();
+                driftCore.setProperty("Blackfly S BFS-U3-51S5M","Binning",2);
             } catch (Exception e) {
                 ReportingUtils.showError(e, ERROR_LOADING_DEVICES);
             }

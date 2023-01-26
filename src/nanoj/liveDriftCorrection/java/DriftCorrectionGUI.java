@@ -264,9 +264,9 @@ public class DriftCorrectionGUI{
 
         // Load calibration from non-volatile storage
         hardwareManager.setCalibration(DriftCorrectionCalibration.createCalibration(preferences.getDouble(CAL_SCALING, CAL_DEFAULT), preferences.getDouble(CAL_ANGLE, CAL_DEFAULT)));
-        driftData.setflipX(preferences.getBoolean(CAL_FLIPPING_X, flip_X));
-        driftData.setflipY(preferences.getBoolean(CAL_FLIPPING_Y, flip_Y));
-        driftData.setSwitchXY(preferences.getBoolean(CAL_SWITCHING_XY, switch_XY));
+        driftData.setflipX(preferences.getBoolean(CAL_FLIPPING_X, false));
+        driftData.setflipY(preferences.getBoolean(CAL_FLIPPING_Y, false));
+        driftData.setSwitchXY(preferences.getBoolean(CAL_SWITCHING_XY, false));
         
         // Add Listeners
         guiFrame.addWindowListener(new RememberPositionListener());
