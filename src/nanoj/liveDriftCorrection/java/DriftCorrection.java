@@ -395,7 +395,7 @@ public class DriftCorrection extends Observable implements Runnable {
                     dt = (getTimeElapsed() - oldTime)/1000;
                     t = t + dt;
                     
-                    Point2D.Double xyError = new Point2D.Double(xErr,-yErr);
+                    Point2D.Double xyError = new Point2D.Double(xErr,-yErr); // -y because of top to bottom image indexing
                     
                     if (driftData.getSwitchXY()){
                         xyError.x = yErr;
