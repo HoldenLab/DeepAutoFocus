@@ -196,14 +196,15 @@ public class DriftCorrection extends Observable implements Runnable {
                         HeightRatio = 0;
                         driftData.clearResultMap(); // 190412 kw
                         i=-1;
-                        /*
-                        ImagePlus LoadedImage = opener.openImage("D:\\software\\github\\LifeHackDevelopment\\Imlock\\Jumpy_Reference\\SubPixelShiftOut\\" + "ShiftedImage_" + Integer.toString(i) + ".tif");
+                        
+                        ImagePlus LoadedImage = opener.openImage("C:\\Users\\joshe\\Documents\\GitHub\\LifeHackDevelopment\\Imlock\\SubPixelShiftOut\\Images\\" + "Middle.tif");
+                        //ImagePlus LoadedImage = opener.openImage("D:\\software\\github\\LifeHackDevelopment\\Imlock\\Jumpy_Reference\\SubPixelShiftOut\\" + "ShiftedImage_" + Integer.toString(i) + ".tif");
                         //ImagePlus LoadedImage = opener.openImage("F:\\ImLock_TwinCam_Covered_1\\Default\\" + "img_channel000_position000_time" + String.format("%09d", i) + "_z000.tif");                       
                         //ImagePlus LoadedImage = opener.openImage("D:\\software\\github\\LifeHackDevelopment\\Imlock\\SubPixelShiftOutRotated\\" + "ShiftedImage_" + Integer.toString(i) + ".tif");
                         FloatProcessor image = LoadedImage.getProcessor().convertToFloatProcessor();
                         driftData.setReferenceImage(image);
-                        */
-                        driftData.setReferenceImage(snapAndProcess());
+                        
+                        //driftData.setReferenceImage(snapAndProcess());
                         if (correctionMode == XY){
                             refCC = CrossCorrelationMap.calculateCrossCorrelationMap(driftData.getReferenceImage(), driftData.getReferenceImage(), true); // 220131 JE
                             Peak = CalculateImageStatistics.getMax(refCC); // 221012 JE
