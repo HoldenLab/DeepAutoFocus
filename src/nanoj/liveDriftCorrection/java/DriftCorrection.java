@@ -175,7 +175,7 @@ public class DriftCorrection extends Observable implements Runnable {
                             continue;
                         }
                         else if (SeqSettings.useSlices() && SeqSettings.relativeZSlice()) {
-                            hardwareManager.AbsMoveFocusStage(SeqSettings.zReference()); 
+                            hardwareManager.AbsMoveFocusStage(SeqSettings.zReference());
                         }
                     }
                     
@@ -195,8 +195,8 @@ public class DriftCorrection extends Observable implements Runnable {
                         t=0;
                         HeightRatio = 0;
                         driftData.clearResultMap(); // 190412 kw
+                        i=-1;
                         /*
-                        i=0;
                         ImagePlus LoadedImage = opener.openImage("D:\\software\\github\\LifeHackDevelopment\\Imlock\\Jumpy_Reference\\SubPixelShiftOut\\" + "ShiftedImage_" + Integer.toString(i) + ".tif");
                         //ImagePlus LoadedImage = opener.openImage("F:\\ImLock_TwinCam_Covered_1\\Default\\" + "img_channel000_position000_time" + String.format("%09d", i) + "_z000.tif");                       
                         //ImagePlus LoadedImage = opener.openImage("D:\\software\\github\\LifeHackDevelopment\\Imlock\\SubPixelShiftOutRotated\\" + "ShiftedImage_" + Integer.toString(i) + ".tif");
@@ -236,14 +236,23 @@ public class DriftCorrection extends Observable implements Runnable {
                             hardwareManager.setZero();
                             // Take picture at current position, filter, clip and add to image stack
                             refStack.addSlice(MIDDLE, snapAndProcess());
+                            ImagePlus LoadedImage = opener.openImage("C:\\Users\\joshe\\Documents\\GitHub\\LifeHackDevelopment\\Imlock\\SubPixelShiftOut\\Images\\" + "Middle.tif");
+                            ImageProcessor image = LoadedImage.getProcessor();
+                            refStack.addSlice(MIDDLE, image);
                         
                             // Move one stepSize above focus, snap and add to image stack
                             hardwareManager.moveFocusStageInSteps(1);
                             refStack.addSlice(TOP, snapAndProcess(), 0);
+                            LoadedImage = opener.openImage("C:\\Users\\joshe\\Documents\\GitHub\\LifeHackDevelopment\\Imlock\\SubPixelShiftOut\\Images\\" + "Top.tif");
+                            image = LoadedImage.getProcessor();
+                            refStack.addSlice(TOP, image, 0);
 
                             // Move two stepSizes below the focus, snap and add to image stack
                             hardwareManager.moveFocusStageInSteps(-2);
                             refStack.addSlice(BOTTOM, snapAndProcess());
+                            LoadedImage = opener.openImage("C:\\Users\\joshe\\Documents\\GitHub\\LifeHackDevelopment\\Imlock\\SubPixelShiftOut\\Images\\" + "Bottom.tif");
+                            image = LoadedImage.getProcessor();
+                            refStack.addSlice(BOTTOM, image);
 
                             // Move back to original position
                             hardwareManager.moveFocusStageInSteps(1);
@@ -306,9 +315,15 @@ public class DriftCorrection extends Observable implements Runnable {
                         currentCenter[0] = 0;
                         currentCenter[1] = 0;
                             
-                        ImageProcessor ImageT = snapAndProcess();
-                        resultStack = CrossCorrelationMap.calculateCrossCorrelationMap(ImageT, driftData.getReferenceStack(), true);
+                        //ImageProcessor ImageT = snapAndProcess();
+                        //resultStack = CrossCorrelationMap.calculateCrossCorrelationMap(ImageT, driftData.getReferenceStack(), true);
+                        //driftData.setResultMap(resultStack);
+                        i=i+1;
+                        ImagePlus LoadedImage = opener.openImage("C:\\Users\\joshe\\Documents\\GitHub\\LifeHackDevelopment\\Imlock\\SubPixelShiftOut\\Images\\" + "ShiftedImage_" + Integer.toString(i) + ".tif");
+                        ImageProcessor image = LoadedImage.getProcessor();
+                        resultStack =  CrossCorrelationMap.calculateCrossCorrelationMap(image, driftData.getReferenceStack(), true);
                         driftData.setResultMap(resultStack);
+                        
                         /*
                         if (MDA.isAcquisitionRunning()){
                             ImageProcessor imProc = resultStack.getProcessor(1);
