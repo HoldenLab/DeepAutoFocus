@@ -10,10 +10,11 @@ import nanoj.core.java.image.calculator.FloatProcessorCalculator;
 import nanoj.core.java.image.analysis.CalculateImageStatistics;
 import nanoj.core.java.image.drift.EstimateShiftAndTilt;
 import ij.gui.OvalRoi;
-//import ij.process.ImageStatistics;
+import ij.process.ImageStatistics;
 import org.micromanager.internal.utils.ReportingUtils;
 
 import java.awt.*;
+import java.util.Arrays;
 
 /**
  *
@@ -151,15 +152,15 @@ public class DriftCorrectionProcess implements Measurements {
     
     public double[] PeakFind2(FloatProcessor CCmap, float[] Peak) {
         if (Peak == null) {
-            Peak[0] =  CCmap.getWidth()/2f;
-            Peak[1] =  CCmap.getHeight()/2f;
+            Peak[0] =  CCmap.getWidth()/2;
+            Peak[1] =  CCmap.getHeight()/2;
         }
         int x;
         int y;
         int PeakX = (int) Peak[0];
         int PeakY = (int) Peak[1];
-        if (Math.abs(PeakX-CCmap.getWidth()/2f) < 3) PeakX = CCmap.getWidth()/2;
-        if (Math.abs(PeakY-CCmap.getHeight()/2f) < 3) PeakY = CCmap.getHeight()/2;
+        if (Math.abs(PeakX-CCmap.getWidth()/2) <= 1) PeakX = CCmap.getWidth()/2;
+        if (Math.abs(PeakY-CCmap.getHeight()/2) <= 1) PeakY = CCmap.getHeight()/2;
         int offset = 5;
         int size = 11;
         
@@ -169,6 +170,54 @@ public class DriftCorrectionProcess implements Measurements {
         y = PeakY - offset;
         
         CCmap.setRoi(x,y, size,size);
+        FloatProcessor region = CCmap.crop().convertToFloatProcessor();
+        /*
+        float[] xyFit = EstimateShiftAndTilt.getMaxFindByOptimization(region);
+        double xFit = (double) xyFit[0];
+        double yFit = (double) xyFit[1];
+        xFit += x; yFit += y;
+        return new double[] {xFit, yFit};
+        */
+        double xCM = 0;
+        double yCM = 0;
+        double v = 0;
+        double sSum = 0;
+        
+        for (int j = 0; j < region.getHeight(); j++) {
+            for (int i = 0; i < region.getWidth(); i++) {
+                v = region.getf(i, j);
+                //if (v < 0) continue;
+                xCM += i * v;
+                yCM += j * v;
+                sSum += v;
+            }
+        }
+        xCM /= sSum; yCM /= sSum;
+        xCM += x; yCM += y;
+        xCM += 0.5; yCM += 0.5; // convert from center of pixel indexing to top left corner indexing 221214 JE
+        
+        return new double[] {xCM, yCM};
+        
+    }
+    
+        public double[] PeakFind3(FloatProcessor CCmap, float[] Peak, int[] Offset) {
+        if (Peak == null) {
+            Peak[0] =  CCmap.getWidth()/2;
+            Peak[1] =  CCmap.getHeight()/2;
+        }
+        int PeakX = (int) Peak[0];
+        int PeakY = (int) Peak[1];
+        if (Math.abs(PeakX-CCmap.getWidth()/2) <= 1) PeakX = CCmap.getWidth()/2;
+        if (Math.abs(PeakY-CCmap.getHeight()/2) <= 1) PeakY = CCmap.getHeight()/2;
+        
+        int sizeX = (Offset[0]*2)+1;
+        int sizeY = (Offset[1]*2)+1;
+        
+        //ReportingUtils.showMessage("rough center, " + Integer.toString(PeakX) + ", " + Integer.toString(PeakY));
+        
+        int x = PeakX - Offset[0];
+        int y = PeakY - Offset[1];
+        CCmap.setRoi(x,y, sizeX,sizeY);
         FloatProcessor region = CCmap.crop().convertToFloatProcessor();
         /*
         float[] xyFit = EstimateShiftAndTilt.getMaxFindByOptimization(region);
@@ -236,19 +285,21 @@ public class DriftCorrectionProcess implements Measurements {
     public double CenterHeightFind3(FloatProcessor image, float[] Center){ // 220131 JE
         int CenterX = (int) Center[0];
         int CenterY = (int) Center[1];
-        if (Math.abs(CenterX-image.getWidth()/2f) < 2) CenterX = image.getWidth()/2;
-        if (Math.abs(CenterY-image.getHeight()/2f) < 2) CenterY = image.getHeight()/2;
+        if (Math.abs(CenterX-image.getWidth()/2) <= 1) CenterX = image.getWidth()/2;
+        if (Math.abs(CenterY-image.getHeight()/2) <= 1) CenterY = image.getHeight()/2;
         int offset = 5;
-        int size = 11;
+        int size = 9;
         int x = CenterX - offset;
         int y = CenterY - offset;
         image.setRoi(x,y, size, size);
         FloatProcessor region = image.crop().convertToFloatProcessor();
+//        float[] Kernel = createGaussianKernel(size);
         float[] pixels = (float[]) region.getPixels();
         double sum = 0;
         for (int n=0; n<pixels.length; n++) {
-            sum += pixels[n];
+            sum += pixels[n];//*Kernel[n];
         }
+        
         double mean = sum/pixels.length;
         return mean;
     }
@@ -328,6 +379,82 @@ public class DriftCorrectionProcess implements Measurements {
         if (data.getBackgroundImage() != null)
             image = backgroundCorrect(image);
         return image;
+    }
+    /*
+    static float[] createGaussianKernel(int radius) { //230207 JE
+
+        float[] Kernel = new float[radius*radius];
+
+        float sigma = radius / 3.0f;
+        float twoSigmaSquare = 2.0f * sigma * sigma;
+
+        for (int y=0; y<radius; y++) {
+            for (int x=0; x<radius; x++) {
+                float dx = x - (radius-1)/2; 
+                float dy = y - (radius-1)/2;
+                double r = Math.sqrt(dx*dx + dy*dy);
+                Kernel[x+radius*y] = (float) Math.exp((-(r*r))/(twoSigmaSquare));
+            }
+        }
+        return Kernel;
+    }
+
+    public static FloatProcessor createTukeyWindow(int size, float alpha){ //230208 JE
+        double[] WindowArray = new double[size*size];
+        Arrays.fill(WindowArray,1d);
+        FloatProcessor Window = new FloatProcessor(size,size);
+        for (int y=0; y<size; y++) {     
+            for (int x=0; x<size; x++) {
+                if ((x<(alpha*size)/2) || x>(size - (alpha*size)/2)) WindowArray[x+size*y] = WindowArray[x+size*y] * 0.5 * (1 - Math.cos((2*Math.PI*x)/(alpha*size)));
+                if ((y<(alpha*size)/2) || y>(size - (alpha*size)/2)) WindowArray[x+size*y] = WindowArray[x+size*y] * 0.5 * (1 - Math.cos((2*Math.PI*y)/(alpha*size)));
+            }
+        }    
+        Window.setPixels(WindowArray);
+        return Window;
+    }
+    */
+    public FloatProcessor Normalize(FloatProcessor image){ //230208 JE
+        
+        ImageStatistics stats = ImageStatistics.getStatistics(image);
+        image.subtract(stats.mean);
+
+        double max = image.getMax();
+        double min = image.getMin();
+        double range = max-min;
+        image.multiply(1/range);
+        
+        return image;
+    }
+    
+    public int[] FWHM(FloatProcessor CCmap){ //230209 JE
+        int[] size = new int[2];
+        size[0] = 15;
+        size[1] = 15;
+        int CenterX = CCmap.getWidth()/2;
+        int CenterY = CCmap.getHeight()/2;
+        int offset = 15;
+        int sizeLimit = 31;
+        int CropX = CenterX - offset;
+        int CropY = CenterY - offset;
+        CCmap.setRoi(CropX,CropY, sizeLimit, sizeLimit);
+        FloatProcessor region = CCmap.crop().convertToFloatProcessor();
+        
+        for (int x=1; x<offset; x++) {
+            if((region.getf(offset+x,offset) + region.getf(offset-x,offset)) < region.getf(offset,offset)){
+                size[0] = x+1;
+                break;
+            }            
+        }
+        
+        for (int y=1; y<offset; y++) {
+            if((region.getf(offset,offset+y) + region.getf(offset,offset-y)) < region.getf(offset,offset)){
+                size[1] = y+1;
+                break;
+            }            
+        }
+        
+        
+        return size;
     }
 
     /**

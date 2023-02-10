@@ -70,7 +70,6 @@ public class DriftCorrectionGUI{
     private static final String Li = "Li"; // 220118 JE
     private static final String BIAS = "Bias"; // 221208 JE
     private static final String PERIOD = "period";
-    private static final String MEASNUM = "averagedMeasurements";
     private static final String REF_UPDATE = "refUpdate";
     private static final String BOUNDS = "bounds";
     private static final String CAL_STEP_SIZE = "calStepSize"; // 201223 kw
@@ -94,10 +93,9 @@ public class DriftCorrectionGUI{
     private static final String Li_DEFAULT = "0"; // 220118 JE
     private static final String BIAS_DEFAULT = "0"; // 221208 JE
     private static final String PERIOD_DEFAULT = "500"; // milliseconds
-    private static final String MEASNUM_DEFAULT = "1"; // 221201 JE
     private static final String REF_UPDATE_DEFAULT = "0"; // minutes
     private static final String BOUNDS_DEFAULT = "10"; // microns
-    private static final double CAL_DEFAULT = -1;
+    private static final double CAL_DEFAULT = 0;
     DecimalFormat df = new DecimalFormat("#.##");
 
     // Labels
@@ -125,7 +123,6 @@ public class DriftCorrectionGUI{
     private static final String Li_LABEL = "Li (Lateral integral gain)"; // 220118 JE
     private static final String BIAS_LABEL = "Lateral gain Bias (+ >> x, - >> y)"; // 221208 JE
     private static final String PERIOD_LABEL = "Time between corrections (ms)";
-    private static final String MEASNUM_LABEL = "Number of averaged measurements";
     private static final String REF_UPDATE_LABEL = "Time between reference updates (min)";
     private static final String BOUNDS_LABEL = "Maximum translation (um)";
     private static final String SEPARATE_STAGES_LABEL = "Separate XY stage devices?";
@@ -224,7 +221,7 @@ public class DriftCorrectionGUI{
     private JButton unloadConfigurationButton = new DButton(UNLOAD_LABEL, configurationListener);
     private JTextField backgroundStepSizeBox = new DTextField(BACK_STEP_SIZE, BACK_STEP_SIZE_DEFAULT);
     private JTextField calibrationStepSizeBox = new DTextField(CAL_STEP_SIZE, CAL_STEP_SIZE_DEFAULT);
-    private JLabel calibrationScalingLabel = new DLabel(SCALING + df.format(preferences.getDouble(CAL_SCALING, CAL_DEFAULT)*1000) + SCALE_UNITS);
+    private JLabel calibrationScalingLabel = new DLabel(SCALING + df.format(preferences.getDouble(CAL_SCALING, CAL_DEFAULT)+70) + SCALE_UNITS);
     private JLabel calibrationAngleLabel = new DLabel(ANGLE + df.format(preferences.getDouble(CAL_ANGLE, CAL_DEFAULT)));
     private JLabel calibrationFlip_XLabel = new DLabel(FLIP_X + preferences.getBoolean(CAL_FLIPPING_X, false));
     private JLabel calibrationFlip_YLabel = new DLabel(FLIP_Y + preferences.getBoolean(CAL_FLIPPING_Y, false));
@@ -241,7 +238,6 @@ public class DriftCorrectionGUI{
     private JTextField LiBox = new DTextField(Li, Li_DEFAULT); // 220118 JE
     private JTextField BiasBox = new DTextField(BIAS, BIAS_DEFAULT); // 221208 JE
     private JTextField periodBox = new DTextField(PERIOD, PERIOD_DEFAULT);
-    private JTextField MeasNumBox = new DTextField(MEASNUM, MEASNUM_DEFAULT); // 221201 JE
     private JTextField refUpdateBox = new DTextField(REF_UPDATE, REF_UPDATE_DEFAULT);
     private JTextField boundsLimitBox = new DTextField(BOUNDS, BOUNDS_DEFAULT);
     private DeviceList focusDeviceList = new DeviceList(DeviceType.StageDevice, Z_STAGE);
@@ -263,7 +259,7 @@ public class DriftCorrectionGUI{
         //mainFrame = MMStudio.getFrame();
 
         // Load calibration from non-volatile storage
-        hardwareManager.setCalibration(DriftCorrectionCalibration.createCalibration(preferences.getDouble(CAL_SCALING, CAL_DEFAULT), preferences.getDouble(CAL_ANGLE, CAL_DEFAULT)));
+        hardwareManager.setCalibration(DriftCorrectionCalibration.createCalibration(preferences.getDouble(CAL_SCALING, CAL_DEFAULT +70), preferences.getDouble(CAL_ANGLE, CAL_DEFAULT)));
         driftData.setflipX(preferences.getBoolean(CAL_FLIPPING_X, false));
         driftData.setflipY(preferences.getBoolean(CAL_FLIPPING_Y, false));
         driftData.setSwitchXY(preferences.getBoolean(CAL_SWITCHING_XY, false));
@@ -407,8 +403,6 @@ public class DriftCorrectionGUI{
         configurationPanel.add(BiasBox);
         configurationPanel.add(new DLabel(PERIOD_LABEL));
         configurationPanel.add(periodBox);
-        configurationPanel.add(new DLabel(MEASNUM_LABEL));
-        configurationPanel.add(MeasNumBox);
         configurationPanel.add(new DLabel(REF_UPDATE_LABEL));
         configurationPanel.add(refUpdateBox);
         configurationPanel.add(new DLabel(BOUNDS_LABEL));
@@ -503,7 +497,6 @@ public class DriftCorrectionGUI{
         driftCorrection.setLi((double) (Double.parseDouble(LiBox.getText()))); //220118 JE
         driftCorrection.setBias((double) (Double.parseDouble(BiasBox.getText()))); //221208 JE
         driftCorrection.setSleep((long) (Double.parseDouble(periodBox.getText())));
-        driftCorrection.setMeasNum((int) (Integer.parseInt(MeasNumBox.getText()))); // 221201 JE
         driftCorrection.setRefUpdate((double) (Double.parseDouble(refUpdateBox.getText())));
         driftCorrection.setThreshold(Double.parseDouble(boundsLimitBox.getText()));
 

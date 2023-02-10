@@ -135,10 +135,12 @@ public class DriftCorrectionCalibration extends Observable implements Runnable {
                     // We now calculate the angle of the observed movement versus the original movement we told it to perform.
                     // Subtract from the expected angle (45° degrees or pi/4 radians) the observed angle
                     angle = (Math.PI/4) - Math.atan(yMovementXY/xMovementXY);
+                    angle = 0;
 
                     // We calculate the vector magnitudes and deduce the scale from that
                     scale = Math.sqrt((Math.pow(step, 2))+(Math.pow(step, 2)))/
                             Math.sqrt(Math.pow(xMovementXY, 2) + Math.pow(yMovementXY, 2));
+                    scale = 0.07;
 
                     // If we are working with negative xMovement values, then the coordinates need to be flipped 180 degrees
                     //flipX = xMovement < 0;
