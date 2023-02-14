@@ -212,7 +212,7 @@ public class DriftCorrectionProcess implements Measurements {
         
         int sizeX = (Offset[0]*2)+1;
         int sizeY = (Offset[1]*2)+1;
-        
+
         //ReportingUtils.showMessage("rough center, " + Integer.toString(PeakX) + ", " + Integer.toString(PeakY));
         
         int x = PeakX - Offset[0];
@@ -234,7 +234,7 @@ public class DriftCorrectionProcess implements Measurements {
         for (int j = 0; j < region.getHeight(); j++) {
             for (int i = 0; i < region.getWidth(); i++) {
                 v = region.getf(i, j);
-                //if (v < 0) continue;
+                if (v < 0) continue;
                 xCM += i * v;
                 yCM += j * v;
                 sSum += v;
@@ -243,7 +243,7 @@ public class DriftCorrectionProcess implements Measurements {
         xCM /= sSum; yCM /= sSum;
         xCM += x; yCM += y;
         xCM += 0.5; yCM += 0.5; // convert from center of pixel indexing to top left corner indexing 221214 JE
-        
+
         return new double[] {xCM, yCM};
         
     }
@@ -287,8 +287,8 @@ public class DriftCorrectionProcess implements Measurements {
         int CenterY = (int) Center[1];
         if (Math.abs(CenterX-image.getWidth()/2) <= 1) CenterX = image.getWidth()/2;
         if (Math.abs(CenterY-image.getHeight()/2) <= 1) CenterY = image.getHeight()/2;
-        int offset = 5;
-        int size = 9;
+        int offset = 1;
+        int size = 3;
         int x = CenterX - offset;
         int y = CenterY - offset;
         image.setRoi(x,y, size, size);
@@ -426,29 +426,28 @@ public class DriftCorrectionProcess implements Measurements {
         return image;
     }
     
-    public int[] FWHM(FloatProcessor CCmap){ //230209 JE
+    public int[] FWTM(FloatProcessor CCmap){ //230209 JE
         int[] size = new int[2];
-        size[0] = 15;
-        size[1] = 15;
+        size[0] = 20;
+        size[1] = 20;
         int CenterX = CCmap.getWidth()/2;
         int CenterY = CCmap.getHeight()/2;
-        int offset = 15;
-        int sizeLimit = 31;
+        int offset = 20;
+        int sizeLimit = 41;
         int CropX = CenterX - offset;
         int CropY = CenterY - offset;
         CCmap.setRoi(CropX,CropY, sizeLimit, sizeLimit);
         FloatProcessor region = CCmap.crop().convertToFloatProcessor();
         
         for (int x=1; x<offset; x++) {
-            if((region.getf(offset+x,offset) + region.getf(offset-x,offset)) < region.getf(offset,offset)){
-                size[0] = x+1;
+            if((region.getf(offset+x,offset) + region.getf(offset-x,offset)) < region.getf(offset,offset)/5){
+                size[0] = x;
                 break;
             }            
         }
-        
         for (int y=1; y<offset; y++) {
-            if((region.getf(offset,offset+y) + region.getf(offset,offset-y)) < region.getf(offset,offset)){
-                size[1] = y+1;
+            if((region.getf(offset,offset+y) + region.getf(offset,offset-y)) < region.getf(offset,offset)/5){
+                size[1] = y;
                 break;
             }            
         }

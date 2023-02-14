@@ -269,7 +269,7 @@ public class DriftCorrection extends Observable implements Runnable {
                             FloatProcessor refTopTopProc = refTopTopCC.convertToFloatProcessor(); // 220131 JE
                             FloatProcessor refBottomBottomProc = refBottomBottomCC.convertToFloatProcessor(); // 220131 JE
                             
-                            int[] Offsets = processor.FWHM(refCCmiddle); // 230209 JE
+                            Offsets = processor.FWTM(refCCmiddle); // 230209 JE
                             ReportingUtils.showMessage(Integer.toString(Offsets[0]) + " ," + Integer.toString(Offsets[1]));
                             
                             //refmiddleMean = ImageStatistics.getStatistics(refStack.getProcessor(2)).mean;
@@ -377,7 +377,8 @@ public class DriftCorrection extends Observable implements Runnable {
                         //PV = (ccSliceTopMax - ccSliceBottomMax) / ccSliceMiddleMax; // eq 5 in McGorty et al. 2013
                         
                         int Plane = (int) Peak[2];
-                        currentCenter = processor.PeakFind2(resultStack.getProcessor(Plane).convertToFloatProcessor(), Peak); // 221012 JE
+                        //currentCenter = processor.PeakFind2(resultStack.getProcessor(Plane).convertToFloatProcessor(), Peak); // 221012 JE
+                        currentCenter = processor.PeakFind3(resultStack.getProcessor(Plane).convertToFloatProcessor(), Peak, Offsets); // 230209 JE
                         
                         HeightRatio = Math.max(Top,Math.max(Middle,Bottom));
                         
