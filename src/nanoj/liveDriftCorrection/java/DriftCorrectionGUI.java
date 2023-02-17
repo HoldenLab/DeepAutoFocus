@@ -31,7 +31,7 @@ public class DriftCorrectionGUI{
     private static final int defaultYPosition = 200;
 
     // Flags and names
-    private static final String FRAME_NAME = "NanoJ Live Drift Correction";
+    private static final String FRAME_NAME = "ImLock";
     private static final String START = "3. Start!";
     private static final String STOP = "STOP!";
     private static final String STOP_LIVE = "Stop Live";

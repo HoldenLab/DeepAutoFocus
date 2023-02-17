@@ -12,7 +12,7 @@ public class DriftCorrectionPlugin implements MenuPlugin, SciJavaPlugin {
 
     public static final String menuName = "ImLock";
     public static final String tooltipDescription = "Asynchronous Image-Correlation-based 3D drift correction.";
-    public static final String version = "1.2";
+    public static final String version = "2.0.0";
     public static final String copyright = "Copyright University College London, 2017";
     private MMStudio app_;
 
@@ -62,6 +62,6 @@ public class DriftCorrectionPlugin implements MenuPlugin, SciJavaPlugin {
 
     @Override
     public String getHelpText() {
-        return "Image-based cross-correlation developed by Ricardo Henriques lab";
+        return "Image-based sample stabilization developed by Ricardo Henriques' and Seamus Holden's labs";
     }
 }
