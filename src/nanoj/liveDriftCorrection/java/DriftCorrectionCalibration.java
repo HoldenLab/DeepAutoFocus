@@ -79,9 +79,9 @@ public class DriftCorrectionCalibration extends Observable implements Runnable {
                     // i <= travel ensures we reach the total travel range
                     for (double i = 0; i<= travel; i += step) {
                         hardwareManager.moveXYStage(step, 0);
-                        images.add(snapAndProcess());
+                        images.add(processor.Normalize(snapAndProcess()));
                         hardwareManager.moveXYStage(0, step);
-                        images.add(snapAndProcess());
+                        images.add(processor.Normalize(snapAndProcess()));
                     }
                     
                     // Move stage back to original position
@@ -306,13 +306,13 @@ public class DriftCorrectionCalibration extends Observable implements Runnable {
                     CrossCorrelationMap.calculateCrossCorrelationMap(
                             images.get(i),
                             images.get(i+1),
-                            true)
+                            false)
                             .convertToFloatProcessor();
             FloatProcessor mapY =
                     CrossCorrelationMap.calculateCrossCorrelationMap(
                             images.get(i+1),
                             images.get(i+2),
-                            true)
+                            false)
                             .convertToFloatProcessor();
 
             if (mapX == null) {

@@ -176,7 +176,7 @@ public class DriftCorrection extends Observable implements Runnable {
                             continue;
                         }
                         else if (SeqSettings.useSlices() && SeqSettings.relativeZSlice()) {
-                            hardwareManager.AbsMoveFocusStage(SeqSettings.zReference());
+                            hardwareManager.moveFocusStage(SeqSettings.zReference());
                         }
                     }
                     
@@ -202,7 +202,7 @@ public class DriftCorrection extends Observable implements Runnable {
                         FloatProcessor image = processor.Normalize(LoadedImage.getProcessor().convertToFloatProcessor());
                         driftData.setReferenceImage(image);
                         */
-                        driftData.setReferenceImage(snapAndProcess());
+                        driftData.setReferenceImage(processor.Normalize(snapAndProcess()));
                         if (correctionMode == XY){
                             refCC = CrossCorrelationMap.calculateCrossCorrelationMap(driftData.getReferenceImage(), driftData.getReferenceImage(), NanoJNormalize); // 220131 JE
                             Peak = CalculateImageStatistics.getMax(refCC); // 221012 JE
@@ -234,7 +234,7 @@ public class DriftCorrection extends Observable implements Runnable {
                             hardwareManager.stopXYStage();
                             hardwareManager.setZero();
                             // Take picture at current position, filter, clip and add to image stack
-                            refStack.addSlice(MIDDLE, snapAndProcess());
+                            refStack.addSlice(MIDDLE, processor.Normalize(snapAndProcess()));
                             /* //for simulations JE
                             ImagePlus LoadedImage = opener.openImage("C:\\Users\\joshe\\Documents\\GitHub\\LifeHackDevelopment\\Imlock\\SubPixelShiftOut\\Images\\" + "Middle.tif");
                             //FloatProcessor image = LoadedImage.getProcessor().convertToFloatProcessor();
@@ -243,7 +243,7 @@ public class DriftCorrection extends Observable implements Runnable {
                             */
                             // Move one stepSize above focus, snap and add to image stack
                             hardwareManager.moveFocusStageInSteps(1);
-                            refStack.addSlice(TOP, snapAndProcess(), 0);
+                            refStack.addSlice(TOP, processor.Normalize(snapAndProcess()), 0);
                             /* //for simulations JE 
                             LoadedImage = opener.openImage("C:\\Users\\joshe\\Documents\\GitHub\\LifeHackDevelopment\\Imlock\\SubPixelShiftOut\\Images\\" + "Top.tif");
                             //image = LoadedImage.getProcessor().convertToFloatProcessor();
@@ -252,7 +252,7 @@ public class DriftCorrection extends Observable implements Runnable {
                             */
                             // Move two stepSizes below the focus, snap and add to image stack
                             hardwareManager.moveFocusStageInSteps(-2);
-                            refStack.addSlice(BOTTOM, snapAndProcess());
+                            refStack.addSlice(BOTTOM, processor.Normalize(snapAndProcess()));
                             /* //for simulations JE
                             LoadedImage = opener.openImage("C:\\Users\\joshe\\Documents\\GitHub\\LifeHackDevelopment\\Imlock\\SubPixelShiftOut\\Images\\" + "Bottom.tif");
                             //image = LoadedImage.getProcessor().convertToFloatProcessor();
@@ -274,7 +274,7 @@ public class DriftCorrection extends Observable implements Runnable {
                             FloatProcessor refBottomBottomProc = refBottomBottomCC.convertToFloatProcessor(); // 220131 JE
                             
                             Offsets = processor.FWTM(refCCmiddle); // 230209 JE
-                            ReportingUtils.showMessage(Integer.toString(Offsets[0]) + " ," + Integer.toString(Offsets[1]));
+                            //ReportingUtils.showMessage(Integer.toString(Offsets[0]) + " ," + Integer.toString(Offsets[1]));
                             
                             //refmiddleMean = ImageStatistics.getStatistics(refStack.getProcessor(2)).mean;
                             
@@ -324,7 +324,7 @@ public class DriftCorrection extends Observable implements Runnable {
                         currentCenter[0] = 0;
                         currentCenter[1] = 0;
                             
-                        ImageProcessor Image = snapAndProcess();
+                        ImageProcessor Image = processor.Normalize(snapAndProcess());
                         resultStack = CrossCorrelationMap.calculateCrossCorrelationMap(Image, driftData.getReferenceStack(), NanoJNormalize);
                         driftData.setResultMap(resultStack);
                         /* //for simulations JE
@@ -507,7 +507,7 @@ public class DriftCorrection extends Observable implements Runnable {
                         //if (Math.abs(xyMove.x) < 0.001) xyMove.x=0;
                         //if (Math.abs(xyMove.y) < 0.001) xyMove.y=0;
                         //if((Lp!=0 || Li!=0) && (Math.abs(xyMove.x)>=0.001 || Math.abs(xyMove.y)>=0.001)) MoveSuccess = hardwareManager.moveXYStage(xyMove);
-                        if((Lp!=0 || Li!=0)) MoveSuccess = hardwareManager.AbsMoveXYStage(xyMove);
+                        if((Lp!=0 || Li!=0)) MoveSuccess = hardwareManager.moveXYStage(xyMove);
                         else MoveSuccess = false;
                     }
 
