@@ -114,6 +114,7 @@ public class DriftCorrection extends Observable implements Runnable {
     private boolean StartMDA = false; // 221025 JE
     private double WaitLeft = 0; // 221025 JE
     private double Bias = 0; // 221025 JE
+    private boolean NanoJNormalize = false;
     
     private double refCCbottomMidMax = 0; // 220201 JE
     private double refCCtopMidMax = 0; // 220201 JE
@@ -196,17 +197,14 @@ public class DriftCorrection extends Observable implements Runnable {
                         HeightRatio = 0;
                         driftData.clearResultMap(); // 190412 kw
                         i=-1;
-                        
+                        /* // for simulations JE
                         ImagePlus LoadedImage = opener.openImage("C:\\Users\\joshe\\Documents\\GitHub\\LifeHackDevelopment\\Imlock\\SubPixelShiftOut\\Images\\" + "Middle.tif");
-                        //ImagePlus LoadedImage = opener.openImage("D:\\software\\github\\LifeHackDevelopment\\Imlock\\Jumpy_Reference\\SubPixelShiftOut\\" + "ShiftedImage_" + Integer.toString(i) + ".tif");
-                        //ImagePlus LoadedImage = opener.openImage("F:\\ImLock_TwinCam_Covered_1\\Default\\" + "img_channel000_position000_time" + String.format("%09d", i) + "_z000.tif");                       
-                        //ImagePlus LoadedImage = opener.openImage("D:\\software\\github\\LifeHackDevelopment\\Imlock\\SubPixelShiftOutRotated\\" + "ShiftedImage_" + Integer.toString(i) + ".tif");
-                        FloatProcessor image = LoadedImage.getProcessor().convertToFloatProcessor();
+                        FloatProcessor image = processor.Normalize(LoadedImage.getProcessor().convertToFloatProcessor());
                         driftData.setReferenceImage(image);
-                        
-                        //driftData.setReferenceImage(snapAndProcess());
+                        */
+                        driftData.setReferenceImage(snapAndProcess());
                         if (correctionMode == XY){
-                            refCC = CrossCorrelationMap.calculateCrossCorrelationMap(driftData.getReferenceImage(), driftData.getReferenceImage(), false); // 220131 JE
+                            refCC = CrossCorrelationMap.calculateCrossCorrelationMap(driftData.getReferenceImage(), driftData.getReferenceImage(), NanoJNormalize); // 220131 JE
                             Peak = CalculateImageStatistics.getMax(refCC); // 221012 JE
                             refCCmidMidMax = processor.CenterHeightFind3(refCC.convertToFloatProcessor(),Peak); // 221012 JE
 
@@ -236,32 +234,38 @@ public class DriftCorrection extends Observable implements Runnable {
                             hardwareManager.stopXYStage();
                             hardwareManager.setZero();
                             // Take picture at current position, filter, clip and add to image stack
-                            //refStack.addSlice(MIDDLE, snapAndProcess());
+                            refStack.addSlice(MIDDLE, snapAndProcess());
+                            /* //for simulations JE
                             ImagePlus LoadedImage = opener.openImage("C:\\Users\\joshe\\Documents\\GitHub\\LifeHackDevelopment\\Imlock\\SubPixelShiftOut\\Images\\" + "Middle.tif");
+                            //FloatProcessor image = LoadedImage.getProcessor().convertToFloatProcessor();
                             FloatProcessor image = processor.Normalize(LoadedImage.getProcessor().convertToFloatProcessor());
                             refStack.addSlice(MIDDLE, image);
-                        
+                            */
                             // Move one stepSize above focus, snap and add to image stack
-                            //hardwareManager.moveFocusStageInSteps(1);
-                            //refStack.addSlice(TOP, snapAndProcess(), 0);
+                            hardwareManager.moveFocusStageInSteps(1);
+                            refStack.addSlice(TOP, snapAndProcess(), 0);
+                            /* //for simulations JE 
                             LoadedImage = opener.openImage("C:\\Users\\joshe\\Documents\\GitHub\\LifeHackDevelopment\\Imlock\\SubPixelShiftOut\\Images\\" + "Top.tif");
+                            //image = LoadedImage.getProcessor().convertToFloatProcessor();
                             image = processor.Normalize(LoadedImage.getProcessor().convertToFloatProcessor());
                             refStack.addSlice(TOP, image, 0);
-
+                            */
                             // Move two stepSizes below the focus, snap and add to image stack
-                            //hardwareManager.moveFocusStageInSteps(-2);
-                            //refStack.addSlice(BOTTOM, snapAndProcess());
+                            hardwareManager.moveFocusStageInSteps(-2);
+                            refStack.addSlice(BOTTOM, snapAndProcess());
+                            /* //for simulations JE
                             LoadedImage = opener.openImage("C:\\Users\\joshe\\Documents\\GitHub\\LifeHackDevelopment\\Imlock\\SubPixelShiftOut\\Images\\" + "Bottom.tif");
+                            //image = LoadedImage.getProcessor().convertToFloatProcessor();
                             image = processor.Normalize(LoadedImage.getProcessor().convertToFloatProcessor());
                             refStack.addSlice(BOTTOM, image);
-
+                            */
                             // Move back to original position
                             hardwareManager.moveFocusStageInSteps(1);
                             
-                            //refStackCC = CrossCorrelationMap.calculateCrossCorrelationMap(snapAndProcess(), refStack, true);
-                            refStackCC = CrossCorrelationMap.calculateCrossCorrelationMap(refStack.getProcessor(2), refStack, false); // 220131 JE
-                            refTopTopCC = CrossCorrelationMap.calculateCrossCorrelationMap(refStack.getProcessor(1), refStack.getProcessor(1), false); // 220131 JE
-                            refBottomBottomCC = CrossCorrelationMap.calculateCrossCorrelationMap(refStack.getProcessor(3), refStack.getProcessor(3), false); // 220131 JE
+                            //refStackCC = CrossCorrelationMap.calculateCrossCorrelationMap(snapAndProcess(), refStack, NanoJNormalize);
+                            refStackCC = CrossCorrelationMap.calculateCrossCorrelationMap(refStack.getProcessor(2), refStack, NanoJNormalize); // 220131 JE
+                            refTopTopCC = CrossCorrelationMap.calculateCrossCorrelationMap(refStack.getProcessor(1), refStack.getProcessor(1), NanoJNormalize); // 220131 JE
+                            refBottomBottomCC = CrossCorrelationMap.calculateCrossCorrelationMap(refStack.getProcessor(3), refStack.getProcessor(3), NanoJNormalize); // 220131 JE
 
                             FloatProcessor refCCbottom = refStackCC.getProcessor(3).convertToFloatProcessor();
                             FloatProcessor refCCmiddle = refStackCC.getProcessor(2).convertToFloatProcessor();
@@ -320,14 +324,17 @@ public class DriftCorrection extends Observable implements Runnable {
                         currentCenter[0] = 0;
                         currentCenter[1] = 0;
                             
-                        //ImageProcessor ImageT = snapAndProcess();
-                        //resultStack = CrossCorrelationMap.calculateCrossCorrelationMap(ImageT, driftData.getReferenceStack(), true);
-                        //driftData.setResultMap(resultStack);
+                        ImageProcessor ImageT = snapAndProcess();
+                        resultStack = CrossCorrelationMap.calculateCrossCorrelationMap(ImageT, driftData.getReferenceStack(), NanoJNormalize);
+                        driftData.setResultMap(resultStack);
+                        /* //for simulations JE
                         i=i+1;
                         try{
+                            if (driftData.getReferenceStack()==null) ReportingUtils.showMessage(Integer.toString(i));
                             ImagePlus LoadedImage = opener.openImage("C:\\Users\\joshe\\Documents\\GitHub\\LifeHackDevelopment\\Imlock\\SubPixelShiftOut\\Images\\" + "ShiftedImage_" + Integer.toString(i) + ".tif");
+                            //FloatProcessor image = LoadedImage.getProcessor().convertToFloatProcessor();
                             FloatProcessor image = processor.Normalize(LoadedImage.getProcessor().convertToFloatProcessor());
-                            resultStack =  CrossCorrelationMap.calculateCrossCorrelationMap(image, driftData.getReferenceStack(), false);
+                            resultStack =  CrossCorrelationMap.calculateCrossCorrelationMap(image, driftData.getReferenceStack(), NanoJNormalize);
                         }
                             catch(Exception e){
                             driftData.setReferenceImage(null);
@@ -337,7 +344,7 @@ public class DriftCorrection extends Observable implements Runnable {
                             }
                         
                         driftData.setResultMap(resultStack);
-                        
+                        */
                         /*
                         if (MDA.isAcquisitionRunning()){
                             ImageProcessor imProc = resultStack.getProcessor(1);
@@ -402,9 +409,9 @@ public class DriftCorrection extends Observable implements Runnable {
                         //ImagePlus LoadedImage = opener.openImage("F:\\ImLock_AddedPost_Unscrewed_matchedFP_2\\Default\\" + "img_channel000_position000_time" + String.format("%09d", i) + "_z000.tif");
                         //ImagePlus LoadedImage = opener.openImage("F:\\ImLock_TwinCam_Covered_1\\Default\\" + "img_channel000_position000_time" + String.format("%09d", i) + "_z000.tif");
                         FloatProcessor image = LoadedImage.getProcessor().convertToFloatProcessor();
-                        resultImage =  CrossCorrelationMap.calculateCrossCorrelationMap(image, driftData.getReferenceImage(), true);
+                        resultImage =  CrossCorrelationMap.calculateCrossCorrelationMap(image, driftData.getReferenceImage(), NanoJNormalize);
                         */
-                        resultImage =  CrossCorrelationMap.calculateCrossCorrelationMap(snapAndProcess(), driftData.getReferenceImage(), false);
+                        resultImage =  CrossCorrelationMap.calculateCrossCorrelationMap(processor.Normalize(snapAndProcess()), driftData.getReferenceImage(), NanoJNormalize);
                         driftData.setResultMap(resultImage);
 
                         ccSliceMiddle = resultImage.convertToFloatProcessor();

@@ -293,7 +293,7 @@ public class DriftCorrectionProcess implements Measurements {
         int y = CenterY - offset;
         image.setRoi(x,y, size, size);
         FloatProcessor region = image.crop().convertToFloatProcessor();
-//        float[] Kernel = createGaussianKernel(size);
+        //float[] Kernel = createGaussianKernel(size);
         float[] pixels = (float[]) region.getPixels();
         double sum = 0;
         for (int n=0; n<pixels.length; n++) {
