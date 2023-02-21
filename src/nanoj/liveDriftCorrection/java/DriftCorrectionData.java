@@ -36,6 +36,7 @@ public class DriftCorrectionData {
     private FloatProcessor referenceImage = null;
     private FloatProcessor backgroundImage = null;
     private ImageStack referenceStack = new ImageStack();
+    private ImageStack driftImages = new ImageStack();
     private Plot plot;
 
     // Data
@@ -294,8 +295,7 @@ public class DriftCorrectionData {
 
         if (isShowMapTrue()) {
 
-            if (!keepStacks)
-                resultMap.setStack(imageStack);
+            if (!keepStacks) resultMap.setStack(imageStack);
             else {
                 if (resultMap.getStackSize() < 2) {
                     resultMap.setStack(imageStack);
@@ -330,25 +330,19 @@ public class DriftCorrectionData {
     }
 
     synchronized void setLatestImage(FloatProcessor image) {
-        
-        latestImage.setProcessor(image);
+        ImageStack stack = new ImageStack(image.getWidth(), image.getHeight());
+        //latestImage.setProcessor(image);
         boolean keepImages = true;
         
-        if (isShowLatestTrue())
-            if (!keepImages)
-                latestImage.setProcessor(image);
+        if (isShowLatestTrue()){
+            if (!keepImages) latestImage.setProcessor(image);      
             else {
-                if (latestImage.getStackSize() < 2) {
-                    latestImage.setProcessor(image);
-                }
-                else {
-                    ImageStack stack = latestImage.getStack();
-                    stack.addSlice(image);
-                    
-                    resultMap.setStack(stack);
-                }
-            latestImage.show();
-        }            
+                if(latestImage.getStack().size()>=1) stack = latestImage.getStack();
+                stack.addSlice(image);
+                latestImage.setStack(stack);
+            }
+            latestImage.show();    
+        }
     }
 
     private synchronized void setXShiftData(ArrayList<Double> xShift) {
