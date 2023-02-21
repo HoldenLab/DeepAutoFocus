@@ -36,7 +36,7 @@ public class DriftCorrectionData {
     private FloatProcessor referenceImage = null;
     private FloatProcessor backgroundImage = null;
     private ImageStack referenceStack = new ImageStack();
-    private ImageStack driftImages = new ImageStack();
+    private ImagePlus driftImages = new ImagePlus();
     private Plot plot;
 
     // Data
@@ -330,18 +330,18 @@ public class DriftCorrectionData {
     }
 
     synchronized void setLatestImage(FloatProcessor image) {
+        latestImage.setProcessor(image);
+        
+        if (isShowLatestTrue()) latestImage.show();
         ImageStack stack = new ImageStack(image.getWidth(), image.getHeight());
         //latestImage.setProcessor(image);
         boolean keepImages = true;
-        
-        if (isShowLatestTrue()){
-            if (!keepImages) latestImage.setProcessor(image);      
-            else {
-                if(latestImage.getStack().size()>=1) stack = latestImage.getStack();
-                stack.addSlice(image);
-                latestImage.setStack(stack);
-            }
-            latestImage.show();    
+
+        if (keepImages){
+            if(driftImages.getStack().size()>=1) stack = driftImages.getStack();
+            stack.addSlice(image);
+            driftImages.setStack(stack);
+            if (isShowLatestTrue()) driftImages.show();
         }
     }
 
