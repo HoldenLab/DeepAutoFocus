@@ -290,7 +290,7 @@ public class DriftCorrectionData {
 
     synchronized void setResultMap(ImageStack imageStack) {
         if (imageStack.getSize() < 1) return;
-        boolean keepStacks = true; // I find it more helpful to see readout in real time. 201230 kw
+        boolean keepStacks = false; // I find it more helpful to see readout in real time. 201230 kw
 
         if (isShowMapTrue()) {
 
@@ -332,9 +332,23 @@ public class DriftCorrectionData {
     synchronized void setLatestImage(FloatProcessor image) {
         
         latestImage.setProcessor(image);
+        boolean keepImages = true;
         
         if (isShowLatestTrue())
+            if (!keepImages)
+                latestImage.setProcessor(image);
+            else {
+                if (latestImage.getStackSize() < 2) {
+                    latestImage.setProcessor(image);
+                }
+                else {
+                    ImageStack stack = latestImage.getStack();
+                    stack.addSlice(image);
+                    
+                    resultMap.setStack(stack);
+                }
             latestImage.show();
+        }            
     }
 
     private synchronized void setXShiftData(ArrayList<Double> xShift) {

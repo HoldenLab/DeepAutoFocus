@@ -324,8 +324,8 @@ public class DriftCorrection extends Observable implements Runnable {
                         currentCenter[0] = 0;
                         currentCenter[1] = 0;
                             
-                        ImageProcessor ImageT = snapAndProcess();
-                        resultStack = CrossCorrelationMap.calculateCrossCorrelationMap(ImageT, driftData.getReferenceStack(), NanoJNormalize);
+                        ImageProcessor Image = snapAndProcess();
+                        resultStack = CrossCorrelationMap.calculateCrossCorrelationMap(Image, driftData.getReferenceStack(), NanoJNormalize);
                         driftData.setResultMap(resultStack);
                         /* //for simulations JE
                         i=i+1;
