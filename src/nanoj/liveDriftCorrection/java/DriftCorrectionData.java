@@ -336,14 +336,13 @@ public class DriftCorrectionData {
         
         if (isShowLatestTrue()) latestImage.show();
         ImageStack stack = new ImageStack(image.getWidth(), image.getHeight());
-        //latestImage.setProcessor(image);
         boolean keepImages = true;
 
-        if (keepImages && isRunning()) {
+        if (keepImages && isRunning() && isShowLatestTrue()) {
             if(driftImages.getStack().size()>=1) stack = driftImages.getStack();
             stack.addSlice(image);
             driftImages.setStack(stack);
-            if (isShowLatestTrue()) driftImages.show();
+            driftImages.show();
         }
     }
 
