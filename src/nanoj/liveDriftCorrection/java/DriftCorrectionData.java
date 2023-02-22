@@ -29,6 +29,7 @@ public class DriftCorrectionData {
     private boolean flipX = false;
     private boolean SwitchXY;
     boolean Tune = false;
+    private boolean Running = false;
     private File dataFile;
     private ImagePlus resultMap = new ImagePlus();
     private ImagePlus plotsImage = new ImagePlus();
@@ -338,7 +339,7 @@ public class DriftCorrectionData {
         //latestImage.setProcessor(image);
         boolean keepImages = true;
 
-        if (keepImages && !hardware.getStreamImages()) {
+        if (keepImages && isRunning()) {
             if(driftImages.getStack().size()>=1) stack = driftImages.getStack();
             stack.addSlice(image);
             driftImages.setStack(stack);
@@ -481,6 +482,14 @@ public class DriftCorrectionData {
     
     public void setStartMDA(int StartMDA) {
         this.StartMDA = StartMDA;
+    }
+    
+    public boolean isRunning() {
+        return Running;
+    }
+    
+    public void setRunning(boolean run){
+        this.Running = run;
     }
 
     synchronized void clearData() {

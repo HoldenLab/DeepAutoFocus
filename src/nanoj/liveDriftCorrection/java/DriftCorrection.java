@@ -596,6 +596,7 @@ public class DriftCorrection extends Observable implements Runnable {
         startTimeStamp = System.currentTimeMillis();
         driftData.clearData();
         this.runAcquisition = run;
+        driftData.setRunning(run);
     }
 
     public FloatProcessor snapAndProcess() throws Exception{
