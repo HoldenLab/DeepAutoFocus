@@ -59,7 +59,6 @@ public class DriftCorrection extends Observable implements Runnable {
     private ImageProcessor refBottomBottomCC = null; // 220131 JE
     private ImageProcessor resultImage = null;
     private FloatProcessor ccSliceMiddle = null;
-    private Image im = null;
 
     private static final int XYZ = 0;
     private static final int Z = 1;
@@ -114,7 +113,7 @@ public class DriftCorrection extends Observable implements Runnable {
     private boolean StartMDA = false; // 221025 JE
     private double WaitLeft = 0; // 221025 JE
     private double Bias = 0; // 221025 JE
-    private boolean NanoJNormalize = false;
+    private final boolean NanoJNormalize = false;
     
     private double refCCbottomMidMax = 0; // 220201 JE
     private double refCCtopMidMax = 0; // 220201 JE

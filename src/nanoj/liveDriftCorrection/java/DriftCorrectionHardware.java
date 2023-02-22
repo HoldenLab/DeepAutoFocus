@@ -590,6 +590,9 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
     public void setStreamImages(boolean liveImage) {
         this.streamImages = liveImage;
     }
+    public boolean getStreamImages() {
+        return streamImages;
+    }
 
     public boolean isLoaded() {
         return loaded;

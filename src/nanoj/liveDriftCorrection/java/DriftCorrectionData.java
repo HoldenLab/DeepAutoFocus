@@ -338,7 +338,7 @@ public class DriftCorrectionData {
         //latestImage.setProcessor(image);
         boolean keepImages = true;
 
-        if (keepImages){
+        if (keepImages && !hardware.getStreamImages()) {
             if(driftImages.getStack().size()>=1) stack = driftImages.getStack();
             stack.addSlice(image);
             driftImages.setStack(stack);
