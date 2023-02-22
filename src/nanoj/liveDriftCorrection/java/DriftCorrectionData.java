@@ -327,6 +327,7 @@ public class DriftCorrectionData {
     // added kw 190412
     synchronized void clearResultMap(){
         resultMap.close();
+        driftImages.close();
     }
 
     synchronized void setLatestImage(FloatProcessor image) {
