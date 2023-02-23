@@ -229,9 +229,6 @@ public class DriftCorrection extends Observable implements Runnable {
                                 driftData.getReferenceImage().getHeight()
                             );
                             
-                            hardwareManager.moveXYStage(new Point2D.Double(0,0)); // give xy stage oppertunity to reset 220908 JE
-                            hardwareManager.stopXYStage();
-                            hardwareManager.setZero();
                             // Take picture at current position, filter, clip and add to image stack
                             refStack.addSlice(MIDDLE, processor.Normalize(snapAndProcess()));
                             /* //for simulations JE

@@ -292,7 +292,7 @@ public class DriftCorrectionData {
 
     synchronized void setResultMap(ImageStack imageStack) {
         if (imageStack.getSize() < 1) return;
-        boolean keepStacks = false; // I find it more helpful to see readout in real time. 201230 kw
+        boolean keepStacks = true; // I find it more helpful to see readout in real time. 201230 kw
 
         if (isShowMapTrue()) {
 
