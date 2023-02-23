@@ -323,7 +323,7 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
                 driftCore.unloadAllDevices();                
                 driftCore.loadSystemConfiguration(getConfigFileLocation());
                 driftCore.initializeAllDevices();
-                driftCore.setProperty("Blackfly S BFS-U3-51S5M","Binning",2); // Added for us only, REMOVE BEFORE DISTRIBUTION JE
+                driftCore.setProperty("Blackfly S BFS-U3-51S5M","Binning",2);
             } catch (Exception e) {
                 ReportingUtils.showError(e, ERROR_LOADING_DEVICES);
             }
@@ -419,13 +419,10 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
                     ReportingUtils.showError(e, ACQUISITION_ERROR);
                 }
             }
-            else{
-                try {
-                    Thread.sleep(1); // Otherwise the compiler seems to think the loop is empty
-                } 
-                catch (InterruptedException e) {
-                    ReportingUtils.logError(e);
-                }
+            try {
+                Thread.sleep(1); // Otherwise the compiler seems to think the loop is empty
+            } catch (InterruptedException e) {
+                ReportingUtils.logError(e);
             }
         }
     }
