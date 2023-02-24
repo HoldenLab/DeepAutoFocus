@@ -417,11 +417,14 @@ public class DriftCorrectionProcess implements Measurements {
         
         ImageStatistics stats = ImageStatistics.getStatistics(image);
         image.subtract(stats.mean);
+        stats = ImageStatistics.getStatistics(image);
+        double sum = stats.area*stats.mean;
 
-        double max = image.getMax();
-        double min = image.getMin();
-        double range = max-min;
-        image.multiply(1/range);
+        //double max = image.getMax();
+        //double min = image.getMin();
+        //double range = max-min;
+        
+        image.multiply(1/sum);
         
         return image;
     }
