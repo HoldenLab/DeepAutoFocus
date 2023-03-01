@@ -304,6 +304,27 @@ public class DriftCorrectionProcess implements Measurements {
         return mean;
     }
     
+    public double CenterHeightFind4(FloatProcessor image, float[] Center, float ShiftX, float ShiftY){ // 220131 JE
+        int CenterX = (int) Center[0] + (int) ShiftX;
+        int CenterY = (int) Center[1] + (int) ShiftY;
+        if (Math.abs(CenterX-((image.getWidth()/2)+ShiftX)) <= 1) CenterX = (image.getWidth()/2) + (int) ShiftX;
+        if (Math.abs(CenterY-((image.getWidth()/2)+ShiftY)) <= 1) CenterY = (image.getHeight()/2) + (int) ShiftY;
+        int offset = 1;
+        int size = 3;
+        int x = CenterX - offset;
+        int y = CenterY - offset;
+        image.setRoi(x,y, size, size);
+        FloatProcessor region = image.crop().convertToFloatProcessor();
+        float[] pixels = (float[]) region.getPixels();
+        double sum = 0;
+        for (int n=0; n<pixels.length; n++) {
+            sum += pixels[n];
+        }
+        
+        double mean = sum/pixels.length;
+        return mean;
+    }
+    
     public float[] PickPlane(ImageStack ccMapStack){ // choses which plane of the ccMap stack has the highest peak to center algorithm on 220926 JE
         float[] Peaks = new float[3];
         float vMax = 0;
@@ -343,26 +364,30 @@ public class DriftCorrectionProcess implements Measurements {
 
         return null;
     }
+    
+    public float[] OffsetCenters(ImageStack ccMapStack){ // choses which plane of the ccMap stack has the highest peak to center algorithm on 220926 JE
+        float[] Shifts = new float[4];
+        
+        
+        ImageProcessor TempTop = ccMapStack.getProcessor(1).duplicate();
+        ImageProcessor TempBot = ccMapStack.getProcessor(3).duplicate();
+        
+        ReportingUtils.showMessage(Double.toString(TempTop.getMax()) + ", " + Double.toString(TempTop.getMin()));
+        
+        if (TempTop.getMax() < TempTop.getMin()*-1) TempTop.multiply(-1d);
+        if (TempBot.getMax() < TempBot.getMin()*-1) TempBot.multiply(-1d);
+        
+        float[] TopPeak = CalculateImageStatistics.getMax(TempTop);
+        float[] BottomPeak = CalculateImageStatistics.getMax(TempBot);
+        
+        ReportingUtils.showMessage(Double.toString(TopPeak[0]) + ", " + Double.toString(TopPeak[1]) + ", " + Double.toString(TopPeak[2]));
 
-    public double CenterHeightFind4(FloatProcessor image){ // 220131 JE
-        int x = image.getWidth()/2 - 12;
-        int y = image.getHeight()/2 - 12;
-        image.setRoi(x,y, 25, 25);
-        FloatProcessor region = image.crop().convertToFloatProcessor();
-        OvalRoi roi = new OvalRoi((region.getWidth()/2)-9, (region.getHeight()/2)-9, 19, 19);
-        region.setColor(0);
-        region.setRoi(roi);
-        region.fillOutside(roi);
-        //double mean = ImageStatistics.getStatistics(region).mean;
-        float[] pixels = (float[]) image.getPixels();
-        double sum = 0;
-        int pixnum = 0;
-        for (int n=0; n<pixels.length; n++) {
-            sum += pixels[n];
-            if (pixels[n] != 0) pixnum = pixnum + 1;
-        }
-        double mean = sum/pixnum;
-        return mean;
+        Shifts[0] = TopPeak[0] - TempTop.getWidth()/2;
+        Shifts[1] = TopPeak[1] - TempTop.getHeight()/2;
+        Shifts[2] = BottomPeak[0] - TempBot.getWidth()/2;
+        Shifts[3] = BottomPeak[1] - TempBot.getHeight()/2;
+
+        return Shifts;
     }
 
     public FloatProcessor backgroundCorrect(FloatProcessor image) throws Exception {
@@ -416,9 +441,9 @@ public class DriftCorrectionProcess implements Measurements {
     public FloatProcessor Normalize(FloatProcessor image){ //230208 JE
         
         ImageStatistics stats = ImageStatistics.getStatistics(image);
-        image.subtract(stats.mean);
-        stats = ImageStatistics.getStatistics(image);
         double sum = stats.area*stats.mean;
+        stats = ImageStatistics.getStatistics(image);
+        image.subtract(stats.mean);
 
         //double max = image.getMax();
         //double min = image.getMin();

@@ -124,6 +124,7 @@ public class DriftCorrection extends Observable implements Runnable {
     float[] Peak = null; //220926 JE
     double[] currentCenter = null; //221012 JE
     int[] Offsets = null; // 230209 JE
+    float[] VerticalOffsets = null; 
 
 
     public DriftCorrection(DriftCorrectionHardware manager, DriftCorrectionData data, DriftCorrectionProcess processor) {
@@ -196,12 +197,12 @@ public class DriftCorrection extends Observable implements Runnable {
                         HeightRatio = 0;
                         driftData.clearResultMap(); // 190412 kw
                         i=-1;
-                        /* // for simulations JE
+                         // for simulations JE
                         ImagePlus LoadedImage = opener.openImage("C:\\Users\\joshe\\Documents\\GitHub\\LifeHackDevelopment\\Imlock\\SubPixelShiftOut\\Images\\" + "Middle.tif");
                         FloatProcessor image = processor.Normalize(LoadedImage.getProcessor().convertToFloatProcessor());
                         driftData.setReferenceImage(image);
-                        */
-                        driftData.setReferenceImage(processor.Normalize(snapAndProcess()));
+                        
+                        //driftData.setReferenceImage(processor.Normalize(snapAndProcess()));
                         if (correctionMode == XY){
                             refCC = CrossCorrelationMap.calculateCrossCorrelationMap(driftData.getReferenceImage(), driftData.getReferenceImage(), NanoJNormalize); // 220131 JE
                             Peak = CalculateImageStatistics.getMax(refCC); // 221012 JE
@@ -230,31 +231,31 @@ public class DriftCorrection extends Observable implements Runnable {
                             );
                             
                             // Take picture at current position, filter, clip and add to image stack
-                            refStack.addSlice(MIDDLE, processor.Normalize(snapAndProcess()));
-                            /* //for simulations JE
+                            //refStack.addSlice(MIDDLE, processor.Normalize(snapAndProcess()));
+                             //for simulations JE
                             ImagePlus LoadedImage = opener.openImage("C:\\Users\\joshe\\Documents\\GitHub\\LifeHackDevelopment\\Imlock\\SubPixelShiftOut\\Images\\" + "Middle.tif");
                             //FloatProcessor image = LoadedImage.getProcessor().convertToFloatProcessor();
                             FloatProcessor image = processor.Normalize(LoadedImage.getProcessor().convertToFloatProcessor());
                             refStack.addSlice(MIDDLE, image);
-                            */
+                            
                             // Move one stepSize above focus, snap and add to image stack
-                            hardwareManager.moveFocusStageInSteps(1);
-                            refStack.addSlice(TOP, processor.Normalize(snapAndProcess()), 0);
-                            /* //for simulations JE 
+                            //hardwareManager.moveFocusStageInSteps(1);
+                            //refStack.addSlice(TOP, processor.Normalize(snapAndProcess()), 0);
+                             //for simulations JE 
                             LoadedImage = opener.openImage("C:\\Users\\joshe\\Documents\\GitHub\\LifeHackDevelopment\\Imlock\\SubPixelShiftOut\\Images\\" + "Top.tif");
                             //image = LoadedImage.getProcessor().convertToFloatProcessor();
                             image = processor.Normalize(LoadedImage.getProcessor().convertToFloatProcessor());
                             refStack.addSlice(TOP, image, 0);
-                            */
+                            
                             // Move two stepSizes below the focus, snap and add to image stack
-                            hardwareManager.moveFocusStageInSteps(-2);
-                            refStack.addSlice(BOTTOM, processor.Normalize(snapAndProcess()));
-                            /* //for simulations JE
+                            //hardwareManager.moveFocusStageInSteps(-2);
+                            //refStack.addSlice(BOTTOM, processor.Normalize(snapAndProcess()));
+                             //for simulations JE
                             LoadedImage = opener.openImage("C:\\Users\\joshe\\Documents\\GitHub\\LifeHackDevelopment\\Imlock\\SubPixelShiftOut\\Images\\" + "Bottom.tif");
                             //image = LoadedImage.getProcessor().convertToFloatProcessor();
                             image = processor.Normalize(LoadedImage.getProcessor().convertToFloatProcessor());
                             refStack.addSlice(BOTTOM, image);
-                            */
+                            
                             // Move back to original position
                             hardwareManager.moveFocusStageInSteps(1);
                             
@@ -284,12 +285,24 @@ public class DriftCorrection extends Observable implements Runnable {
                             //refCCmidMidMax = refCCmidMid.getMax();*/
                             
                             Peak = processor.PickPlane(refStackCC);
+                            VerticalOffsets = processor.OffsetCenters(refStackCC);
+                            ReportingUtils.showMessage(Float.toString(VerticalOffsets[0]));
                             
+                            /*
                             refCCbottomMidMax = processor.CenterHeightFind3(refCCbottom, Peak); // 220131 JE
                             refCCtopMidMax = processor.CenterHeightFind3(refCCtop, Peak); // 220131 JE
                             refCCmidMidMax = processor.CenterHeightFind3(refCCmiddle, Peak); // 220131 JE
                             refCCTopTopMax = processor.CenterHeightFind3(refTopTopProc, Peak); // 220131 JE
                             refCCBottomBottomMax = processor.CenterHeightFind3(refBottomBottomProc, Peak); // 220131 JE
+                            */
+                            
+                            refCCbottomMidMax = processor.CenterHeightFind4(refCCbottom, Peak, VerticalOffsets[2], VerticalOffsets[3]); // 230301 JE
+                            refCCtopMidMax = processor.CenterHeightFind4(refCCtop, Peak, VerticalOffsets[0], VerticalOffsets[1]); // 230301 JE
+                            refCCmidMidMax = processor.CenterHeightFind4(refCCmiddle, Peak, 0, 0); // 230301 JE
+                            refCCTopTopMax = processor.CenterHeightFind4(refTopTopProc, Peak, 0, 0); // 230301 JE
+                            refCCBottomBottomMax = processor.CenterHeightFind4(refBottomBottomProc, Peak, 0, 0); // 230301 JE
+                            
+                            ReportingUtils.showMessage(Double.toString(refCCmidMidMax));
                             
                             Top = (refCCtopMidMax/refCCTopTopMax); // 220131 JE
                             Bottom = (refCCbottomMidMax/refCCBottomBottomMax); // 220131 JE
@@ -320,14 +333,14 @@ public class DriftCorrection extends Observable implements Runnable {
                         currentCenter[0] = 0;
                         currentCenter[1] = 0;
                             
-                        ImageProcessor Image = processor.Normalize(snapAndProcess());
-                        resultStack = CrossCorrelationMap.calculateCrossCorrelationMap(Image, driftData.getReferenceStack(), NanoJNormalize);
-                        driftData.setResultMap(resultStack);
-                        /* //for simulations JE
+                        //ImageProcessor Image = processor.Normalize(snapAndProcess());
+                        //resultStack = CrossCorrelationMap.calculateCrossCorrelationMap(Image, driftData.getReferenceStack(), NanoJNormalize);
+                        //driftData.setResultMap(resultStack);
+                         //for simulations JE
                         i=i+1;
                         try{
-                            if (driftData.getReferenceStack()==null) ReportingUtils.showMessage(Integer.toString(i));
-                            ImagePlus LoadedImage = opener.openImage("C:\\Users\\joshe\\Documents\\GitHub\\LifeHackDevelopment\\Imlock\\SubPixelShiftOut\\Images\\" + "ShiftedImage_" + Integer.toString(i) + ".tif");
+                            //ReportingUtils.showMessage(String.format("%04d", i));
+                            ImagePlus LoadedImage = opener.openImage("C:\\Users\\joshe\\Documents\\GitHub\\LifeHackDevelopment\\Imlock\\SubPixelShiftOut\\Images\\" + "ShiftedImage" + String.format("%04d", i) + ".tif");
                             //FloatProcessor image = LoadedImage.getProcessor().convertToFloatProcessor();
                             FloatProcessor image = processor.Normalize(LoadedImage.getProcessor().convertToFloatProcessor());
                             resultStack =  CrossCorrelationMap.calculateCrossCorrelationMap(image, driftData.getReferenceStack(), NanoJNormalize);
@@ -340,7 +353,7 @@ public class DriftCorrection extends Observable implements Runnable {
                             }
                         
                         driftData.setResultMap(resultStack);
-                        */
+                        
                         /*
                         if (MDA.isAcquisitionRunning()){
                             ImageProcessor imProc = resultStack.getProcessor(1);
@@ -366,10 +379,16 @@ public class DriftCorrection extends Observable implements Runnable {
                         //double ccSliceMiddleMax = processor.CenterHeightFind2(ccSliceMiddle); // 220131 JE
 
                         Peak = processor.PickPlane(resultStack);
-
+                        
+                        /*
                         double ccSliceBottomMax = processor.CenterHeightFind3(ccSliceBottom, Peak); // 220926 JE
                         double ccSliceTopMax = processor.CenterHeightFind3(ccSliceTop, Peak); // 220926 JE
                         double ccSliceMiddleMax = processor.CenterHeightFind3(ccSliceMiddle, Peak); // 220926 JE
+                        */
+                        
+                        double ccSliceBottomMax = processor.CenterHeightFind4(ccSliceBottom, Peak, VerticalOffsets[2], VerticalOffsets[3]); // 230301 JE
+                        double ccSliceTopMax = processor.CenterHeightFind4(ccSliceTop, Peak, VerticalOffsets[0], VerticalOffsets[1]); // 230301 JE
+                        double ccSliceMiddleMax = processor.CenterHeightFind4(ccSliceMiddle, Peak, 0, 0); // 230301 JE
 
                         Top = (ccSliceTopMax/refCCTopTopMax); // 220131 JE
                         Bottom = (ccSliceBottomMax/refCCBottomBottomMax); // 220131 JE
