@@ -372,20 +372,19 @@ public class DriftCorrectionProcess implements Measurements {
         ImageProcessor TempTop = ccMapStack.getProcessor(1).duplicate();
         ImageProcessor TempBot = ccMapStack.getProcessor(3).duplicate();
         
-        ReportingUtils.showMessage(Double.toString(TempTop.getMax()) + ", " + Double.toString(TempTop.getMin()));
-        
         if (TempTop.getMax() < TempTop.getMin()*-1) TempTop.multiply(-1d);
         if (TempBot.getMax() < TempBot.getMin()*-1) TempBot.multiply(-1d);
         
         float[] TopPeak = CalculateImageStatistics.getMax(TempTop);
         float[] BottomPeak = CalculateImageStatistics.getMax(TempBot);
         
-        ReportingUtils.showMessage(Double.toString(TopPeak[0]) + ", " + Double.toString(TopPeak[1]) + ", " + Double.toString(TopPeak[2]));
 
         Shifts[0] = TopPeak[0] - TempTop.getWidth()/2;
         Shifts[1] = TopPeak[1] - TempTop.getHeight()/2;
         Shifts[2] = BottomPeak[0] - TempBot.getWidth()/2;
         Shifts[3] = BottomPeak[1] - TempBot.getHeight()/2;
+        
+        //ReportingUtils.showMessage(Double.toString(Shifts[0]) + ", " + Double.toString(Shifts[1]) + ", " + Double.toString(Shifts[2]) + ", " + Double.toString(Shifts[3]));
 
         return Shifts;
     }

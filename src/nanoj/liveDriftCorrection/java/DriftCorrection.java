@@ -286,7 +286,6 @@ public class DriftCorrection extends Observable implements Runnable {
                             
                             Peak = processor.PickPlane(refStackCC);
                             VerticalOffsets = processor.OffsetCenters(refStackCC);
-                            ReportingUtils.showMessage(Float.toString(VerticalOffsets[0]));
                             
                             /*
                             refCCbottomMidMax = processor.CenterHeightFind3(refCCbottom, Peak); // 220131 JE
@@ -301,8 +300,6 @@ public class DriftCorrection extends Observable implements Runnable {
                             refCCmidMidMax = processor.CenterHeightFind4(refCCmiddle, Peak, 0, 0); // 230301 JE
                             refCCTopTopMax = processor.CenterHeightFind4(refTopTopProc, Peak, 0, 0); // 230301 JE
                             refCCBottomBottomMax = processor.CenterHeightFind4(refBottomBottomProc, Peak, 0, 0); // 230301 JE
-                            
-                            ReportingUtils.showMessage(Double.toString(refCCmidMidMax));
                             
                             Top = (refCCtopMidMax/refCCTopTopMax); // 220131 JE
                             Bottom = (refCCbottomMidMax/refCCBottomBottomMax); // 220131 JE
