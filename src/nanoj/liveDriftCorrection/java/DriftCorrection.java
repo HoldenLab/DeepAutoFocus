@@ -658,7 +658,9 @@ public class DriftCorrection extends Observable implements Runnable {
         int StartMin = Integer.parseInt(StartTime.split(":")[1]);
         double StartSec = Double.parseDouble(StartTime.split(":")[2]);
         
-        if (Hrs<StartHrs) Hrs = Hrs + 24; // Protects against new day error JE 
+        if (Hrs<StartHrs) Hrs = Hrs + 24; // Protects against new day error JE
+        if (Hrs<StartHrs) Min = Min + 60; // Protects against new hour error JE
+        if (Hrs<StartHrs) Sec = Sec + 60; // Protects against new minute error JE
         
         int HrsDiff = Hrs - StartHrs;
         int MinDiff = Min - StartMin;
