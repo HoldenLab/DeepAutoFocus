@@ -49,7 +49,7 @@ public class DriftCorrectionData {
     private ArrayList<Double> PVdrift = new ArrayList<Double>(); // process variable for PI controller 220110
     private ArrayList<Double> OPdrift = new ArrayList<Double>(); // output for PI controller 220110
     private ArrayList<Double> timeStamps = new ArrayList<Double>();
-    private int StartMDA;
+    private double StartMDA;
 
     private int dataType = 0;
 
@@ -292,10 +292,9 @@ public class DriftCorrectionData {
 
     synchronized void setResultMap(ImageStack imageStack) {
         if (imageStack.getSize() < 1) return;
-        boolean keepStacks = true; // I find it more helpful to see readout in real time. 201230 kw
+        boolean keepStacks = false; // I find it more helpful to see readout in real time. 201230 kw
 
         if (isShowMapTrue()) {
-
             if (!keepStacks) resultMap.setStack(imageStack);
             else {
                 if (resultMap.getStackSize() < 2) {
@@ -336,10 +335,9 @@ public class DriftCorrectionData {
         
         if (isShowLatestTrue()) latestImage.show();
         ImageStack stack = new ImageStack(image.getWidth(), image.getHeight());
-        //latestImage.setProcessor(image);
-        boolean keepImages = true;
+        boolean keepImages = false;
 
-        if (keepImages && isRunning()) {
+        if (isShowLatestTrue() && keepImages && isRunning()) {
             if(driftImages.getStack().size()>=1) stack = driftImages.getStack();
             stack.addSlice(image);
             driftImages.setStack(stack);
@@ -476,11 +474,11 @@ public class DriftCorrectionData {
         this.SwitchXY = SwitchXY;
     }
     
-    public int getStartMDA() {
+    public double getStartMDA() {
         return StartMDA;
     }
     
-    public void setStartMDA(int StartMDA) {
+    public void setStartMDA(double StartMDA) {
         this.StartMDA = StartMDA;
     }
     
