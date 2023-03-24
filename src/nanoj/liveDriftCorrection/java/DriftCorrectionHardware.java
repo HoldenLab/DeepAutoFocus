@@ -75,11 +75,11 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
         setConfigFileLocation(config);
     }
     
-    public void moveFocusStageInSteps(double target) throws Exception {
+    public synchronized void moveFocusStageInSteps(double target) throws Exception {
         moveFocusStage(target*getStepSize());
     }
     
-    public void moveFocusStage(double target) throws Exception {
+    public synchronized void moveFocusStage(double target) throws Exception {
         if (target == 0.0) return;
 
         CMMCore core;
@@ -120,7 +120,7 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
     }
 
     // Move XY stage in microns without having to know if the XY stage is a single or two devices
-    public boolean moveXYStage(Point2D.Double target) throws Exception {
+    public synchronized boolean moveXYStage(Point2D.Double target) throws Exception {
         boolean Success = moveXYStage(target.x, target.y);
         return Success;
     }
@@ -203,7 +203,7 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
     }
 
     // Move XY stage in microns without having to know if the XY stage is a single or two devices
-    public boolean moveXYStage(double xTarget, double yTarget) throws Exception {
+    public synchronized boolean moveXYStage(double xTarget, double yTarget) throws Exception {
         //if (xTarget == 0 && yTarget == 0) return;
 
         CMMCore core;
@@ -217,13 +217,8 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
                 else core = driftCore;
                 core.waitForDevice(stageXY);
                 try{
-                    //double Pos1 = core.getXPosition();
                     core.setRelativeXYPosition(stageXY, xTarget, yTarget);
                     core.waitForDevice(getXYStage());
-                    //Point2D.Double Position = core.getXYStagePosition(stageXY);
-                    //double Pos2 = core.getXPosition();
-                    //double Move = Pos2 - Pos1;
-                    //ReportingUtils.showMessage(Double.toString(Move) + ", " + Double.toString(xTarget));
                 }
                 catch(Exception e){ // Guards against timeout hard-fails 22106 JE
                     core.stop(stageXY);
@@ -251,6 +246,16 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
         }
         return(true);
     }
+    
+    public Point2D.Double PollStage() throws Exception {
+        CMMCore core;
+        if (useMainXYAxis) core = mainCore;
+                else core = driftCore;
+        core.waitForDevice(stageXY);
+        Point2D.Double Position = core.getXYStagePosition(stageXY);
+        return Position;
+    }
+    
     
     public void stopXYStage() throws Exception {
         //if (xTarget == 0 && yTarget == 0) return;
