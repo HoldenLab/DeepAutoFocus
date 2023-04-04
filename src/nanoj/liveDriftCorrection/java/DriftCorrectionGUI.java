@@ -37,6 +37,7 @@ public class DriftCorrectionGUI{
     private static final String STOP_LIVE = "Stop Live";
     private static final String CONTROL = "Control";
     private static final String CONFIGURATION = "Configuration";
+    private static final String ADVANCED = "Advanced";
     private static final String CORRECTION_THREAD_NAME = "Drift Correction Thread";
     private static final String HARDWARE_THREAD_NAME = "Hardware Manager Thread";
     private static final String BG_SUB_THREAD_NAME = "Background subtraction Thread";
@@ -69,6 +70,8 @@ public class DriftCorrectionGUI{
     private static final String Lp = "Lp"; // 220118 JE
     private static final String Li = "Li"; // 220118 JE
     private static final String BIAS = "Bias"; // 221208 JE
+    private static final String ADZ = "Bias"; // 230404 JE
+    private static final String LDZ = "Bias"; // 230404 JE
     private static final String PERIOD = "period";
     private static final String REF_UPDATE = "refUpdate";
     private static final String BOUNDS = "bounds";
@@ -91,7 +94,9 @@ public class DriftCorrectionGUI{
     private static final String Zi_DEFAULT = "0"; // 220118 JE
     private static final String Lp_DEFAULT = "0.1"; // 220118 JE
     private static final String Li_DEFAULT = "0"; // 220118 JE
-    private static final String BIAS_DEFAULT = "0"; // 221208 JE
+    private static final String BIAS_DEFAULT = "0"; // 230404 JE
+    private static final String ADZ_DEFAULT = "0"; // 230404 JE
+    private static final String LDZ_DEFAULT = "10"; // 221208 JE
     private static final String PERIOD_DEFAULT = "500"; // milliseconds
     private static final String REF_UPDATE_DEFAULT = "0"; // minutes
     private static final String BOUNDS_DEFAULT = "10"; // microns
@@ -122,6 +127,8 @@ public class DriftCorrectionGUI{
     private static final String Lp_LABEL = "Lp (Lateral proportional gain)"; // 220118 JE
     private static final String Li_LABEL = "Li (Lateral integral gain)"; // 220118 JE
     private static final String BIAS_LABEL = "Lateral gain Bias (+ >> x, - >> y)"; // 221208 JE
+    private static final String ADZ_LABEL = "Axial Dead Zone (nm)"; // 230404 JE
+    private static final String LDZ_LABEL = "Lateral Dead Zone (nm)"; // 230404 JE
     private static final String PERIOD_LABEL = "Time between corrections (ms)";
     private static final String REF_UPDATE_LABEL = "Time between reference updates (min)";
     private static final String BOUNDS_LABEL = "Maximum translation (um)";
@@ -200,6 +207,7 @@ public class DriftCorrectionGUI{
     private JTabbedPane guiPanel = new JTabbedPane();
     private Dimension controlDimensions = new Dimension(600, 600);
     private Dimension configurationDimensions = new Dimension(300, 900);
+    private Dimension advancedDimensions = new Dimension(300, 900);
 
     // Control Panel objects
     private JToggleButton startButton = new DToggleButton(START, startButtonListener);
@@ -235,8 +243,7 @@ public class DriftCorrectionGUI{
     private JTextField ZpBox = new DTextField(Zp, Zp_DEFAULT); // 190404 kw
     private JTextField ZiBox = new DTextField(Zi, Zi_DEFAULT); // 220118 JE
     private JTextField LpBox = new DTextField(Lp, Lp_DEFAULT); // 220118 JE
-    private JTextField LiBox = new DTextField(Li, Li_DEFAULT); // 220118 JE
-    private JTextField BiasBox = new DTextField(BIAS, BIAS_DEFAULT); // 221208 JE
+    private JTextField LiBox = new DTextField(Li, Li_DEFAULT); // 220118 JE   
     private JTextField periodBox = new DTextField(PERIOD, PERIOD_DEFAULT);
     private JTextField refUpdateBox = new DTextField(REF_UPDATE, REF_UPDATE_DEFAULT);
     private JTextField boundsLimitBox = new DTextField(BOUNDS, BOUNDS_DEFAULT);
@@ -247,6 +254,12 @@ public class DriftCorrectionGUI{
     private JLabel xStageListLabel = new DLabel(X_STAGE_LIST_LABEL);
     private DeviceList yStageList = new DeviceList(DeviceType.StageDevice, Y_STAGE);
     private JLabel yStageListLabel = new DLabel(Y_STAGE_LIST_LABEL);
+    
+    // Adcanced Panel objects
+    private JTextField BiasBox = new DTextField(BIAS, BIAS_DEFAULT); // 221208 JE
+    private JTextField ADZBox = new DTextField(ADZ, ADZ_DEFAULT); // 230404 JE
+    private JTextField LDZBox = new DTextField(LDZ, ADZ_DEFAULT); // 230404 JE
+    
 
     //////////////////////// Instance
 
@@ -310,6 +323,9 @@ public class DriftCorrectionGUI{
 
         JPanel configurationPanel = new JPanel();
         configurationPanel.setLayout(new BoxLayout(configurationPanel,BoxLayout.PAGE_AXIS));
+        
+        JPanel advancedPanel = new JPanel();
+        advancedPanel.setLayout(new BoxLayout(advancedPanel,BoxLayout.PAGE_AXIS));
 
         // Add GUI elements to CONTROL panel
         controlPanelLayout.setHorizontalGroup(
@@ -399,8 +415,6 @@ public class DriftCorrectionGUI{
         configurationPanel.add(LpBox);
         configurationPanel.add(new DLabel(Li_LABEL)); //220118 JE
         configurationPanel.add(LiBox);
-        configurationPanel.add(new DLabel(BIAS_LABEL)); //220118 JE
-        configurationPanel.add(BiasBox);
         configurationPanel.add(new DLabel(PERIOD_LABEL));
         configurationPanel.add(periodBox);
         configurationPanel.add(new DLabel(REF_UPDATE_LABEL));
@@ -408,10 +422,18 @@ public class DriftCorrectionGUI{
         configurationPanel.add(new DLabel(BOUNDS_LABEL));
         configurationPanel.add(boundsLimitBox);
         
+        // Add GUI elements to ADVANCED panel
+        advancedPanel.add(new DLabel(BIAS_LABEL)); //220118 JE
+        advancedPanel.add(BiasBox);
+        advancedPanel.add(new DLabel(ADZ_LABEL)); //230404 JE
+        advancedPanel.add(LDZBox);
+        advancedPanel.add(new DLabel(LDZ_LABEL)); //230404 JE
+        advancedPanel.add(ADZBox);
 
         // Build GUI frame with the panels
         guiPanel.addTab(CONTROL, controlPanel);
         guiPanel.addTab(CONFIGURATION, configurationPanel);
+        guiPanel.addTab(ADVANCED, advancedPanel);
         guiFrame.setContentPane(guiPanel);
     }
 
@@ -496,6 +518,8 @@ public class DriftCorrectionGUI{
         driftCorrection.setLp((double) (Double.parseDouble(LpBox.getText()))); //220118 JE
         driftCorrection.setLi((double) (Double.parseDouble(LiBox.getText()))); //220118 JE
         driftCorrection.setBias((double) (Double.parseDouble(BiasBox.getText()))); //221208 JE
+        driftCorrection.setADZ((double) (Double.parseDouble(ADZBox.getText()))); //230404 JE
+        driftCorrection.setLDZ((double) (Double.parseDouble(LDZBox.getText()))); //230404 JE
         driftCorrection.setSleep((long) (Double.parseDouble(periodBox.getText())));
         driftCorrection.setRefUpdate((double) (Double.parseDouble(refUpdateBox.getText())));
         driftCorrection.setThreshold(Double.parseDouble(boundsLimitBox.getText()));
