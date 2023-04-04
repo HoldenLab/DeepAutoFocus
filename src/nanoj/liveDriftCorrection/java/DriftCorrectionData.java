@@ -28,7 +28,6 @@ public class DriftCorrectionData {
     private boolean flipY = false;
     private boolean flipX = false;
     private boolean SwitchXY;
-    boolean Tune = false;
     private boolean Running = false;
     private File dataFile;
     private ImagePlus resultMap = new ImagePlus();
@@ -145,19 +144,10 @@ public class DriftCorrectionData {
             double[] zPos = ArrayCasting.toArray(this.zPosition, 1d);
             double[] timeStamps = ArrayCasting.toArray(this.timeStamps, 1d);
                 
-            if (Tune){ 
-                xUnit = " (um)";
-                yUnit = " (um)";
-                zUnit = "";
-                tUnit = " (ms)";
-            }
-            else {
-                xUnit = " (um)";
-                yUnit = " (um)";
-                zUnit = " (um)";
-                tUnit = " (min)";
-            }
-            
+            xUnit = " (um)";
+            yUnit = " (um)";
+            zUnit = "";
+            tUnit = " (ms)";            
 
             switch (dataTypeIs()) {
                 case Z:
@@ -280,10 +270,6 @@ public class DriftCorrectionData {
 
     synchronized void setShowLatest(boolean showLatest) {
         this.showLatest = showLatest;
-    }
-    
-    synchronized void setTuneMode(boolean Tune) {
-        this.Tune = Tune;
     }
 
     private synchronized File getDataFile() { return dataFile; }
@@ -411,12 +397,8 @@ public class DriftCorrectionData {
 
         addXYPoint(xShiftPoint, yShiftPoint);
         
-        if (Tune) zDrift.add(z_err);
+        zDrift.add(z_err);
         
-        else{
-            if (zDrift.size() == 0) zDrift.add(zShiftPoint);
-            else zDrift.add(zShiftPoint + zDrift.get(zDrift.size()-1));
-        }
         if (!xDrift.isEmpty()) {
             if (isShowPlotTrue()) showPlots();
             if (isSavePlotsTrue()) {
@@ -437,20 +419,13 @@ public class DriftCorrectionData {
             yDrift.add(y);
         }
         else {
-            if (this.Tune) {
             xDrift.add(x);
-            yDrift.add(y);
-            }
-            else{
-            xDrift.add(x + xDrift.get(xDrift.size()-1));
-            yDrift.add(y + yDrift.get(yDrift.size()-1));
-            }
+            yDrift.add(y);            
         }
     }
 
     private synchronized void addTimeStamp(double timeStamp) {
-        if (Tune) timeStamps.add(timeStamp);
-        else timeStamps.add(timeStamp/60000);
+        timeStamps.add(timeStamp);
     }
 
     private synchronized void setTimeStamps(ArrayList<Double> timeStamps) {
