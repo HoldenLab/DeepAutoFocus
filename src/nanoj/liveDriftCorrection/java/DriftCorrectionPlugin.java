@@ -62,6 +62,6 @@ public class DriftCorrectionPlugin implements MenuPlugin, SciJavaPlugin {
 
     @Override
     public String getHelpText() {
-        return "Image-based cross-correlation developed by Henriques and Holden labs";
+        return "Full documentation is available at https://holdenlab.github.io/LifeHackWebsite/ImageAutofocus.html";
     }
 }
