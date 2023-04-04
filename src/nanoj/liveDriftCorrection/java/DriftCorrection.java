@@ -1,20 +1,12 @@
 package nanoj.liveDriftCorrection.java;
 
 import ij.io.Opener;
-import ij.ImagePlus;
 import ij.ImageStack;
-//import ij.measure.Calibration;
-//import ij.measure.Measurements;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
-//import ij.process.FloatStatistics;
-import ij.process.ImageStatistics;
-import nanoj.core.java.image.drift.EstimateShiftAndTilt;
-import java.lang.Math;
 import nanoj.core.java.image.transform.CrossCorrelationMap;
 import org.micromanager.internal.utils.ReportingUtils;
 import java.util.Date;
-import java.text.DateFormat;
 
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
@@ -30,10 +22,8 @@ import org.micromanager.PositionList;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.StagePosition;
 import org.micromanager.data.ImageJConverter;
-import org.micromanager.data.Image;
 import org.micromanager.data.DataManager;
 import org.micromanager.data.Datastore;
-import nanoj.core.java.image.calculator.ImageCalculator;
 
 public class DriftCorrection extends Observable implements Runnable {
     private boolean alive = true;
@@ -125,7 +115,6 @@ public class DriftCorrection extends Observable implements Runnable {
     private double refCCmidMidMax = 0; // 220201 JE
     private double refCCTopTopMax = 0; // 220201 JE
     private double refCCBottomBottomMax = 0; // 220201 JE
-    private double refmiddleMean = 0; // 220916 JE
     float[] Peak = null; //220926 JE
     double[] currentCenter = null; //221012 JE
     int[] Offsets = null; // 230209 JE
