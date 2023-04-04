@@ -590,18 +590,12 @@ public class DriftCorrection extends Observable implements Runnable {
                              driftData.addZShift(zDrift, z_err, getTimeElapsed(), Zp, Zi, refUpdate);
                              break;
                         case XY:
-                            if (driftData.Tune){
-                                driftData.addXYshift(xyError.x, xyError.y, getTimeElapsed(), Lp, Li, refUpdate);
-                                //driftData.addXYshift(xErr, yErr, getTimeElapsed(), Lp, Li, refUpdate);
-                            }
-                            else driftData.addXYshift((xyMove.x), (xyMove.y), getTimeElapsed(), Lp, Li, refUpdate);
+                            driftData.addXYshift(xyError.x, xyError.y, getTimeElapsed(), Lp, Li, refUpdate);
+                            //driftData.addXYshift(xErr, yErr, getTimeElapsed(), Lp, Li, refUpdate);
                             break;
                         case XYZ:
-                            if (driftData.Tune){
-                                driftData.addXYZshift(xyError.x, xyError.y, zDrift, z_err, getTimeElapsed(), Zp, Zi, Lp, Li, refUpdate);
-                                //driftData.addXYZshift(xyError.x, xyMove.x, zDrift, z_err, getTimeElapsed(), Zp, Zi, Lp, Li, refUpdate);
-                            }
-                            else driftData.addXYZshift((xyMove.x), (xyMove.y), zDrift, z_err, getTimeElapsed(), Zp, Zi, Lp, Li, refUpdate);
+                            driftData.addXYZshift(xyError.x, xyError.y, zDrift, z_err, getTimeElapsed(), Zp, Zi, Lp, Li, refUpdate);
+                            //driftData.addXYZshift(xyError.x, xyMove.x, zDrift, z_err, getTimeElapsed(), Zp, Zi, Lp, Li, refUpdate);
                             break;
                     }
 
