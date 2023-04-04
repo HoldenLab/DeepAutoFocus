@@ -50,7 +50,6 @@ public class DriftCorrectionGUI{
     private static final String SHOW_MAP = "showMap";
     private static final String SHOW_PLOT = "showPlot";
     private static final String SAVE_PLOTS = "savePlots";
-    private static final String TUNING_MODE = "TuningMode";
     private static final String CORRECTION_MODE = "correctionMode";
     private static final String CAMERA = "camera";
     private static final String TRIGGER = "trigger";
@@ -99,7 +98,6 @@ public class DriftCorrectionGUI{
     private static final String SHOW_MAP_BUTTON_LABEL = "Show cross correlation map";
     private static final String SHOW_DRIFT_PLOT_LABEL = "Show drift plots";
     private static final String SAVE_DRIFT_PLOT_LABEL = "Save drift data to file";
-    private static final String TUNING_MODE_LABEL = "Tuning Mode";
     private static final String SAVE_DRIFT_LOCATION_LABEL = "Save Location";
     private static final String CONFIGURE_LABEL = "Select configuration file";
     private static final String LOAD_LABEL = "Load Hardware";
@@ -196,7 +194,6 @@ public class DriftCorrectionGUI{
     private JCheckBox showMapButton = new DCheckBox(SHOW_MAP_BUTTON_LABEL, new ShowMapButtonListener(), SHOW_MAP);
     private JCheckBox showDriftPlotButton = new DCheckBox(SHOW_DRIFT_PLOT_LABEL, new ShowDriftPlotListener(), SHOW_PLOT);
     private JCheckBox saveDriftPlotButton = new DCheckBox(SAVE_DRIFT_PLOT_LABEL, new SaveToggleListener(), SAVE_PLOTS);
-    private JCheckBox TuningModeButton = new DCheckBox(TUNING_MODE_LABEL, new TuneToggleListener(), TUNING_MODE);
 
     // Configuration Panel objects
     private JButton loadConfigurationButton = new DButton(LOAD_LABEL, configurationListener);
@@ -300,7 +297,6 @@ public class DriftCorrectionGUI{
                     .addComponent(showLatestButton)
                     .addComponent(showMapButton)
                     .addComponent(showDriftPlotButton)
-                    .addComponent(TuningModeButton)
                     .addComponent(saveDriftPlotButton)
                     .addComponent(saveLocationButton))
                 .addGroup(controlPanelLayout.createParallelGroup()
@@ -320,7 +316,6 @@ public class DriftCorrectionGUI{
                 .addComponent(showLatestButton) 
                 .addComponent(showMapButton)
                 .addComponent(showDriftPlotButton)
-                .addComponent(TuningModeButton)
                 .addComponent(saveDriftPlotButton)
                 .addGroup(controlPanelLayout.createParallelGroup(GroupLayout.Alignment.TRAILING)
                         .addComponent(saveLocationButton)
@@ -405,7 +400,6 @@ public class DriftCorrectionGUI{
         driftData.setShowMap(preferences.getBoolean(SHOW_MAP, false));
         driftData.setShowPlot(preferences.getBoolean(SHOW_PLOT, false));
         driftData.setSavePlots(preferences.getBoolean(SAVE_PLOTS, false));
-        driftData.setTuneMode(preferences.getBoolean(TUNING_MODE, false));
         driftData.setDataFile(new File(preferences.get(DRIFT_FILE_LOCATION, defaultDriftFileLocation)));
 
         // Create the drift correction object
@@ -798,15 +792,6 @@ public class DriftCorrectionGUI{
             driftData.setShowPlot(showDriftPlotButton.isSelected());
         }
     }
-    
-    class TuneToggleListener implements ActionListener {
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            driftData.setTuneMode(TuningModeButton.isSelected());
-        }
-    }
-    
 
     class CorrectionModeListener implements ActionListener {
 

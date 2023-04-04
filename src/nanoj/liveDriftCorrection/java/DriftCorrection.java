@@ -395,17 +395,10 @@ public class DriftCorrection extends Observable implements Runnable {
                              driftData.addZShift(zDrift, z_err, getTimeElapsed());
                              break;
                         case XY:
-                            if (driftData.Tune){
-                                driftData.addXYshift(xErr, yErr, getTimeElapsed());
-                            }
-                            else driftData.addXYshift((xyDrift.x), (xyDrift.y), getTimeElapsed());
+                            driftData.addXYshift(xErr, yErr, getTimeElapsed());
                             break;
                         case XYZ:
-                            if (driftData.Tune){
-                                driftData.addXYZshift(xErr, yErr, zDrift, z_err, getTimeElapsed());
-                                //driftData.addXYZshift(xErr, yErr, zDrift, (xyDrift.x), getTimeElapsed());
-                            }
-                            else driftData.addXYZshift((xyDrift.x), (xyDrift.y), zDrift, z_err, getTimeElapsed());
+                            driftData.addXYZshift(xErr, yErr, zDrift, z_err, getTimeElapsed());
                             break;
                     }
 
