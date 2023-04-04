@@ -105,8 +105,8 @@ public class DriftCorrection extends Observable implements Runnable {
     double y = 0;
     double t = 0;
     int i = 0;
-    double ADZ = 0;
-    double LDZ = 0;
+    double AMM = 0;
+    double LMM = 0;
     private double xErr = 0; // 220119 JE
     private double yErr = 0; // 220119 JE
     private double xErrSum = 0; // 220414 JE
@@ -533,7 +533,7 @@ public class DriftCorrection extends Observable implements Runnable {
                         z_err = SP - PV; // Z-correction error 220110
                         z_errSum = z_errSum + z_err*dt;
                         zDrift = Zp*z_err + Zi*z_errSum;
-                        if((Zp!=0 || Zi!=0) && (Math.abs(zDrift)>=ADZ)) hardwareManager.moveFocusStage(zDrift);
+                        if((Zp!=0 || Zi!=0) && (Math.abs(zDrift)>=AMM)) hardwareManager.moveFocusStage(zDrift);
                         oldzErr = z_err;
                         
                     }
@@ -548,7 +548,9 @@ public class DriftCorrection extends Observable implements Runnable {
                         if (Math.abs(xyDriftCorr.y) < 5.023) xyDriftCorr.y=0;
                         if(Lp!=0 | Li!=0) hardwareManager.moveXYStage(xyDriftCorr);
                         */
-                        if((Lp!=0 || Li!=0) && (Math.abs(xyMove.x)>=LDZ || Math.abs(xyMove.y)>=LDZ)) MoveSuccess = hardwareManager.moveXYStage(xyMove);
+                        if (Math.abs(xyMove.x)>=LMM) xyMove.x = 0;
+                        if (Math.abs(xyMove.y)>=LMM) xyMove.y = 0;
+                        if(xyMove.x!=0 || xyMove.y!=0) MoveSuccess = hardwareManager.moveXYStage(xyMove);
                         //if((xyMove.x !=0 || xyMove.y !=0)) MoveSuccess = hardwareManager.moveXYStage(xyMove);
                         else MoveSuccess = true;
                     }
@@ -728,13 +730,13 @@ public class DriftCorrection extends Observable implements Runnable {
     }
     
     // added 230404 JE
-    public void setADZ(double ADZ){
-        this.ADZ = ADZ/1000;
+    public void setAMM(double AMM){
+        this.AMM = AMM/1000;
     }
     
         // added 230404 JE
-    public void setLDZ(double LDZ){
-        this.LDZ = LDZ/1000;
+    public void setLMM(double LDZ){
+        this.LMM = LMM/1000;
     }
     
 
