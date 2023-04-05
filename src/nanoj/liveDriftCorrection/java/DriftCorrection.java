@@ -325,19 +325,20 @@ public class DriftCorrection extends Observable implements Runnable {
                             Peak = processor.PickPlane(refStackCC);
                             VerticalOffsets = processor.OffsetCenters(refStackCC);
                             
-                            /*
+                            
                             refCCbottomMidMax = processor.CenterHeightFind3(refCCbottom, Peak); // 220131 JE
                             refCCtopMidMax = processor.CenterHeightFind3(refCCtop, Peak); // 220131 JE
                             refCCmidMidMax = processor.CenterHeightFind3(refCCmiddle, Peak); // 220131 JE
                             refCCTopTopMax = processor.CenterHeightFind3(refTopTopProc, Peak); // 220131 JE
                             refCCBottomBottomMax = processor.CenterHeightFind3(refBottomBottomProc, Peak); // 220131 JE
-                            */
                             
+                            /*
                             refCCbottomMidMax = processor.CenterHeightFind4(refCCbottom, Peak, VerticalOffsets[2], VerticalOffsets[3]); // 230301 JE
                             refCCtopMidMax = processor.CenterHeightFind4(refCCtop, Peak, VerticalOffsets[0], VerticalOffsets[1]); // 230301 JE
                             refCCmidMidMax = processor.CenterHeightFind4(refCCmiddle, Peak, 0, 0); // 230301 JE
                             refCCTopTopMax = processor.CenterHeightFind4(refTopTopProc, Peak, 0, 0); // 230301 JE
                             refCCBottomBottomMax = processor.CenterHeightFind4(refBottomBottomProc, Peak, 0, 0); // 230301 JE
+                            */
                             
                             Top = (refCCtopMidMax/refCCTopTopMax); // 220131 JE
                             Bottom = (refCCbottomMidMax/refCCBottomBottomMax); // 220131 JE
@@ -350,8 +351,8 @@ public class DriftCorrection extends Observable implements Runnable {
                             driftData.setReferenceStack(refStack);
                             
                             int Plane = (int) Peak[2];
-                            //currentCenter = processor.PeakFind2(refStackCC.getProcessor(Plane).convertToFloatProcessor(), Peak); // 221012 JE
-                            currentCenter = processor.PeakFind3(refStackCC.getProcessor(Plane).convertToFloatProcessor(), Peak, Offsets); // 230209 JE
+                            currentCenter = processor.PeakFind2(refStackCC.getProcessor(Plane).convertToFloatProcessor(), Peak); // 221012 JE
+                            //currentCenter = processor.PeakFind3(refStackCC.getProcessor(Plane).convertToFloatProcessor(), Peak, Offsets); // 230209 JE
                             
                             t = 0;
                             //imCentx = currentCenter[0];
@@ -407,16 +408,16 @@ public class DriftCorrection extends Observable implements Runnable {
 
                         Peak = processor.PickPlane(resultStack);
                         
-                        /*
+                        
                         double ccSliceBottomMax = processor.CenterHeightFind3(ccSliceBottom, Peak); // 220926 JE
                         double ccSliceTopMax = processor.CenterHeightFind3(ccSliceTop, Peak); // 220926 JE
                         double ccSliceMiddleMax = processor.CenterHeightFind3(ccSliceMiddle, Peak); // 220926 JE
-                        */
                         
+                        /*
                         double ccSliceBottomMax = processor.CenterHeightFind4(ccSliceBottom, Peak, VerticalOffsets[2], VerticalOffsets[3]); // 230301 JE
                         double ccSliceTopMax = processor.CenterHeightFind4(ccSliceTop, Peak, VerticalOffsets[0], VerticalOffsets[1]); // 230301 JE
                         double ccSliceMiddleMax = processor.CenterHeightFind4(ccSliceMiddle, Peak, 0, 0); // 230301 JE
-
+                        */
                         Top = (ccSliceTopMax/refCCTopTopMax); // 220131 JE
                         Bottom = (ccSliceBottomMax/refCCBottomBottomMax); // 220131 JE
                         Middle = (ccSliceMiddleMax/refCCmidMidMax); // 220131 JE
