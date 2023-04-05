@@ -328,6 +328,7 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
                 driftCore.unloadAllDevices();                
                 driftCore.loadSystemConfiguration(getConfigFileLocation());
                 driftCore.initializeAllDevices();
+                driftCore.setProperty("Blackfly S BFS-U3-51S5M","Binning",2);
             } catch (Exception e) {
                 ReportingUtils.showError(e, ERROR_LOADING_DEVICES);
             }
