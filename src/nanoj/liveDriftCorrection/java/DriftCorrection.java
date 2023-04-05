@@ -104,9 +104,9 @@ public class DriftCorrection extends Observable implements Runnable {
     double x = 0;
     double y = 0;
     double t = 0;
-    int i = 0;
-    double AMM = 0;
-    double LMM = 0;
+    private int i = 0;
+    private double AMM = 0;
+    private double LMM = 0;
     private double xErr = 0; // 220119 JE
     private double yErr = 0; // 220119 JE
     private double xErrSum = 0; // 220414 JE
@@ -533,7 +533,7 @@ public class DriftCorrection extends Observable implements Runnable {
                         z_err = SP - PV; // Z-correction error 220110
                         z_errSum = z_errSum + z_err*dt;
                         zDrift = Zp*z_err + Zi*z_errSum;
-                        if((Zp!=0 || Zi!=0) && (Math.abs(zDrift)>=AMM)) hardwareManager.moveFocusStage(zDrift);
+                        if((Zp!=0 || Zi!=0) && (Math.abs(zDrift)<AMM)) hardwareManager.moveFocusStage(zDrift);
                         oldzErr = z_err;
                         
                     }
@@ -541,15 +541,8 @@ public class DriftCorrection extends Observable implements Runnable {
                     //Point2D.Double PrePos = hardwareManager.PollStage();
                     // Move XY stage
                     if (isRunning() && (correctionMode == XY || correctionMode == XYZ)){
-                        /*
-                        Point2D.Double xyDriftCorr = new Point2D.Double(x,-y);
-                        xyDriftCorr = hardwareManager.convertPixelsToMicrons(xyDriftCorr);
-                        if (Math.abs(xyDriftCorr.x) < 5.023) xyDriftCorr.x=0;
-                        if (Math.abs(xyDriftCorr.y) < 5.023) xyDriftCorr.y=0;
-                        if(Lp!=0 | Li!=0) hardwareManager.moveXYStage(xyDriftCorr);
-                        */
-                        if (Math.abs(xyMove.x)>=LMM) xyMove.x = 0;
-                        if (Math.abs(xyMove.y)>=LMM) xyMove.y = 0;
+                        if (Math.abs(xyMove.x)<LMM) xyMove.x = 0;
+                        if (Math.abs(xyMove.y)<LMM) xyMove.y = 0;
                         if(xyMove.x!=0 || xyMove.y!=0) MoveSuccess = hardwareManager.moveXYStage(xyMove);
                         //if((xyMove.x !=0 || xyMove.y !=0)) MoveSuccess = hardwareManager.moveXYStage(xyMove);
                         else MoveSuccess = true;
@@ -734,8 +727,8 @@ public class DriftCorrection extends Observable implements Runnable {
         this.AMM = AMM/1000;
     }
     
-        // added 230404 JE
-    public void setLMM(double LDZ){
+    // added 230404 JE
+    public void setLMM(double LMM){
         this.LMM = LMM/1000;
     }
     

@@ -95,7 +95,7 @@ public class DriftCorrectionGUI{
     private static final String Li_DEFAULT = "0"; // 220118 JE
     private static final String BIAS_DEFAULT = "0"; // 230404 JE
     private static final String AMM_DEFAULT = "0"; // 230404 JE
-    private static final String LMM_DEFAULT = "10"; // 221208 JE
+    private static final String LMM_DEFAULT = "0"; // 221208 JE
     private static final String PERIOD_DEFAULT = "500"; // milliseconds
     private static final String REF_UPDATE_DEFAULT = "0"; // minutes
     private static final String BOUNDS_DEFAULT = "10"; // microns
@@ -205,7 +205,6 @@ public class DriftCorrectionGUI{
     private JTabbedPane guiPanel = new JTabbedPane();
     private Dimension controlDimensions = new Dimension(600, 600);
     private Dimension configurationDimensions = new Dimension(300, 900);
-    private Dimension advancedDimensions = new Dimension(300, 900);
 
     // Control Panel objects
     private JToggleButton startButton = new DToggleButton(START, startButtonListener);
