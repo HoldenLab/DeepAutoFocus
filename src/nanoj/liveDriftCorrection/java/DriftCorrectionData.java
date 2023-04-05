@@ -28,6 +28,7 @@ public class DriftCorrectionData {
     private boolean flipY = false;
     private boolean flipX = false;
     private boolean SwitchXY;
+    private boolean Running = false;
     private File dataFile;
     private ImagePlus resultMap = new ImagePlus();
     private ImagePlus plotsImage = new ImagePlus();
@@ -35,6 +36,7 @@ public class DriftCorrectionData {
     private FloatProcessor referenceImage = null;
     private FloatProcessor backgroundImage = null;
     private ImageStack referenceStack = new ImageStack();
+    private ImagePlus driftImages = new ImagePlus();
     private Plot plot;
 
     // Data
@@ -46,6 +48,7 @@ public class DriftCorrectionData {
     private ArrayList<Double> PVdrift = new ArrayList<Double>(); // process variable for PI controller 220110
     private ArrayList<Double> OPdrift = new ArrayList<Double>(); // output for PI controller 220110
     private ArrayList<Double> timeStamps = new ArrayList<Double>();
+    private double StartMDA;
 
     private int dataType = 0;
 
@@ -70,11 +73,14 @@ public class DriftCorrectionData {
     public static final String CLOSING_FILE_ERROR = "Error when trying to close drift data file.";
     public static final String DATA_MISMATCH_ERROR = "Data is not of the correct type, it is actually: ";
     private static final String procedure_succeeded = "The procedure has succeeded!";
+    
+    private DriftCorrectionHardware hardware;
 
-    DriftCorrectionData() {
+    DriftCorrectionData(DriftCorrectionHardware hardwareManager) {
         resultMap.setTitle(MAP_NAME);
         plotsImage.setTitle(PLOTS_NAME);
         latestImage.setTitle(LIVE_WINDOW_NAME);
+        hardware = hardwareManager;
     }
 
     // Create file
@@ -138,10 +144,10 @@ public class DriftCorrectionData {
             double[] zPos = ArrayCasting.toArray(this.zPosition, 1d);
             double[] timeStamps = ArrayCasting.toArray(this.timeStamps, 1d);
                 
-            xUnit = " (pixels)";
-            yUnit = " (pixels)";
+            xUnit = " (um)";
+            yUnit = " (um)";
             zUnit = "";
-            tUnit = " (ms)";
+            tUnit = " (ms)";            
 
             switch (dataTypeIs()) {
                 case Z:
@@ -265,7 +271,7 @@ public class DriftCorrectionData {
     synchronized void setShowLatest(boolean showLatest) {
         this.showLatest = showLatest;
     }
-    
+
     private synchronized File getDataFile() { return dataFile; }
 
     synchronized void setDataFile(File dataFile) { this.dataFile = dataFile; }
@@ -275,9 +281,7 @@ public class DriftCorrectionData {
         boolean keepStacks = false; // I find it more helpful to see readout in real time. 201230 kw
 
         if (isShowMapTrue()) {
-
-            if (!keepStacks)
-                resultMap.setStack(imageStack);
+            if (!keepStacks) resultMap.setStack(imageStack);
             else {
                 if (resultMap.getStackSize() < 2) {
                     resultMap.setStack(imageStack);
@@ -309,14 +313,22 @@ public class DriftCorrectionData {
     // added kw 190412
     synchronized void clearResultMap(){
         resultMap.close();
+        driftImages.close();
     }
 
     synchronized void setLatestImage(FloatProcessor image) {
-        
         latestImage.setProcessor(image);
         
-        if (isShowLatestTrue())
-            latestImage.show();
+        if (isShowLatestTrue()) latestImage.show();
+        ImageStack stack = new ImageStack(image.getWidth(), image.getHeight());
+        boolean keepImages = false;
+
+        if (isShowLatestTrue() && keepImages && isRunning()) {
+            if(driftImages.getStack().size()>=1) stack = driftImages.getStack();
+            stack.addSlice(image);
+            driftImages.setStack(stack);
+            if (isShowLatestTrue()) driftImages.show();
+        }
     }
 
     private synchronized void setXShiftData(ArrayList<Double> xShift) {
@@ -335,7 +347,7 @@ public class DriftCorrectionData {
         this.zPosition = zPosition;
     }
 
-    synchronized void addZShift(double zShiftPoint, double z_err, double timeStamp) {
+    synchronized void addZShift(double zShiftPoint, double z_err, double timeStamp, double Zp, double Zi, double refUpdate) {
         //if (dataTypeIs() != Z) throw new TypeMismatchException(DATA_MISMATCH_ERROR + dataTypeIs());
         if ( Double.isNaN(zShiftPoint) ) return;
         addTimeStamp(timeStamp);
@@ -351,13 +363,15 @@ public class DriftCorrectionData {
             if (isShowPlotTrue()) showPlots();
             if (isSavePlotsTrue()) {
                 double z = zDrift.get(zDrift.size()-1);
-                if (zDrift.size() == 1) appendDataToFile("timeStamp (ms)" + "," + "z");
+                if (zDrift.size() <= 2) appendDataToFile("Zp" + "," + "Zi" + "," + "Step size (nm) for Z correction" + "," + "Time between reference updates (min)");
+                if (zDrift.size() <= 2) appendDataToFile(Zp + "," + Zi + "," + hardware.getStepSize()*1000 + "," + refUpdate);
+                if (zDrift.size() <= 2) appendDataToFile("timeStamp (ms)" + "," + "z");
                 appendDataToFile(timeStamp + "," + z);
             }
         }
     }
 
-    synchronized void addXYshift(double xShiftPoint, double yShiftPoint, double timeStamp) {
+    synchronized void addXYshift(double xShiftPoint, double yShiftPoint, double timeStamp, double Lp, double Li, double refUpdate) {
         //if (dataTypeIs() != XY) throw new TypeMismatchException(DATA_MISMATCH_ERROR + dataTypeIs());
         if ( Double.isNaN(xShiftPoint) || Double.isNaN(yShiftPoint) ) return;
         addTimeStamp(timeStamp);
@@ -368,13 +382,15 @@ public class DriftCorrectionData {
             if (isSavePlotsTrue()) {
                 double x = xDrift.get(xDrift.size() - 1);
                 double y = yDrift.get(yDrift.size() - 1);
-                if (xDrift.size() == 1) appendDataToFile("timeStamp (ms)" + "," + "x (microns)" + "," + "y (microns)");
+                if (xDrift.size() <= 2) appendDataToFile("Lp" + "," + "Li" + "," + "Step size (nm) for Z correction" + "," + "Time between reference updates (min)");
+                if (xDrift.size() <= 2) appendDataToFile(Lp + "," + Li + "," + hardware.getStepSize()*1000 + "," + refUpdate);
+                if (xDrift.size() <= 2) appendDataToFile("time (ms)" + "," + "x (microns)" + "," + "y (microns)");
                 appendDataToFile(timeStamp + "," + x + ", " + y);
             }
         }
     }
 
-    synchronized void addXYZshift(double xShiftPoint, double yShiftPoint, double zShiftPoint, double z_err, double timeStamp) {
+    synchronized void addXYZshift(double xShiftPoint, double yShiftPoint, double zShiftPoint, double z_err, double timeStamp, double Zp, double Zi, double Lp, double Li, double refUpdate) {
         //if (dataTypeIs() != XYZ) throw new TypeMismatchException(DATA_MISMATCH_ERROR + dataTypeIs());
         if ( Double.isNaN(xShiftPoint) || Double.isNaN(yShiftPoint) || Double.isNaN(zShiftPoint) ) return;
         addTimeStamp(timeStamp);
@@ -382,14 +398,16 @@ public class DriftCorrectionData {
         addXYPoint(xShiftPoint, yShiftPoint);
         
         zDrift.add(z_err);
-
+        
         if (!xDrift.isEmpty()) {
             if (isShowPlotTrue()) showPlots();
             if (isSavePlotsTrue()) {
                 double x = xDrift.get(xDrift.size() - 1);
                 double y = yDrift.get(yDrift.size() - 1);
                 double z = zDrift.get(zDrift.size() - 1);
-                if (xDrift.size() == 1) appendDataToFile("timeStamp (ms)" + "," + "x (microns)" + "," + "y (microns)" + "," + "z");
+                if (xDrift.size() <= 2) appendDataToFile("Zp" + "," + "Zi" + "," + "Lp" + "," + "Li" + "," + "Step size (nm) for Z correction" + "," + "Time between reference updates (min)");
+                if (xDrift.size() <= 2) appendDataToFile(Zp + "," + Zi + "," + Lp + "," + Li + "," + hardware.getStepSize()*1000 + "," + refUpdate);
+                if (xDrift.size() <= 2) appendDataToFile("timeStamp (ms)" + "," + "x (um)" + "," + "y (um)" + "," + "z");
                 appendDataToFile(timeStamp + "," + x + "," + y + "," + z);
             }
         }
@@ -402,7 +420,7 @@ public class DriftCorrectionData {
         }
         else {
             xDrift.add(x);
-            yDrift.add(y);
+            yDrift.add(y);            
         }
     }
 
@@ -429,6 +447,14 @@ public class DriftCorrectionData {
 
     public void setSwitchXY(boolean SwitchXY) {
         this.SwitchXY = SwitchXY;
+    }
+    
+    public boolean isRunning() {
+        return Running;
+    }
+    
+    public void setRunning(boolean run){
+        this.Running = run;
     }
 
     synchronized void clearData() {

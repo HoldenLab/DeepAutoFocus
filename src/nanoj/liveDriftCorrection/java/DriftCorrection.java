@@ -76,20 +76,20 @@ public class DriftCorrection extends Observable implements Runnable {
     double x = 0;
     double y = 0;
     double t = 0;
-    double missX = 0;
-    double missY = 0;
-    double missZ = 0;
+    private int i = 0;
+    private double AMM = 0;
+    private double LMM = 0;
     private double xErr = 0; // 220119 JE
     private double yErr = 0; // 220119 JE
     private double xErrSum = 0; // 220414 JE
     private double yErrSum = 0; // 220414 JE
-    private double oldyErr = 0; // 220829 JE
-    private double oldxErr = 0; // 220829 JE
     private double oldzErr = 0; // 220906 JE
     private double Top = 0; // 220131 JE
     private double Bottom = 0; // 220131 JE
     private double Middle = 0; // 220131 JE
     private double HeightRatio = 0; // 220131 JE
+    private double Bias = 0; // 221025 JE
+    private final boolean NanoJNormalize = false;
     
     private double refCCbottomMidMax = 0; // 220201 JE
     private double refCCtopMidMax = 0; // 220201 JE
@@ -97,8 +97,10 @@ public class DriftCorrection extends Observable implements Runnable {
     private double refCCTopTopMax = 0; // 220201 JE
     private double refCCBottomBottomMax = 0; // 220201 JE
     private double refmiddleMedian = 0; // 220916 JE
-    float[] Peak = null; //220926 JE
-    double[] currentCenter = null; //221012 JE
+    private float[] Peak = null; //220926 JE
+    private double[] currentCenter = null; //221012 JE
+    private int[] Offsets = null; // 230209 JE
+    private float[] VerticalOffsets = null;
 
 
     public DriftCorrection(DriftCorrectionHardware manager, DriftCorrectionData data, DriftCorrectionProcess processor) {
@@ -137,21 +139,24 @@ public class DriftCorrection extends Observable implements Runnable {
                         yErr = 0;
                         xErrSum = 0;
                         yErrSum = 0;
-                        oldyErr = 0;
-                        oldxErr = 0;
                         oldTime = 0;
                         t=0;
                         HeightRatio = 0;
-                        
-                        driftData.setReferenceImage(snapAndProcess());
+                        driftData.clearResultMap(); // 190412 kw
+                        i=-1;
+                        /* // for simulations JE
+                        ImagePlus LoadedImage = opener.openImage("C:\\Users\\joshe\\Documents\\GitHub\\LifeHackDevelopment\\Imlock\\SubPixelShiftOut\\Images\\" + "Middle.tif");
+                        FloatProcessor image = processor.Normalize(LoadedImage.getProcessor().convertToFloatProcessor());
+                        driftData.setReferenceImage(image);
+                        */
+                        driftData.setReferenceImage(processor.Normalize(snapAndProcess()));
                         if (correctionMode == XY){
-                            refCC = CrossCorrelationMap.calculateCrossCorrelationMap(driftData.getReferenceImage(), driftData.getReferenceImage(), true); // 220131 JE
+                            refCC = CrossCorrelationMap.calculateCrossCorrelationMap(driftData.getReferenceImage(), driftData.getReferenceImage(), NanoJNormalize); // 220131 JE
                             Peak = CalculateImageStatistics.getMax(refCC); // 221012 JE
                             refCCmidMidMax = processor.CenterHeightFind3(refCC.convertToFloatProcessor(),Peak); // 221012 JE
 
-                            currentCenter = processor.PeakFind2(refCC.convertToFloatProcessor(), Peak); // 221012 JE
-                            imCentx = currentCenter[0];
-                            imCenty = currentCenter[1];
+                            imCentx = refCC.getWidth()/2f; 
+                            imCenty = refCC.getHeight()/2f;
                         }
                         UpdateTime = getTimeElapsed() +  refUpdate;
                     } 
@@ -171,26 +176,42 @@ public class DriftCorrection extends Observable implements Runnable {
                                 driftData.getReferenceImage().getWidth(),
                                 driftData.getReferenceImage().getHeight()
                             );
+                            
+                            hardwareManager.moveXYStage(0, 0);
+                            hardwareManager.stopXYStage();
                             // Take picture at current position, filter, clip and add to image stack
-                            hardwareManager.moveXYStage(new Point2D.Double(0,0)); // give xy stage oppertunity to reset 220908 JE
-                            refStack.addSlice(MIDDLE, snapAndProcess());
-                        
+                            refStack.addSlice(MIDDLE, processor.Normalize(snapAndProcess()));
+                            /* //for simulations JE
+                            ImagePlus LoadedImage = opener.openImage("C:\\Users\\joshe\\Documents\\GitHub\\LifeHackDevelopment\\Imlock\\SubPixelShiftOut\\Images\\" + "Middle.tif");
+                            //FloatProcessor image = LoadedImage.getProcessor().convertToFloatProcessor();
+                            FloatProcessor image = processor.Normalize(LoadedImage.getProcessor().convertToFloatProcessor());
+                            refStack.addSlice(MIDDLE, image);
+                            */
                             // Move one stepSize above focus, snap and add to image stack
                             hardwareManager.moveFocusStageInSteps(1);
-                            refStack.addSlice(TOP, snapAndProcess(), 0);
-
+                            refStack.addSlice(TOP, processor.Normalize(snapAndProcess()), 0);
+                            /* //for simulations JE 
+                            LoadedImage = opener.openImage("C:\\Users\\joshe\\Documents\\GitHub\\LifeHackDevelopment\\Imlock\\SubPixelShiftOut\\Images\\" + "Top.tif");
+                            //image = LoadedImage.getProcessor().convertToFloatProcessor();
+                            image = processor.Normalize(LoadedImage.getProcessor().convertToFloatProcessor());
+                            refStack.addSlice(TOP, image, 0);
+                            */
                             // Move two stepSizes below the focus, snap and add to image stack
                             hardwareManager.moveFocusStageInSteps(-2);
-                            refStack.addSlice(BOTTOM, snapAndProcess());
-
+                            refStack.addSlice(BOTTOM, processor.Normalize(snapAndProcess()));
+                            /* //for simulations JE
+                            LoadedImage = opener.openImage("C:\\Users\\joshe\\Documents\\GitHub\\LifeHackDevelopment\\Imlock\\SubPixelShiftOut\\Images\\" + "Bottom.tif");
+                            //image = LoadedImage.getProcessor().convertToFloatProcessor();
+                            image = processor.Normalize(LoadedImage.getProcessor().convertToFloatProcessor());
+                            refStack.addSlice(BOTTOM, image);
+                            */
                             // Move back to original position
                             hardwareManager.moveFocusStageInSteps(1);
-                            hardwareManager.moveXYStage(new Point2D.Double(0,0)); // give xy stage oppertunity to reset 220908 JE
-
-                            //refStackCC = CrossCorrelationMap.calculateCrossCorrelationMap(snapAndProcess(), refStack, true);
-                            refStackCC = CrossCorrelationMap.calculateCrossCorrelationMap(refStack.getProcessor(2), refStack, true); // 220131 JE
-                            refTopTopCC = CrossCorrelationMap.calculateCrossCorrelationMap(refStack.getProcessor(1), refStack.getProcessor(1), true); // 220131 JE
-                            refBottomBottomCC = CrossCorrelationMap.calculateCrossCorrelationMap(refStack.getProcessor(3), refStack.getProcessor(3), true); // 220131 JE
+                            
+                            //refStackCC = CrossCorrelationMap.calculateCrossCorrelationMap(snapAndProcess(), refStack, NanoJNormalize);
+                            refStackCC = CrossCorrelationMap.calculateCrossCorrelationMap(refStack.getProcessor(2), refStack, NanoJNormalize); // 220131 JE
+                            refTopTopCC = CrossCorrelationMap.calculateCrossCorrelationMap(refStack.getProcessor(1), refStack.getProcessor(1), NanoJNormalize); // 220131 JE
+                            refBottomBottomCC = CrossCorrelationMap.calculateCrossCorrelationMap(refStack.getProcessor(3), refStack.getProcessor(3), NanoJNormalize); // 220131 JE
 
                             FloatProcessor refCCbottom = refStackCC.getProcessor(3).convertToFloatProcessor();
                             FloatProcessor refCCmiddle = refStackCC.getProcessor(2).convertToFloatProcessor();
@@ -198,7 +219,10 @@ public class DriftCorrection extends Observable implements Runnable {
                             FloatProcessor refTopTopProc = refTopTopCC.convertToFloatProcessor(); // 220131 JE
                             FloatProcessor refBottomBottomProc = refBottomBottomCC.convertToFloatProcessor(); // 220131 JE
                             
-                            refmiddleMedian = ImageStatistics.getStatistics(refStack.getProcessor(2)).median;
+                            Offsets = processor.FWTM(refCCmiddle); // 230209 JE
+                            //ReportingUtils.showMessage(Integer.toString(Offsets[0]) + " ," + Integer.toString(Offsets[1]));
+                            
+                            //refmiddleMean = ImageStatistics.getStatistics(refStack.getProcessor(2)).mean;
                             
                             //refCCbottomMidMax = refCCbottom.getMax();
                             //refCCtopMidMax = refCCtop.getMax();
@@ -210,12 +234,22 @@ public class DriftCorrection extends Observable implements Runnable {
                             //refCCmidMidMax = refCCmidMid.getMax();*/
                             
                             Peak = processor.PickPlane(refStackCC);
+                            VerticalOffsets = processor.OffsetCenters(refStackCC);
+                            
                             
                             refCCbottomMidMax = processor.CenterHeightFind3(refCCbottom, Peak); // 220131 JE
                             refCCtopMidMax = processor.CenterHeightFind3(refCCtop, Peak); // 220131 JE
                             refCCmidMidMax = processor.CenterHeightFind3(refCCmiddle, Peak); // 220131 JE
                             refCCTopTopMax = processor.CenterHeightFind3(refTopTopProc, Peak); // 220131 JE
                             refCCBottomBottomMax = processor.CenterHeightFind3(refBottomBottomProc, Peak); // 220131 JE
+                            
+                            /*
+                            refCCbottomMidMax = processor.CenterHeightFind4(refCCbottom, Peak, VerticalOffsets[2], VerticalOffsets[3]); // 230301 JE
+                            refCCtopMidMax = processor.CenterHeightFind4(refCCtop, Peak, VerticalOffsets[0], VerticalOffsets[1]); // 230301 JE
+                            refCCmidMidMax = processor.CenterHeightFind4(refCCmiddle, Peak, 0, 0); // 230301 JE
+                            refCCTopTopMax = processor.CenterHeightFind4(refTopTopProc, Peak, 0, 0); // 230301 JE
+                            refCCBottomBottomMax = processor.CenterHeightFind4(refBottomBottomProc, Peak, 0, 0); // 230301 JE
+                            */
                             
                             Top = (refCCtopMidMax/refCCTopTopMax); // 220131 JE
                             Bottom = (refCCbottomMidMax/refCCBottomBottomMax); // 220131 JE
@@ -229,23 +263,50 @@ public class DriftCorrection extends Observable implements Runnable {
                             
                             int Plane = (int) Peak[2];
                             currentCenter = processor.PeakFind2(refStackCC.getProcessor(Plane).convertToFloatProcessor(), Peak); // 221012 JE
+                            //currentCenter = processor.PeakFind3(refStackCC.getProcessor(Plane).convertToFloatProcessor(), Peak, Offsets); // 230209 JE
                             
                             t = 0;
-                            imCentx = currentCenter[0];
-                            imCenty = currentCenter[1];
-                            UpdateTime = getTimeElapsed() +  refUpdate;
+                            //imCentx = currentCenter[0];
+                            //imCenty = currentCenter[1];
+                            //ReportingUtils.showMessage("centroid, " + Double.toString(imCentx) + ", " + Double.toString(imCenty));
+                            
+                            imCentx = refCCmiddle.getWidth()/2f;
+                            imCenty = refCCmiddle.getHeight()/2f;
+                            //ReportingUtils.showMessage("Half Image, " + Double.toString(imCentx) + ", " + Double.toString(imCenty));
+                            UpdateTime = getTimeElapsed() + refUpdate;
                         }
+
+                        PV = 0;
+                        currentCenter[0] = 0;
+                        currentCenter[1] = 0;
                         
-                        ImageProcessor ImageT = snapAndProcess();
-                        resultStack = CrossCorrelationMap.calculateCrossCorrelationMap(ImageT, driftData.getReferenceStack(), true);
+                        ImageProcessor Image = processor.Normalize(snapAndProcess());
+                        resultStack = CrossCorrelationMap.calculateCrossCorrelationMap(Image, driftData.getReferenceStack(), NanoJNormalize);
                         driftData.setResultMap(resultStack);
+                        /* //for simulations JE
+                        i=i+1;
+                        try{
+                            //ReportingUtils.showMessage(String.format("%04d", i));
+                            ImagePlus LoadedImage = opener.openImage("C:\\Users\\joshe\\Documents\\GitHub\\LifeHackDevelopment\\Imlock\\SubPixelShiftOut\\Images\\" + "ShiftedImage" + String.format("%04d", i) + ".tif");
+                            //FloatProcessor image = LoadedImage.getProcessor().convertToFloatProcessor();
+                            FloatProcessor image = processor.Normalize(LoadedImage.getProcessor().convertToFloatProcessor());
+                            resultStack =  CrossCorrelationMap.calculateCrossCorrelationMap(image, driftData.getReferenceStack(), NanoJNormalize);
+                        }
+                            catch(Exception e){
+                            driftData.setReferenceImage(null);
+                            driftData.setReferenceStack(new ImageStack());
+                            runAcquisition(false);
+                            break;
+                            }
+                        driftData.setResultMap(resultStack);
+                        */
 
                         // Measure XYZ drift
                         FloatProcessor ccSliceBottom = resultStack.getProcessor(3).convertToFloatProcessor();
                         ccSliceMiddle = resultStack.getProcessor(2).convertToFloatProcessor();
                         FloatProcessor ccSliceTop = resultStack.getProcessor(1).convertToFloatProcessor();
                         
-                        double MedianT = ImageStatistics.getStatistics(ImageT).median;
+                        //double MedianT = ImageStatistics.getStatistics(ImageT).median;
                         
                         // offset maxima because minima not at zero
                         //double ccSliceBottomMax = ccSliceBottom.getMax();
@@ -257,11 +318,17 @@ public class DriftCorrection extends Observable implements Runnable {
                         //double ccSliceMiddleMax = processor.CenterHeightFind2(ccSliceMiddle); // 220131 JE
 
                         Peak = processor.PickPlane(resultStack);
-
+                        
+                        
                         double ccSliceBottomMax = processor.CenterHeightFind3(ccSliceBottom, Peak); // 220926 JE
                         double ccSliceTopMax = processor.CenterHeightFind3(ccSliceTop, Peak); // 220926 JE
                         double ccSliceMiddleMax = processor.CenterHeightFind3(ccSliceMiddle, Peak); // 220926 JE
-
+                        
+                        /*
+                        double ccSliceBottomMax = processor.CenterHeightFind4(ccSliceBottom, Peak, VerticalOffsets[2], VerticalOffsets[3]); // 230301 JE
+                        double ccSliceTopMax = processor.CenterHeightFind4(ccSliceTop, Peak, VerticalOffsets[0], VerticalOffsets[1]); // 230301 JE
+                        double ccSliceMiddleMax = processor.CenterHeightFind4(ccSliceMiddle, Peak, 0, 0); // 230301 JE
+                        */
                         Top = (ccSliceTopMax/refCCTopTopMax); // 220131 JE
                         Bottom = (ccSliceBottomMax/refCCBottomBottomMax); // 220131 JE
                         Middle = (ccSliceMiddleMax/refCCmidMidMax); // 220131 JE
@@ -271,21 +338,42 @@ public class DriftCorrection extends Observable implements Runnable {
                         //PV = (ccSliceTopMax - ccSliceBottomMax) / ccSliceMiddleMax; // eq 5 in McGorty et al. 2013
                         
                         int Plane = (int) Peak[2];
-                        currentCenter = processor.PeakFind2(resultStack.getProcessor(Plane).convertToFloatProcessor(), Peak); // 221012 JE
-                                               
+                        //currentCenter = processor.PeakFind2(resultStack.getProcessor(Plane).convertToFloatProcessor(), Peak); // 221012 JE
+                        currentCenter = processor.PeakFind3(resultStack.getProcessor(Plane).convertToFloatProcessor(), Peak, Offsets); // 230209 JE
+                        
                         HeightRatio = Math.max(Top,Math.max(Middle,Bottom));
                         
                     }
                     
                     // XY drift correction ONLY 201230 kw
                     else {
-                        resultImage =  CrossCorrelationMap.calculateCrossCorrelationMap(snapAndProcess(), driftData.getReferenceImage(), true);
+                        //if (MDA.isAcquisitionRunning() && !MDA.isPaused() && (MDA.getNextWakeTime() < 1000 || MDA.getNextWakeTime() < getSleep())) {
+                        //    ReportingUtils.showMessage("blocked by MDA");
+                        //    continue;
+                        //}
+                        /*
+                        i=i+1;
+                        //if (i == 49) runAcquisition(false);
+                        if (i == 50) i=-49;
+                        ImagePlus LoadedImage = opener.openImage("D:\\software\\github\\LifeHackDevelopment\\Imlock\\Jumpy_Reference\\SubPixelShiftOut\\" + "ShiftedImage_" + Integer.toString(i) + ".tif");
+                        //ImagePlus LoadedImage = opener.openImage("F:\\NoOptosplit_MainCamBeads_2_2\\Default\\" + "img_channel000_position000_time" + String.format("%09d", i) + "_z000.tif");
+                        //ImagePlus LoadedImage = opener.openImage("F:\\ImLock_AddedPost_2\\Default\\" + "img_channel000_position000_time" + String.format("%09d", i) + "_z000.tif");
+                        //ImagePlus LoadedImage = opener.openImage("F:\\ImLock_AddedPost_Unscrewed_1\\Default\\" + "img_channel000_position000_time" + String.format("%09d", i) + "_z000.tif");
+                        //ImagePlus LoadedImage = opener.openImage("F:\\ImLock_AddedPost_Unscrewed_matchedFP_1\\Default\\" + "img_channel000_position000_time" + String.format("%09d", i) + "_z000.tif");
+                        //ImagePlus LoadedImage = opener.openImage("F:\\ImLock_AddedPost_Unscrewed_matchedFP_2\\Default\\" + "img_channel000_position000_time" + String.format("%09d", i) + "_z000.tif");
+                        //ImagePlus LoadedImage = opener.openImage("F:\\ImLock_TwinCam_Covered_1\\Default\\" + "img_channel000_position000_time" + String.format("%09d", i) + "_z000.tif");
+                        FloatProcessor image = LoadedImage.getProcessor().convertToFloatProcessor();
+                        resultImage =  CrossCorrelationMap.calculateCrossCorrelationMap(image, driftData.getReferenceImage(), NanoJNormalize);
+                        */
+
+                        resultImage =  CrossCorrelationMap.calculateCrossCorrelationMap(processor.Normalize(snapAndProcess()), driftData.getReferenceImage(), NanoJNormalize);
                         driftData.setResultMap(resultImage);
 
                         ccSliceMiddle = resultImage.convertToFloatProcessor();
                         
                         Peak = CalculateImageStatistics.getMax(ccSliceMiddle); // 221012 JE
-                        currentCenter =  processor.PeakFind2(ccSliceMiddle, Peak); // 221012 JE
+                        //currentCenter =  processor.PeakFind2(ccSliceMiddle, Peak); // 221012 JE
+                        currentCenter =  processor.PeakFind3(ccSliceMiddle, Peak, Offsets); // 230209 JE
                         double ccSliceMiddleMax = processor.CenterHeightFind3(ccSliceMiddle, Peak); // 220926 JE
                         HeightRatio = ccSliceMiddleMax / refCCmidMidMax;
                         
@@ -311,94 +399,80 @@ public class DriftCorrection extends Observable implements Runnable {
                     yErr = currentCenter[1]  - imCenty;
                     dt = (getTimeElapsed() - oldTime)/1000;
                     t = t + dt;
-                    missX = x+(oldxErr-xErr);
-                    missY = y+(oldyErr-yErr);
-                    //if (MoveSuccess && ((dt*1000)<10*sleep) && (dt*1000 > 1000)){
-                        //xErrSum = xErrSum + missX*dt;
-                        //yErrSum = yErrSum + missY*dt;
-                        xErrSum = xErrSum + xErr*dt;
-                        yErrSum = yErrSum + yErr*dt;
-                    //}
+                    
+                    Point2D.Double xyError = new Point2D.Double(xErr,-yErr); // -y because of top to bottom image indexing
+                    
+                    if (driftData.getSwitchXY()){
+                        xyError.x = yErr;
+                        xyError.y = -xErr;
+                    }
+                    if (driftData.getflipX()) xyError.x = -xyError.x;
+                    if (driftData.getflipY()) xyError.y = -xyError.y;
+
+                    // Convert from pixel units to microns
+                    xyError = hardwareManager.convertPixelsToMicrons(xyError);
+                    
+                    if (MoveSuccess && ((dt*1000)<10*sleep)){
+                        xErrSum = xErrSum + xyError.x*dt;
+                        yErrSum = yErrSum + xyError.y*dt;
+                    }
                     
                     x = 0;
                     y = 0;
 
                     if (correctionMode == XY || correctionMode == XYZ){
-                        x = Lp*xErr + Li*xErrSum;
-                        y = Lp*yErr + Li*yErrSum;
+                        x = (1+Bias)*(Lp*xyError.x + Li*xErrSum);
+                        y = (1-Bias)*(Lp*xyError.y + Li*yErrSum);
                     }
-                    
+                    //double zPos = hardwareManager.getMainCore().getPosition();
                     oldTime = getTimeElapsed(); // time of current loop (store for next loop iteration)
-                    oldxErr = xErr;
-                    oldyErr = yErr;
                     
-                    //ReportingUtils.showMessage(Boolean.toString(driftData.getflipY()) + " " + Boolean.toString(driftData.getflipX()) + " " + Boolean.toString(driftData.getSwitchXY()));
-                    
-                    
-                    Point2D.Double xyDrift = new Point2D.Double(x,-y);
-                    
-                    if (driftData.getSwitchXY()){
-                        xyDrift.x = y;
-                        xyDrift.y = -x;
-                    }
-                    if (driftData.getflipX()) xyDrift.x = -xyDrift.x;
-                    if (driftData.getflipY()) xyDrift.y = -xyDrift.y;
-                    
-                    //Point2D.Double xyDrift = new Point2D.Double(y,-x); //Not sure why the switch of x and y is needed but it seems to work for now 290922 JE @ CAIRN
-
-                    // Convert from pixel units to microns
-                    xyDrift = hardwareManager.convertPixelsToMicrons(xyDrift);
-                    
-                    //LatMag = Math.sqrt(Math.pow(xErr,2) + Math.pow(yErr,2));
+                    Point2D.Double xyMove = new Point2D.Double(x,y);
                     
                     // Check if detected movement is within bounds
-                    if (((correctionMode == XY || correctionMode == XYZ) && (Math.abs(xyDrift.x) > threshold || Math.abs(xyDrift.y) > threshold) || HeightRatio < 0.2) 
-                            || (correctionMode == Z && HeightRatio < 0.2)) {
+                    if (((correctionMode == XY || correctionMode == XYZ) && (Math.abs(xyError.x) > threshold || Math.abs(xyError.y) > threshold) || HeightRatio < 0.2) || (correctionMode == Z && HeightRatio < 0.2)) {
                         runAcquisition(false);
                         setChanged();
                         notifyObservers(OUT_OF_BOUNDS_ERROR);
                         driftData.setReferenceImage(null);
                         driftData.setReferenceStack(new ImageStack()); // 190401 kw
-                        driftData.clearResultMap(); // 190412 kw
                         break;
                     }
                     
-                    missZ = zDrift+(oldzErr-z_err);
                     // Move Z stage to more appropriate position. We get zDrift in microns instead of steps to save later to Data. (added 190403 kw)
                     // Now using PI controller instead of equation in McGorty 2013 paper (220110 kw)
                     if (isRunning() && (correctionMode == Z || correctionMode == XYZ) ) {
                         z_err = SP - PV; // Z-correction error 220110
                         z_errSum = z_errSum + z_err*dt;
                         zDrift = Zp*z_err + Zi*z_errSum;
-                        if(Zp!=0 || Zi!=0) hardwareManager.moveFocusStage(zDrift);
+                        if((Zp!=0 || Zi!=0) && (Math.abs(zDrift)<AMM)) hardwareManager.moveFocusStage(zDrift);
                         oldzErr = z_err;
                         
                     }
-
+                    
+                    //Point2D.Double PrePos = hardwareManager.PollStage();
                     // Move XY stage
-                    if (isRunning() && (correctionMode == XY || correctionMode == XYZ) ){
-                        /*
-                        Point2D.Double xyDriftCorr = new Point2D.Double(x,-y);
-                        xyDriftCorr = hardwareManager.convertPixelsToMicrons(xyDriftCorr);
-                        if (Math.abs(xyDriftCorr.x) < 5.023) xyDriftCorr.x=0;
-                        if (Math.abs(xyDriftCorr.y) < 5.023) xyDriftCorr.y=0;
-                        if(Lp!=0 | Li!=0) hardwareManager.moveXYStage(xyDriftCorr);
-                        */
-                        //if (Math.abs(xyDrift.x) < 0.023) xyDrift.x=0;
-                        //if (Math.abs(xyDrift.y) < 0.023) xyDrift.y=0;
-                        if(Lp!=0 || Li!=0) MoveSuccess = hardwareManager.moveXYStage(xyDrift);
+                    if (isRunning() && (correctionMode == XY || correctionMode == XYZ)){
+                        if (Math.abs(xyMove.x)<LMM) xyMove.x = 0;
+                        if (Math.abs(xyMove.y)<LMM) xyMove.y = 0;
+                        if(xyMove.x!=0 || xyMove.y!=0) MoveSuccess = hardwareManager.moveXYStage(xyMove);
+                        //if((xyMove.x !=0 || xyMove.y !=0)) MoveSuccess = hardwareManager.moveXYStage(xyMove);
+                        else MoveSuccess = true;
                     }
-
+                    //Point2D.Double PostPos = hardwareManager.PollStage();
+                    
                     // Add data //changed to switch statement from ifs 220128 JE
                     switch(correctionMode){
                         case Z:
-                             driftData.addZShift(zDrift, z_err, getTimeElapsed());
+                             driftData.addZShift(zDrift, z_err, getTimeElapsed(), Zp, Zi, refUpdate);
                              break;
                         case XY:
-                            driftData.addXYshift(xErr, yErr, getTimeElapsed());
+                            driftData.addXYshift(xyError.x, xyError.y, getTimeElapsed(), Lp, Li, refUpdate);
+                            //driftData.addXYshift(xErr, yErr, getTimeElapsed(), Lp, Li, refUpdate);
                             break;
                         case XYZ:
-                            driftData.addXYZshift(xErr, yErr, zDrift, z_err, getTimeElapsed());
+                            driftData.addXYZshift(xyError.x, xyError.y, zDrift, z_err, getTimeElapsed(), Zp, Zi, Lp, Li, refUpdate);
+                            //driftData.addXYZshift(xyError.x, xyMove.x, zDrift, z_err, getTimeElapsed(), Zp, Zi, Lp, Li, refUpdate);
                             break;
                     }
 
@@ -496,6 +570,21 @@ public class DriftCorrection extends Observable implements Runnable {
     // added 220118 JE
     public void setLi(double Li){
         this.Li = Li;
+    }
+    
+    // added 221208 JE
+    public void setBias(double Bias){
+        this.Bias = Bias;
+    }
+    
+    // added 230404 JE
+    public void setAMM(double AMM){
+        this.AMM = AMM/1000;
+    }
+    
+    // added 230404 JE
+    public void setLMM(double LMM){
+        this.LMM = LMM/1000;
     }
 
     public double getThreshold() {

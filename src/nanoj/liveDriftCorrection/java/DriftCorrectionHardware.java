@@ -128,6 +128,32 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
         }
         return(true);
     }
+    
+    public void stopXYStage() throws Exception {
+        //if (xTarget == 0 && yTarget == 0) return;
+
+        CMMCore core;
+        CMMCore Xcore;
+        CMMCore Ycore;
+
+        if ( !isSeparateXYStages() )
+            if (getXYStage() == null) throw new NullPointerException(XY_STAGE_NOT_SET);
+            else {
+                core = mainCore;            
+                core.stop(stageXY);
+                }
+            
+        else {
+            if (getSeparateXYStages()[0] == null) throw new NullPointerException(X_STAGE_NOT_SET);
+            else if (getSeparateXYStages()[1] == null) throw new NullPointerException(Y_STAGE_NOT_SET);
+            else {
+                Xcore = mainCore;
+                Ycore = mainCore;
+                Xcore.stop(stageXaxis);
+                Ycore.stop(stageYAxis);
+            }
+        }
+    }
 
     public String[] getLoadedDevices() {
         loadedDevices = mainCore.getLoadedDevices().toArray();
