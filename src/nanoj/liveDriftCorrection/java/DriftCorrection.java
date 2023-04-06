@@ -534,7 +534,7 @@ public class DriftCorrection extends Observable implements Runnable {
                         z_err = SP - PV; // Z-correction error 220110
                         z_errSum = z_errSum + z_err*dt;
                         zDrift = Zp*z_err + Zi*z_errSum;
-                        if((Zp!=0 || Zi!=0) && (Math.abs(zDrift)<AMM)) hardwareManager.moveFocusStage(zDrift);
+                        if((Zp!=0 || Zi!=0) && (Math.abs(zDrift)>AMM)) hardwareManager.moveFocusStage(zDrift);
                         oldzErr = z_err;
                         
                     }
