@@ -68,6 +68,7 @@ public class DriftCorrectionGUI{
     private static final String Zi = "Zi"; // 220110 kw
     private static final String Lp = "Lp"; // 220118 JE
     private static final String Li = "Li"; // 220118 JE
+    private static final String Alpha = "Alpha"; // 230424 JE
     private static final String BIAS = "Bias"; // 221208 JE
     private static final String AMM = "AMM"; // 230404 JE
     private static final String LMM = "LMM"; // 230404 JE
@@ -89,17 +90,18 @@ public class DriftCorrectionGUI{
     private static final String ROI_SIZE_DEFAULT = "2000";
     private static final String EDGE_CLIP_DEFAULT = "0";
     private static final String STEP_SIZE_DEFAULT = "1500"; // nanometers
-    private static final String Zp_DEFAULT = "0.3"; // 190404 kw
+    private static final String Zp_DEFAULT = "0.7"; // 190404 kw
     private static final String Zi_DEFAULT = "0"; // 220118 JE
-    private static final String Lp_DEFAULT = "0.1"; // 220118 JE
+    private static final String Lp_DEFAULT = "0.7"; // 220118 JE
     private static final String Li_DEFAULT = "0"; // 220118 JE
+    private static final String Alpha_DEFAULT = "1"; // 230424 JE
     private static final String BIAS_DEFAULT = "0"; // 230404 JE
     private static final String AMM_DEFAULT = "0"; // 230404 JE
     private static final String LMM_DEFAULT = "0"; // 221208 JE
     private static final String PERIOD_DEFAULT = "500"; // milliseconds
     private static final String REF_UPDATE_DEFAULT = "0"; // minutes
     private static final String BOUNDS_DEFAULT = "10"; // microns
-    private static final double CAL_DEFAULT = 0;
+    private static final double CAL_DEFAULT = 65;
     DecimalFormat df = new DecimalFormat("#.##");
 
     // Labels
@@ -124,6 +126,7 @@ public class DriftCorrectionGUI{
     private static final String Zi_LABEL = "Zi (Axial integral gain)"; // 220118 JE
     private static final String Lp_LABEL = "Lp (Lateral proportional gain)"; // 220118 JE
     private static final String Li_LABEL = "Li (Lateral integral gain)"; // 220118 JE
+    private static final String Alpha_LABEL = "Alpha (Z error -> um conversion)"; // 230424 JE
     private static final String BIAS_LABEL = "Lateral gain Bias (+ >> x, - >> y)"; // 221208 JE
     private static final String AMM_LABEL = "Axial Minimum Move (nm)"; // 230404 JE
     private static final String LMM_LABEL = "Lateral Minimum Move (nm)"; // 230404 JE
@@ -225,7 +228,7 @@ public class DriftCorrectionGUI{
     private JButton unloadConfigurationButton = new DButton(UNLOAD_LABEL, configurationListener);
     private JTextField backgroundStepSizeBox = new DTextField(BACK_STEP_SIZE, BACK_STEP_SIZE_DEFAULT);
     private JTextField calibrationStepSizeBox = new DTextField(CAL_STEP_SIZE, CAL_STEP_SIZE_DEFAULT);
-    private JLabel calibrationScalingLabel = new DLabel(SCALING + df.format(preferences.getDouble(CAL_SCALING, CAL_DEFAULT)+70) + SCALE_UNITS);
+    private JLabel calibrationScalingLabel = new DLabel(SCALING + df.format(preferences.getDouble(CAL_SCALING, CAL_DEFAULT)) + SCALE_UNITS);
     private JLabel calibrationAngleLabel = new DLabel(ANGLE + df.format(preferences.getDouble(CAL_ANGLE, CAL_DEFAULT)));
     private JLabel calibrationFlip_XLabel = new DLabel(FLIP_X + preferences.getBoolean(CAL_FLIPPING_X, false));
     private JLabel calibrationFlip_YLabel = new DLabel(FLIP_Y + preferences.getBoolean(CAL_FLIPPING_Y, false));
@@ -255,6 +258,7 @@ public class DriftCorrectionGUI{
     private JTextField BiasBox = new DTextField(BIAS, BIAS_DEFAULT); // 221208 JE
     private JTextField AMMBox = new DTextField(AMM, AMM_DEFAULT); // 230404 JE
     private JTextField LMMBox = new DTextField(LMM, LMM_DEFAULT); // 230404 JE
+    private JTextField AlphaBox = new DTextField(Alpha, Alpha_DEFAULT); // 230424 JE  
     
 
     //////////////////////// Instance
@@ -268,10 +272,17 @@ public class DriftCorrectionGUI{
         //mainFrame = MMStudio.getFrame();
 
         // Load calibration from non-volatile storage
-        hardwareManager.setCalibration(DriftCorrectionCalibration.createCalibration(preferences.getDouble(CAL_SCALING, CAL_DEFAULT +70), preferences.getDouble(CAL_ANGLE, CAL_DEFAULT)));
+        hardwareManager.setCalibration(DriftCorrectionCalibration.createCalibration(preferences.getDouble(CAL_SCALING, CAL_DEFAULT), preferences.getDouble(CAL_ANGLE, CAL_DEFAULT)));
         driftData.setflipX(preferences.getBoolean(CAL_FLIPPING_X, false));
         driftData.setflipY(preferences.getBoolean(CAL_FLIPPING_Y, false));
         driftData.setSwitchXY(preferences.getBoolean(CAL_SWITCHING_XY, false));
+        
+        /* // for simulation
+        hardwareManager.setCalibration(DriftCorrectionCalibration.createCalibration(0.065,0.03));
+        driftData.setflipX(false);
+        driftData.setflipY(false);
+        driftData.setSwitchXY(true);
+        */
         
         // Add Listeners
         guiFrame.addWindowListener(new RememberPositionListener());
@@ -423,6 +434,8 @@ public class DriftCorrectionGUI{
         advancedPanel.add(AMMBox);
         advancedPanel.add(new DLabel(LMM_LABEL)); //230404 JE
         advancedPanel.add(LMMBox);
+        advancedPanel.add(new DLabel(Alpha_LABEL)); //230424 JE
+        advancedPanel.add(AlphaBox);
 
         // Build GUI frame with the panels
         guiPanel.addTab(CONTROL, controlPanel);
@@ -513,6 +526,7 @@ public class DriftCorrectionGUI{
         driftCorrection.setBias((double) (Double.parseDouble(BiasBox.getText()))); //221208 JE
         driftCorrection.setAMM((double) (Double.parseDouble(AMMBox.getText()))); //230404 JE
         driftCorrection.setLMM((double) (Double.parseDouble(LMMBox.getText()))); //230404 JE
+        driftCorrection.setAlpha((double) (Double.parseDouble(AlphaBox.getText()))); //230424 JE
         driftCorrection.setSleep((long) (Double.parseDouble(periodBox.getText())));
         driftCorrection.setRefUpdate((double) (Double.parseDouble(refUpdateBox.getText())));
         driftCorrection.setThreshold(Double.parseDouble(boundsLimitBox.getText()));
