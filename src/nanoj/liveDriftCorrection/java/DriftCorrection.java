@@ -107,6 +107,7 @@ public class DriftCorrection extends Observable implements Runnable {
     private int i = 0;
     private double AMM = 0;
     private double LMM = 0;
+    private double Alpha = 0; // 230424 JE
     private double xErr = 0; // 220119 JE
     private double yErr = 0; // 220119 JE
     private double xErrSum = 0; // 220414 JE
@@ -232,9 +233,10 @@ public class DriftCorrection extends Observable implements Runnable {
                         t=0;
                         HeightRatio = 0;
                         driftData.clearResultMap(); // 190412 kw
-                        i=-1;
+                        
                         /* // for simulations JE
-                        ImagePlus LoadedImage = opener.openImage("C:\\Users\\joshe\\Documents\\GitHub\\LifeHackDevelopment\\Imlock\\SubPixelShiftOut\\Images\\" + "Middle.tif");
+                        i=-1;
+                        ImagePlus LoadedImage = opener.openImage("F:\\230922_InterPathwayDrift_TwinCam\\231001_InterPathwayDrift_TwinCam\\Exp30ms_Int1s_InterPathwayDrift_5\\RenamedImages\\" + "Middle.tif");
                         FloatProcessor image = processor.Normalize(LoadedImage.getProcessor().convertToFloatProcessor());
                         driftData.setReferenceImage(image);
                         */
@@ -268,32 +270,33 @@ public class DriftCorrection extends Observable implements Runnable {
                             
                             hardwareManager.moveXYStage(0, 0);
                             hardwareManager.stopXYStage();
+                            
                             // Take picture at current position, filter, clip and add to image stack
                             refStack.addSlice(MIDDLE, processor.Normalize(snapAndProcess()));
                             /* //for simulations JE
-                            ImagePlus LoadedImage = opener.openImage("C:\\Users\\joshe\\Documents\\GitHub\\LifeHackDevelopment\\Imlock\\SubPixelShiftOut\\Images\\" + "Middle.tif");
-                            //FloatProcessor image = LoadedImage.getProcessor().convertToFloatProcessor();
+                            ImagePlus LoadedImage = opener.openImage("F:\\230922_InterPathwayDrift_TwinCam\\231001_InterPathwayDrift_TwinCam\\Exp30ms_Int1s_InterPathwayDrift_5\\RenamedImages\\" + "Middle.tif");
                             FloatProcessor image = processor.Normalize(LoadedImage.getProcessor().convertToFloatProcessor());
                             refStack.addSlice(MIDDLE, image);
                             */
+                            
                             // Move one stepSize above focus, snap and add to image stack
                             hardwareManager.moveFocusStageInSteps(1);
                             refStack.addSlice(TOP, processor.Normalize(snapAndProcess()), 0);
                             /* //for simulations JE 
-                            LoadedImage = opener.openImage("C:\\Users\\joshe\\Documents\\GitHub\\LifeHackDevelopment\\Imlock\\SubPixelShiftOut\\Images\\" + "Top.tif");
-                            //image = LoadedImage.getProcessor().convertToFloatProcessor();
+                            LoadedImage = opener.openImage("F:\\230922_InterPathwayDrift_TwinCam\\231001_InterPathwayDrift_TwinCam\\Exp30ms_Int1s_InterPathwayDrift_5\\RenamedImages\\" + "Top.tif");
                             image = processor.Normalize(LoadedImage.getProcessor().convertToFloatProcessor());
                             refStack.addSlice(TOP, image, 0);
                             */
+                            
                             // Move two stepSizes below the focus, snap and add to image stack
                             hardwareManager.moveFocusStageInSteps(-2);
                             refStack.addSlice(BOTTOM, processor.Normalize(snapAndProcess()));
                             /* //for simulations JE
-                            LoadedImage = opener.openImage("C:\\Users\\joshe\\Documents\\GitHub\\LifeHackDevelopment\\Imlock\\SubPixelShiftOut\\Images\\" + "Bottom.tif");
-                            //image = LoadedImage.getProcessor().convertToFloatProcessor();
+                            LoadedImage = opener.openImage("F:\\230922_InterPathwayDrift_TwinCam\\231001_InterPathwayDrift_TwinCam\\Exp30ms_Int1s_InterPathwayDrift_5\\RenamedImages\\" + "Bottom.tif");
                             image = processor.Normalize(LoadedImage.getProcessor().convertToFloatProcessor());
                             refStack.addSlice(BOTTOM, image);
                             */
+                            
                             // Move back to original position
                             hardwareManager.moveFocusStageInSteps(1);
                             
@@ -375,18 +378,18 @@ public class DriftCorrection extends Observable implements Runnable {
                         /* //for simulations JE
                         i=i+1;
                         try{
-                            //ReportingUtils.showMessage(String.format("%04d", i));
-                            ImagePlus LoadedImage = opener.openImage("C:\\Users\\joshe\\Documents\\GitHub\\LifeHackDevelopment\\Imlock\\SubPixelShiftOut\\Images\\" + "ShiftedImage" + String.format("%04d", i) + ".tif");
-                            //FloatProcessor image = LoadedImage.getProcessor().convertToFloatProcessor();
+                            //ReportingUtils.showMessage("F:\\ImLock_BrightfieldTest_TwinCam_Uncovered_1\\Images\\" + "ImLock_BrightfieldTest_TwinCam_Uncovered_1_MMStack_Pos0.ome" + String.format("%06d", i) + ".tif");
+                            //ImagePlus LoadedImage = opener.openImage("F:\\ImLock_BrightfieldTest_TwinCam_Uncovered_1\\Images\\" + "ImLock_BrightfieldTest_TwinCam_Uncovered_1_MMStack_Pos0.ome" + String.format("%06d", i) + ".tif");
+                            ImagePlus LoadedImage = opener.openImage("F:\\230922_InterPathwayDrift_TwinCam\\231001_InterPathwayDrift_TwinCam\\Exp30ms_Int1s_InterPathwayDrift_5\\RenamedImages\\" + "ShiftedImage_" + i + ".tif");
                             FloatProcessor image = processor.Normalize(LoadedImage.getProcessor().convertToFloatProcessor());
                             resultStack =  CrossCorrelationMap.calculateCrossCorrelationMap(image, driftData.getReferenceStack(), NanoJNormalize);
                         }
-                            catch(Exception e){
+                        catch(Exception e){
                             driftData.setReferenceImage(null);
                             driftData.setReferenceStack(new ImageStack());
                             runAcquisition(false);
                             break;
-                            }
+                        }
                         driftData.setResultMap(resultStack);
                         */
 
@@ -436,25 +439,6 @@ public class DriftCorrection extends Observable implements Runnable {
                     
                     // XY drift correction ONLY 201230 kw
                     else {
-                        //if (MDA.isAcquisitionRunning() && !MDA.isPaused() && (MDA.getNextWakeTime() < 1000 || MDA.getNextWakeTime() < getSleep())) {
-                        //    ReportingUtils.showMessage("blocked by MDA");
-                        //    continue;
-                        //}
-                        /*
-                        i=i+1;
-                        //if (i == 49) runAcquisition(false);
-                        if (i == 50) i=-49;
-                        ImagePlus LoadedImage = opener.openImage("D:\\software\\github\\LifeHackDevelopment\\Imlock\\Jumpy_Reference\\SubPixelShiftOut\\" + "ShiftedImage_" + Integer.toString(i) + ".tif");
-                        //ImagePlus LoadedImage = opener.openImage("F:\\NoOptosplit_MainCamBeads_2_2\\Default\\" + "img_channel000_position000_time" + String.format("%09d", i) + "_z000.tif");
-                        //ImagePlus LoadedImage = opener.openImage("F:\\ImLock_AddedPost_2\\Default\\" + "img_channel000_position000_time" + String.format("%09d", i) + "_z000.tif");
-                        //ImagePlus LoadedImage = opener.openImage("F:\\ImLock_AddedPost_Unscrewed_1\\Default\\" + "img_channel000_position000_time" + String.format("%09d", i) + "_z000.tif");
-                        //ImagePlus LoadedImage = opener.openImage("F:\\ImLock_AddedPost_Unscrewed_matchedFP_1\\Default\\" + "img_channel000_position000_time" + String.format("%09d", i) + "_z000.tif");
-                        //ImagePlus LoadedImage = opener.openImage("F:\\ImLock_AddedPost_Unscrewed_matchedFP_2\\Default\\" + "img_channel000_position000_time" + String.format("%09d", i) + "_z000.tif");
-                        //ImagePlus LoadedImage = opener.openImage("F:\\ImLock_TwinCam_Covered_1\\Default\\" + "img_channel000_position000_time" + String.format("%09d", i) + "_z000.tif");
-                        FloatProcessor image = LoadedImage.getProcessor().convertToFloatProcessor();
-                        resultImage =  CrossCorrelationMap.calculateCrossCorrelationMap(image, driftData.getReferenceImage(), NanoJNormalize);
-                        */
-
                         resultImage =  CrossCorrelationMap.calculateCrossCorrelationMap(processor.Normalize(snapAndProcess()), driftData.getReferenceImage(), NanoJNormalize);
                         driftData.setResultMap(resultImage);
 
@@ -531,7 +515,7 @@ public class DriftCorrection extends Observable implements Runnable {
                     // Move Z stage to more appropriate position. We get zDrift in microns instead of steps to save later to Data. (added 190403 kw)
                     // Now using PI controller instead of equation in McGorty 2013 paper (220110 kw)
                     if (isRunning() && (correctionMode == Z || correctionMode == XYZ) ) {
-                        z_err = SP - PV; // Z-correction error 220110
+                        z_err = Alpha*(SP - PV); // Z-correction error 220110
                         z_errSum = z_errSum + z_err*dt;
                         zDrift = Zp*z_err + Zi*z_errSum;
                         if((Zp!=0 || Zi!=0) && (Math.abs(zDrift)>AMM)) hardwareManager.moveFocusStage(zDrift);
@@ -582,20 +566,21 @@ public class DriftCorrection extends Observable implements Runnable {
                     }
                     
                     // Add data //changed to switch statement from ifs 220128 JE
-                    switch(correctionMode){
-                        case Z:
-                             driftData.addZShift(zDrift, z_err, getTimeElapsed(), Zp, Zi, refUpdate);
-                             break;
-                        case XY:
-                            driftData.addXYshift(xyError.x, xyError.y, getTimeElapsed(), Lp, Li, refUpdate);
-                            //driftData.addXYshift(xErr, yErr, getTimeElapsed(), Lp, Li, refUpdate);
-                            break;
-                        case XYZ:
-                            driftData.addXYZshift(xyError.x, xyError.y, zDrift, z_err, getTimeElapsed(), Zp, Zi, Lp, Li, refUpdate);
-                            //driftData.addXYZshift(xyError.x, xyMove.x, zDrift, z_err, getTimeElapsed(), Zp, Zi, Lp, Li, refUpdate);
-                            break;
+                    if(isRunning()){
+                        switch(correctionMode){
+                            case Z:
+                                driftData.addZShift(zDrift, z_err, getTimeElapsed(), Alpha, Zp, Zi, refUpdate);
+                                break;
+                            case XY:
+                                driftData.addXYshift(xyError.x, xyError.y, getTimeElapsed(), Lp, Li, refUpdate);
+                                //driftData.addXYshift(xErr, yErr, getTimeElapsed(), Lp, Li, refUpdate);
+                                break;
+                            case XYZ:
+                                driftData.addXYZshift(xyError.x, xyError.y, zDrift, z_err, getTimeElapsed(), Alpha, Zp, Zi, Lp, Li, refUpdate);
+                                //driftData.addXYZshift(xyError.x, xyMove.x, zDrift, z_err, getTimeElapsed(), Zp, Zi, Lp, Li, refUpdate);
+                                break;
+                        }
                     }
-
                     // If the acquisition was stopped, clear the reference image.
                     if (!isRunning()) {
                         driftData.setReferenceImage(null);
@@ -650,8 +635,8 @@ public class DriftCorrection extends Observable implements Runnable {
         double StartSec = Double.parseDouble(StartTime.split(":")[2]);
         
         if (Hrs<StartHrs) Hrs = Hrs + 24; // Protects against new day error JE
-        if (Hrs<StartHrs) Min = Min + 60; // Protects against new hour error JE
-        if (Hrs<StartHrs) Sec = Sec + 60; // Protects against new minute error JE
+        if (Min<StartMin) Min = Min + 60; // Protects against new hour error JE
+        if (Sec<StartSec) Sec = Sec + 60; // Protects against new minute error JE
         
         int HrsDiff = Hrs - StartHrs;
         int MinDiff = Min - StartMin;
@@ -731,6 +716,11 @@ public class DriftCorrection extends Observable implements Runnable {
     // added 230404 JE
     public void setLMM(double LMM){
         this.LMM = LMM/1000;
+    }
+    
+    // added 230404 JE
+    public void setAlpha(double Alpha){
+        this.Alpha = Alpha;
     }
     
 
