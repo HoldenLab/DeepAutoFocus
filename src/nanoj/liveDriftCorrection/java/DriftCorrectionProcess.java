@@ -348,7 +348,7 @@ public class DriftCorrectionProcess implements Measurements {
             }
         }
 
-        if(pMax != 1) ReportingUtils.showMessage("Plane, " + Integer.toString(pMax));
+        //if(pMax != 1) ReportingUtils.showMessage("Plane, " + Integer.toString(pMax));
         
         switch(pMax){
             case 0:
