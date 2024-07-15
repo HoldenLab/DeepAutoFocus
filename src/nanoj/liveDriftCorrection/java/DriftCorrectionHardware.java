@@ -256,6 +256,14 @@ public class DriftCorrectionHardware extends Observable implements Runnable {
         return Position;
     }
     
+    public void WaitForStages() throws Exception {
+        CMMCore core;
+        if (useMainXYAxis) core = mainCore;
+                else core = driftCore;
+        core.waitForDevice(stageXY);
+        core.waitForDevice(focusDevice);
+    }
+    
     
     public void stopXYStage() throws Exception {
         //if (xTarget == 0 && yTarget == 0) return;

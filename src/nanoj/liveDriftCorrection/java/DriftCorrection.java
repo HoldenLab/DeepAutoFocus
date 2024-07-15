@@ -135,6 +135,7 @@ public class DriftCorrection extends Observable implements Runnable {
     String StartTime = null;
     double DelayMDA = 0;
     boolean Meta = false;
+    boolean Acquiring = false;
 
 
     public DriftCorrection(DriftCorrectionHardware manager, DriftCorrectionData data, DriftCorrectionProcess processor) {
@@ -167,7 +168,12 @@ public class DriftCorrection extends Observable implements Runnable {
                         }
                         WaitLeft = (MDA.getNextWakeTime() - System.nanoTime() / 1000000.0);
                         if(hardwareManager.getMainCoreBusy() || WaitLeft < 1200) {
+                            Acquiring = true;
                             continue;
+                        }
+                        if(Acquiring) {
+                            Acquiring = false;
+                            hardwareManager.WaitForStages();
                         }
                     }
                     
@@ -232,6 +238,7 @@ public class DriftCorrection extends Observable implements Runnable {
                         t=0;
                         HeightRatio = 0;
                         driftData.clearResultMap(); // 190412 kw
+                        Acquiring=false;
                         i=-1;
                         /* // for simulations JE
                         ImagePlus LoadedImage = opener.openImage("C:\\Users\\joshe\\Documents\\GitHub\\LifeHackDevelopment\\Imlock\\SubPixelShiftOut\\Images\\" + "Middle.tif");
@@ -558,8 +565,10 @@ public class DriftCorrection extends Observable implements Runnable {
                         double[] xpos = new double[1];
                         double[] ypos = new double[1];
                         hardwareManager.getMainCore().getXYPosition(hardwareManager.getXYStage(), xpos, ypos);
-                        double Xoffset = xpos[0] - Positions.getPosition(0).getX();
-                        double Yoffset = ypos[0] - Positions.getPosition(0).getY();
+                        double Xoffset = 0;
+                        double Yoffset = 0;
+                        if (Math.abs(xyMove.x)<LMM) Xoffset = xpos[0] - Positions.getPosition(0).getX();
+                        if (Math.abs(xyMove.y)<LMM) Yoffset = ypos[0] - Positions.getPosition(0).getY();
                         for (MultiStagePosition msp : list) {
                             StagePosition spz = msp.get(hardwareManager.getFocusDevice());
                             StagePosition spxy = msp.get(hardwareManager.getXYStage());
